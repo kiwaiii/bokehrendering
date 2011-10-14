@@ -60,7 +60,6 @@ namespace glf
 		Program 					program;
 	};
 	//-------------------------------------------------------------------------
-	#if 
 	class CSMRenderer
 	{
 	public:
@@ -93,36 +92,6 @@ namespace glf
 
 		Program 					program;
 	};
-	#else
-	class CSMRenderer
-	{
-	public:
-					CSMRenderer(	int _w, 
-									int _h);
-		void 		Draw(			const CSMLight&	_light,
-									const GBuffer&	_gbuffer,
-									const glm::vec3&_viewPos,
-									float 			_bias,
-									RenderTarget&	_target);
-	private:
- 					CSMRenderer(	const CSMRenderer&);
- 		CSMRenderer	operator=(		const CSMRenderer&);
-	public:
-		GLint 						positionTexUnit;
-		GLint 						diffuseTexUnit;
-		GLint 						normalTexUnit;
-		GLint 						shadowTexUnit;
-
-		GLint						camViewVar;
-		GLint 						lightViewProjsVar;
-		GLint						lightDirVar;
-		GLint						lightIntensityVar;
-		GLint						biasVar;
-		GLint						nCascadesVar;
-
-		Program 					program;
-	};
-	#endif
 }
 
 #endif
