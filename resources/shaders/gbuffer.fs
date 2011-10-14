@@ -27,4 +27,8 @@ void main()
 	FragPosition 	= vec4(gPosition,1);
 	FragNormal   	= normalize(normal.x*gNTangent + normal.y*gNBitangent + normal.z*gNNormal);
 	FragDiffuse  	= vec4(texture(DiffuseTex,gTexCoord).xyz,Roughness);
+
+//if(gl_FragCoord.x<10000)
+//FragNormal   	= normal;
 }
+

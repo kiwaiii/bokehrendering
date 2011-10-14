@@ -1911,6 +1911,7 @@ namespace
 
 
 
+
 		/* Allocate an array to hold the values for each */
 		entries=(char**)cJSON_malloc(numentries*sizeof(char*));
 		if (!entries) return 0;
@@ -2162,9 +2163,9 @@ namespace glf
 					LoadTexture(filename,*texture,false);
 
 					texture->SetFiltering(GL_LINEAR,GL_LINEAR);
-					texture->SetAnisotropy(MAX_ANISOSTROPY);
-					glBindTexture(texture->target,texture->id);
-					glGenerateMipmap(GL_TEXTURE_2D);
+					//texture->SetAnisotropy(MAX_ANISOSTROPY);
+					//glBindTexture(texture->target,texture->id);
+					//glGenerateMipmap(GL_TEXTURE_2D);
 					
 					_textureDB[filename] = texture;
 				}
@@ -2296,14 +2297,14 @@ namespace glf
 
 				// Load textures
 				glf::Texture2D* diffuseTex = GetDiffuseTex(_folder,mesh.pMaterial->colorMapFilename,textureDB,_resourceManager);
-				//glf::Texture2D* normalTex  = GetNormalTex(_folder,mesh.pMaterial->bumpMapFilename,textureDB,_resourceManager);
-glf::Texture2D* normalTex  = GetNormalTex(_folder,"",textureDB,_resourceManager);
+				glf::Texture2D* normalTex  = GetNormalTex(_folder,mesh.pMaterial->bumpMapFilename,textureDB,_resourceManager);
+				//glf::Texture2D* normalTex  = GetNormalTex(_folder,"",textureDB,_resourceManager);
 	
 				// Create and add regular mesh
 				RegularMesh rmesh;
 				rmesh.diffuseTex   = diffuseTex;
 				rmesh.normalTex    = normalTex;
-				rmesh.roughness    = mesh.pMaterial->shininess * 1000.f;
+				rmesh.roughness    = mesh.pMaterial->shininess * 1000.f; // (Has to be specified as roughness into MTL file)
 				rmesh.indices      = ib;
 				rmesh.startIndices = mesh.startIndex;
 				rmesh.countIndices = mesh.triangleCount*3;
