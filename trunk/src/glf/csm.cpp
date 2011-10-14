@@ -286,13 +286,14 @@ namespace glf
 		program.Compile(LoadFile("../resources/shaders/csmrenderer.vs"),
 						LoadFile("../resources/shaders/csmrenderer.fs"));
 
+		viewPosVar 			= program["ViewPos"].location;
 		lightDirVar 		= program["LightDir"].location;
 		lightViewProjsVar	= program["LightViewProjs"].location;
 		lightIntensityVar	= program["LightIntensity"].location;
 		biasVar				= program["Bias"].location;
-		apertureVar			= program["Aperture"].location;
-		nSamplesVar			= program["nSamples"].location;
 		nCascadesVar		= program["nCascades"].location;
+
+		blendFactorVar		= program["BlendFactor"].location;
 
 		positionTexUnit		= program["PositionTex"].unit;
 		diffuseTexUnit		= program["DiffuseTex"].unit;
@@ -301,70 +302,31 @@ namespace glf
 
 		glm::mat4 transform = ScreenQuadTransform();
 
-		// PCF samples
-		// Halton sequence generated using: WONG, T.-T., LUK, W.-S., AND HENG, 
-		// P.-A. 1997.Sampling with hammersley and Halton points
-		// http://www.cse.cuhk.edu.hk/~ttwong/papers/udpoint/udpoint.pdf
-		glm::vec2 haltonPoints[32];
-		haltonPoints[0]  = glm::vec2(-0.353553, 0.612372);
-		haltonPoints[1]  = glm::vec2(-0.25, -0.433013);
-		haltonPoints[2]  = glm::vec2(0.663414, 0.55667);
-		haltonPoints[3]  = glm::vec2(-0.332232, 0.120922);
-		haltonPoints[4]  = glm::vec2(0.137281, -0.778559);
-		haltonPoints[5]  = glm::vec2(0.106337, 0.603069);
-		haltonPoints[6]  = glm::vec2(-0.879002, -0.319931);
-		haltonPoints[7]  = glm::vec2(0.191511, -0.160697);
-		haltonPoints[8]  = glm::vec2(0.729784, 0.172962);
-		haltonPoints[9]  = glm::vec2(-0.383621, 0.406614);
-		haltonPoints[10] = glm::vec2(-0.258521, -0.86352);
-		haltonPoints[11] = glm::vec2(0.258577, 0.34733);
-		haltonPoints[12] = glm::vec2(-0.82355, 0.0962588);
-		haltonPoints[13] = glm::vec2(0.261982, -0.607343);
-		haltonPoints[14] = glm::vec2(-0.0562987, 0.966608);
-		haltonPoints[15] = glm::vec2(-0.147695, -0.0971404);
-		haltonPoints[16] = glm::vec2(0.651341, -0.327115);
-		haltonPoints[17] = glm::vec2(0.47392, 0.238012);
-		haltonPoints[18] = glm::vec2(-0.738474, 0.485702);
-		haltonPoints[19] = glm::vec2(-0.0229837, -0.394616);
-		haltonPoints[20] = glm::vec2(0.320861, 0.74384);
-		haltonPoints[21] = glm::vec2(-0.633068, -0.0739953);
-		haltonPoints[22] = glm::vec2(0.568478, -0.763598);
-		haltonPoints[23] = glm::vec2(-0.0878153, 0.293323);
-		haltonPoints[24] = glm::vec2(-0.528785, -0.560479);
-		haltonPoints[25] = glm::vec2(0.570498, -0.13521);
-		haltonPoints[26] = glm::vec2(0.915797, 0.0711813);
-		haltonPoints[27] = glm::vec2(-0.264538, 0.385706);
-		haltonPoints[28] = glm::vec2(-0.365725, -0.76485);
-		haltonPoints[29] = glm::vec2(0.488794, 0.479406);
-		haltonPoints[30] = glm::vec2(-0.948199, 0.263949);
-		haltonPoints[31] = glm::vec2(0.0311802, -0.121049);
-
 		glProgramUniformMatrix4fv(program.id, program["Transformation"].location,	1, GL_FALSE, &transform[0][0]);
 		glProgramUniform1i(program.id, 		  program["PositionTex"].location,		positionTexUnit);
 		glProgramUniform1i(program.id, 		  program["ShadowTex"].location,		shadowTexUnit);
 		glProgramUniform1i(program.id, 		  program["DiffuseTex"].location,		diffuseTexUnit);
 		glProgramUniform1i(program.id, 		  program["NormalTex"].location,		normalTexUnit);
-		glProgramUniform2fv(program.id,		  program["HaltonPoints"].location,		32, (float*)haltonPoints);
 
 		glf::CheckError("CSMRenderer::Create");
 	}
 	//-------------------------------------------------------------------------
 	void CSMRenderer::Draw(	const CSMLight&	_light,
 							const GBuffer&	_gbuffer,
-							const glm::vec3&_view,
+							const glm::vec3&_viewPos,
+							float 			_blendFactor,
 							float 			_bias,
-							float 			_aperture,
-							int 			_nSamples,
 							RenderTarget&	_target)
 	{
 		glUseProgram(program.id);
 
+		glProgramUniform1f(program.id,			blendFactorVar,			_blendFactor);
+
 		glProgramUniform1f(program.id,			biasVar,			_bias);
-		glProgramUniform1f(program.id,			apertureVar,		_aperture);
-		glProgramUniform1i(program.id,			nSamplesVar,		_nSamples);
 		glProgramUniform1i(program.id,			nCascadesVar,		_light.nCascades);
-		glProgramUniformMatrix4fv(program.id,	lightViewProjsVar,	_light.nCascades, 	GL_FALSE, &_light.viewprojs[0][0][0]);
+		glProgramUniform3f(program.id,			viewPosVar,			_viewPos.x, _viewPos.y, _viewPos.z);
 		glProgramUniform3f(program.id,			lightDirVar,		_light.direction.x, _light.direction.y, _light.direction.z);
+		glProgramUniformMatrix4fv(program.id,	lightViewProjsVar,	_light.nCascades, 	GL_FALSE, &_light.viewprojs[0][0][0]);
 		glProgramUniform3f(program.id,			lightIntensityVar,	_light.intensity.x,	_light.intensity.y,	_light.intensity.z);
 
 		_light.depthTexs.Bind(shadowTexUnit);

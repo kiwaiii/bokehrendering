@@ -68,9 +68,8 @@ namespace glf
 		void 		Draw(			const CSMLight&	_light,
 									const GBuffer&	_gbuffer,
 									const glm::vec3&_viewPos,
+									float 			_blendFactor,
 									float 			_bias,
-									float 			_aperture,
-									int 			_nSamples,
 									RenderTarget&	_target);
 	private:
  					CSMRenderer(	const CSMRenderer&);
@@ -81,13 +80,12 @@ namespace glf
 		GLint 						normalTexUnit;
 		GLint 						shadowTexUnit;
 
-		GLint						camViewVar;
-		GLint 						lightViewProjsVar;
+		GLint						blendFactorVar;
+		GLint						viewPosVar;
 		GLint						lightDirVar;
+		GLint 						lightViewProjsVar;
 		GLint						lightIntensityVar;
 		GLint						biasVar;
-		GLint						nSamplesVar;
-		GLint						apertureVar;
 		GLint						nCascadesVar;
 
 		Program 					program;

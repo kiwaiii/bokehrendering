@@ -10,8 +10,8 @@ illum 2
 newmtl left_engine_phong
 Ka 0 0 0 0
 Kd 1 1 1 1
-Ks 0.5 0.5 0.5 0.5
-Ns 0.5
+Ks 1 1 1 1
+Ns 0.1
 map_Kd left_engine_diff.png
 map_bump left_engine_norm.png
 illum 2
@@ -21,7 +21,7 @@ newmtl right_engine_phong
 Ka 0 0 0 0
 Kd 1 1 1 1
 Ks 0 0 0 0
-Ns 1
+Ns 0.1
 map_Kd left_engine_diff.png
 map_bump left_engine_norm.png
 illum 2
@@ -31,7 +31,7 @@ newmtl turret_phong
 Ka 0 0 0 0
 Kd 1 1 1 1
 Ks 0 0 0 0
-Ns 1
+Ns 0.1
 map_Kd turret_diff.png
 map_bump turret_norm.png
 illum 2
@@ -41,7 +41,7 @@ newmtl lambert1
 Ka 0 0 0 0
 Kd 1 1 1 1
 Ks 0 0 0 0
-Ns 1
+Ns 0.1
 map_Kd default.png
 map_bump default-normalmap.png
 illum 2
@@ -51,7 +51,7 @@ newmtl barricade_phong
 Ka 0 0 0 0
 Kd 1 1 1 1
 Ks 0 0 0 0
-Ns 1
+Ns 0.1
 map_Kd turret_diff.png
 map_bump turret_norm.png
 illum 2

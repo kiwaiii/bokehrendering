@@ -159,13 +159,6 @@ namespace
 	ssaoPass(_w,_h),
 	bilateralPass(_w,_h),
 	postProcessor(_w,_h)
-//	accBuffer		= glf::AccumulationBuffer::Create(ctx::window.Size.x,ctx::window.Size.y);
-//	accBufferTmp	= glf::AccumulationBuffer::Create(ctx::window.Size.x,ctx::window.Size.y);
-//	shProbe			= glf::SHProbe::Create(1024);
-//	shPass			= glf::SHLightPass::Create(ctx::window.Size.x,ctx::window.Size.y);
-//	ssaoPass		= glf::SSAOPass::Create(ctx::window.Size.x,ctx::window.Size.y);
-//	bilateralPass	= glf::BilateralPass::Create(ctx::window.Size.x,ctx::window.Size.y);
-//	postProcessPass = glf::PostProcessor::Create(ctx::window.Size.x,ctx::window.Size.y);
 //	dofProcessPass	= glf::DOFProcessor::Create(ctx::window.Size.x,ctx::window.Size.y);
 	{
 		ssaoParams.beta				= 10e-04;
@@ -178,7 +171,7 @@ namespace
 		ssaoParams.sigmaV			= 1.f;
 		ssaoParams.nTaps			= 4;
 
-		toneParams.expToneExposure 	=-3.59f;
+		toneParams.expToneExposure 	=-4.08f;
 		toneParams.expBloomExposure	=-4.33f;
 		toneParams.toneExposure		= pow(10.f,toneParams.expToneExposure);
 		toneParams.bloomExposure	= pow(10.f,toneParams.expBloomExposure);
@@ -187,7 +180,7 @@ namespace
 		toneParams.bloomTaps		= 4;
 
 		csmParams.nSamples			= 1;
-		csmParams.bias				= 0.f;
+		csmParams.bias				= 0.0016f;
 		csmParams.aperture			= 0.0f;
 		csmParams.blendFactor		= 0.f;
 		csmParams.cascadeAlpha		= 0.5f;
@@ -350,7 +343,7 @@ void interface()
 			{
 				sprintf(labelBuffer,"BlendFactor: %f",app->csmParams.blendFactor);
 				ctx::ui->Label(none,labelBuffer);
-				update |= ctx::ui->HorizontalSlider(sliderRect,0.f,0.001f,&app->csmParams.blendFactor);
+				update |= ctx::ui->HorizontalSlider(sliderRect,0.f,1.f,&app->csmParams.blendFactor);
 
 				sprintf(labelBuffer,"Alpha : %f",app->csmParams.cascadeAlpha);
 				ctx::ui->Label(none,labelBuffer);
@@ -587,9 +580,8 @@ void display()
 			app->csmRenderer.Draw(	app->csmLight,
 									app->gbuffer,
 									viewPos,
+									app->csmParams.blendFactor,
 									app->csmParams.bias,
-									app->csmParams.aperture,
-									app->csmParams.nSamples,
 									app->renderTarget1);
 
 			glBindFramebuffer(GL_FRAMEBUFFER,0);
