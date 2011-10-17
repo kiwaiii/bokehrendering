@@ -34,6 +34,7 @@
 //------------------------------------------------------------------------------
 #define ENABLE_ANISOSTROPIC_FILTERING	1
 #define MAX_ANISOSTROPY					16.f
+#define ADD_TBN_HELPERS					0
 
 // OBJ loader
 namespace
@@ -1912,6 +1913,9 @@ namespace
 
 
 
+
+
+
 		/* Allocate an array to hold the values for each */
 		entries=(char**)cJSON_malloc(numentries*sizeof(char*));
 		if (!entries) return 0;
@@ -2162,10 +2166,10 @@ namespace glf
 					texture = _resourceManager.CreateTexture2D();
 					LoadTexture(filename,*texture,false);
 
-					texture->SetFiltering(GL_LINEAR,GL_LINEAR);
-					//texture->SetAnisotropy(MAX_ANISOSTROPY);
-					//glBindTexture(texture->target,texture->id);
-					//glGenerateMipmap(GL_TEXTURE_2D);
+					texture->SetFiltering(GL_LINEAR_MIPMAP_LINEAR,GL_LINEAR);
+					texture->SetAnisotropy(MAX_ANISOSTROPY);
+					glBindTexture(texture->target,texture->id);
+					glGenerateMipmap(GL_TEXTURE_2D);
 					
 					_textureDB[filename] = texture;
 				}
@@ -2199,6 +2203,7 @@ namespace glf
 							const glm::mat4& _transform,
 							ResourceManager& _resourceManager,
 							SceneManager& _scene,
+							HelperManager& _helpers,
 							bool _verbose)
 		{
 			// Load objects
@@ -2226,7 +2231,7 @@ namespace glf
 			// Create VBO
 			glf::VertexBuffer3F* vb = _resourceManager.CreateVBO3F();
 			glf::VertexBuffer3F* nb = _resourceManager.CreateVBO3F();
-			glf::VertexBuffer3F* tb = _resourceManager.CreateVBO3F();
+			glf::VertexBuffer4F* tb = _resourceManager.CreateVBO4F();
 			glf::VertexBuffer2F* ub = _resourceManager.CreateVBO2F();
 
 			int nVertices = loader.getNumberOfVertices();
@@ -2239,7 +2244,7 @@ namespace glf
 			const ModelOBJ::Vertex* vSource = loader.getVertexBuffer();
 			glm::vec3* vptr = vb->Lock();
 			glm::vec3* nptr = nb->Lock();
-			glm::vec3* tptr = tb->Lock();
+			glm::vec4* tptr = tb->Lock();
 			glm::vec2* uptr = ub->Lock();
 			for(int i=0;i<nVertices;++i)
 			{
@@ -2256,10 +2261,22 @@ namespace glf
 				tptr[i].x = vSource[i].tangent[0];
 				tptr[i].y = vSource[i].tangent[1];
 				tptr[i].z = vSource[i].tangent[2];
-				tptr[i]   = rotTransform * tptr[i];
+				tptr[i].w = 0; 						// For removing translation
+				tptr[i]   = _transform * tptr[i];
+
+				glm::vec3 bitangent;
+				bitangent.x = vSource[i].bitangent[0];
+				bitangent.y = vSource[i].bitangent[1];
+				bitangent.z = vSource[i].bitangent[2];
+				bitangent   = rotTransform * bitangent;
 
 				uptr[i].x = vSource[i].texCoord[0];
 				uptr[i].y = vSource[i].texCoord[1];
+
+				// Compute the referential's handedness and store its sign 
+				// into w component of the tangent vector
+				tptr[i].w = glm::dot(bitangent,glm::normalize(glm::cross(nptr[i],glm::vec3(tptr[i]))));
+				//glf::Info("Sign : %f",tptr[i].w);
 			}
 			ub->Unlock();
 			tb->Unlock();
@@ -2280,7 +2297,7 @@ namespace glf
 			glf::VertexArray* regularVAO = _resourceManager.CreateVAO();
 			regularVAO->Add(*vb,semantic::Position, 3,GL_FLOAT,false,0);
 			regularVAO->Add(*nb,semantic::Normal,   3,GL_FLOAT,false,0);
-			regularVAO->Add(*tb,semantic::Tangent,  3,GL_FLOAT,false,0);
+			regularVAO->Add(*tb,semantic::Tangent,  4,GL_FLOAT,false,0);
 			regularVAO->Add(*ub,semantic::TexCoord, 2,GL_FLOAT,false,0);
 
 			glf::VertexArray* shadowVAO  = _resourceManager.CreateVAO();
@@ -2299,12 +2316,13 @@ namespace glf
 				glf::Texture2D* diffuseTex = GetDiffuseTex(_folder,mesh.pMaterial->colorMapFilename,textureDB,_resourceManager);
 				glf::Texture2D* normalTex  = GetNormalTex(_folder,mesh.pMaterial->bumpMapFilename,textureDB,_resourceManager);
 				//glf::Texture2D* normalTex  = GetNormalTex(_folder,"",textureDB,_resourceManager);
-	
+
 				// Create and add regular mesh
 				RegularMesh rmesh;
 				rmesh.diffuseTex   = diffuseTex;
 				rmesh.normalTex    = normalTex;
 				rmesh.roughness    = mesh.pMaterial->shininess * 1000.f; // (Has to be specified as roughness into MTL file)
+				rmesh.specularity  = 0.25 * (mesh.pMaterial->specular[0]+mesh.pMaterial->specular[1]+mesh.pMaterial->specular[2]+mesh.pMaterial->specular[3]);
 				rmesh.indices      = ib;
 				rmesh.startIndices = mesh.startIndex;
 				rmesh.countIndices = mesh.triangleCount*3;
@@ -2326,6 +2344,10 @@ namespace glf
 
 				BBox obound = ObjectBound(*vb,*ib,rmesh.startIndices,rmesh.countIndices);
 				_scene.oBounds.push_back(obound);
+
+				#if ADD_TBN_HELPERS
+					_helpers.CreateTangentSpace(*vb,*nb,*tb,*ib,rmesh.startIndices,rmesh.countIndices,0.1f);
+				#endif
 
 				if(_verbose)
 				{

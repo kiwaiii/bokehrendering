@@ -33,6 +33,7 @@ namespace glf
 		GLint 	 						normalTexUnit;
 		GLint 	 						diffuseTexUnit;
 		GLint	 						roughnessVar;
+		GLint	 						specularityVar;
 
 		GLint	 						transformVar;
 		GLint	 						modelVar;

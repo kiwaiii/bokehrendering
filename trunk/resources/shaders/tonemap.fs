@@ -16,8 +16,8 @@ vec3 ToneMapFilmicALU(vec3 _color)
 	_color = (_color * (6.2f*_color + vec3(0.5f))) / (_color * (6.2f * _color + vec3(1.7f)) + vec3(0.06f));
 
 	// Result has 1/2.2 baked in
-	return pow(_color, vec3(2.2f));
-//	return _color;
+//	return pow(_color, vec3(2.2f));
+	return _color;
 }
 //------------------------------------------------------------------------------
 void main()

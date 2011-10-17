@@ -13,6 +13,7 @@ namespace glf
 		GLint TexCoord 	= 2;
 		GLint Tangent 	= 3;
 		GLint Color	 	= 4;
+		GLint Bitangent	= 5;
 	};
 	//-------------------------------------------------------------------------
 	VertexArray::VertexArray()

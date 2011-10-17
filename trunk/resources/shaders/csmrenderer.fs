@@ -4,8 +4,8 @@
 //-----------------------------------------------------------------------------
 uniform	int						nCascades;
 uniform sampler2DArrayShadow	ShadowTex;
-uniform sampler2D    			PositionTex;
-uniform sampler2D    			DiffuseTex;
+uniform sampler2D				PositionTex;
+uniform sampler2D				DiffuseTex;
 uniform sampler2D				NormalTex;
 
 uniform vec3					ViewPos;
@@ -13,7 +13,7 @@ uniform vec3					LightDir;
 uniform vec3					LightIntensity;
 uniform mat4					LightViewProjs[4];
 
-uniform float					BlendFactor;
+uniform float					BlendFactor;	// Fake variable
 uniform float 					Bias;
 //------------------------------------------------------------------------------
 out vec4 						FragColor;
@@ -31,28 +31,27 @@ vec3 BRDF(	in vec3 _viewDir,
 			in vec3 _lightDir,
 			in vec3 _normal,
 			in vec3 _diffuse,
-			in float _roughness)
+			in float _roughness,
+			in float _specularity)
 {
-	vec3 h		= normalize(_viewDir+_lightDir);
-
+	vec3  h		= normalize(_viewDir+_lightDir);
 	float F0	= 0.01f;
-	float VdotH = max(0.f,dot(_viewDir,h));
-	float NdotH = max(0.f,dot(_normal,h));
-	float NdotV = max(0.f,dot(_normal,_viewDir));
-	float NdotL = max(0.f,dot(_normal,_lightDir));
+	float VdotH = max(0.0f,dot(_viewDir,h));
+	float NdotH = max(0.0f,dot(_normal,h));
+	float NdotL = max(0.0f,dot(_normal,_lightDir));
+	float NdotV = max(0.0f,dot(_normal,_viewDir));
+	float sNdotH= sqrt(1.f-NdotH*NdotH);
 
-	float delta = acos(NdotH);
-
+	// Basic Cook-Torrance
+	float kappa	= sNdotH/(NdotH*_roughness);
 	float F		= F0 + (1.f-F0) * pow(1.f - VdotH,5.f);
-	float D		= 1.f / (_roughness*_roughness * pow(cos(delta),4.f)) * exp(-pow(tan(delta)/_roughness, 2.f));
+	float D		= 1.f / (_roughness*_roughness * pow(NdotH,4.f)) * exp(-kappa*kappa);
 	float G		= min(1.f,min( 2.f*NdotH*NdotV/VdotH , 2.f*NdotH*NdotL/VdotH ));
 
-//_diffuse * NdotL / M_PI + 
-//	if(BlendFactor < 1000)
-//		return ;
-//	else
-//		return ;
-	return mix(_diffuse * NdotL / M_PI, _diffuse * D * G * F / (M_PI * NdotL * NdotV), BlendFactor);
+	// Max function prevents "nan" value due to the denominator
+	float val	= max(0.f,D * F *G / (M_PI * NdotL * NdotV));
+
+	return _diffuse * NdotL / M_PI + BlendFactor*_specularity*vec3(val);
 }
 //------------------------------------------------------------------------------
 float ShadowTest(const vec3 _pos, int _cascadeIndex)
@@ -63,18 +62,13 @@ float ShadowTest(const vec3 _pos, int _cascadeIndex)
 void main()
 {
 	// Get world position of the point to shade
-	vec2 pix		= gl_FragCoord.xy / vec2(textureSize(PositionTex,0));
-	vec4 pos		= textureLod(PositionTex,pix,0);
-	vec3 n			= textureLod(NormalTex,pix,0).xyz;
-	vec4 diffuse	= textureLod(DiffuseTex,pix,0);
-	float roughness = diffuse.w;
-	vec3 viewDir	= normalize(ViewPos-pos.xyz);
-
-//if(roughness<0.1)
-//{
-//	FragColor   = vec4(10000.f,0.f,0.f,1.f);
-//	return;
-//}
+	vec2 pix			= gl_FragCoord.xy / vec2(textureSize(PositionTex,0));
+	vec4 pos			= textureLod(PositionTex,pix,0);
+	vec4 normal			= textureLod(NormalTex,pix,0);
+	vec4 diffuse		= textureLod(DiffuseTex,pix,0);
+	float roughness		= diffuse.w;
+	float specularity	= normal.w;
+	vec3 viewDir		= normalize(ViewPos-pos.xyz);
 
 	// Select cascade
 	// Compute derivates of position in projective light space for small 
@@ -101,8 +95,7 @@ void main()
 
 	// Compute radiance
 	float v		= ShadowTest(lposs[cindex].xyz, cindex);
-//	float rad	= max(0.f,dot(normalize(texture(NormalTex,pix).xyz),-LightDir)) * INV_PI;
-	vec3 f		= BRDF(viewDir,-LightDir,n,diffuse.xyz,roughness);
+	vec3 f		= BRDF(viewDir,-LightDir,normal.xyz,diffuse.xyz,roughness,specularity);
 
 	#if DISPLAY_CASCADES
 	vec3 color;
@@ -118,7 +111,7 @@ void main()
 		else 
 				color = vec3(1.f,0.f,1.f);
 	}
-	FragColor   = vec4(diffuse*LightIntensity*rad*v*color,1.f);
+	FragColor   = vec4(f*LightIntensity*v*color,1.f);
 	#else
 	FragColor   = vec4(f*LightIntensity*v,1.f);
 	#endif

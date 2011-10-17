@@ -120,7 +120,6 @@ namespace glf
 							const SceneManager& _scene,
 							HelperManager& 		_helpers)
 	{
-		_helpers.Clear();
 
 		// Extract camera near/far
 		float n = _camera.Near();
@@ -136,6 +135,7 @@ namespace glf
 		float camRatio		= _camera.Ratio();
 
 		#if ENABLE_HELPERS
+		_helpers.Clear();
 		_helpers.CreateReferential(camRight,camUp,-camDir,0.3f,glm::translate(camPos.x,camPos.y,camPos.z));
 		#endif
 

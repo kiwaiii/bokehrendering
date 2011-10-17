@@ -61,6 +61,13 @@ namespace glf
 											const glm::vec3& c2,
 											const glm::vec3& c3,
 											const glm::mat4& _t=glm::mat4(1.f));
+		Helper::Ptr CreateTangentSpace(		VertexBuffer3F& _pvbo,
+											VertexBuffer3F& _nvbo,
+											VertexBuffer4F& _tvbo,
+											IndexBuffer& _ibo,
+											int _startIndex,
+											int _countIndex,
+											float _vectorSize);
 		void 			Clear();
 
 		std::vector<Helper::Ptr> helpers;
