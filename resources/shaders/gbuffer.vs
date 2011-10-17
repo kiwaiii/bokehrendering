@@ -8,6 +8,7 @@
 #define ATTR_TEXCOORD	2
 #define ATTR_TANGENT	3
 #define ATTR_COLOR		4
+#define ATTR_BITANGENT	5
 
 uniform mat4 Transform;
 uniform mat4 Model;
@@ -15,21 +16,23 @@ uniform mat4 Model;
 layout(location = ATTR_POSITION) 	in  vec3 Position;
 layout(location = ATTR_NORMAL) 		in  vec3 Normal;
 layout(location = ATTR_TEXCOORD) 	in  vec2 TexCoord;
-layout(location = ATTR_TANGENT) 	in  vec3 Tangent;
+layout(location = ATTR_TANGENT) 	in  vec4 Tangent;
 
-out vec3 gPosition;
-out vec3 gNormal;
-out vec3 gTangent;
-out vec2 gTexCoord;
+out vec3  vPosition;
+out vec3  vNormal;
+out vec3  vTangent;
+out vec2  vTexCoord;
+out float vTBNsign;
 
 void main()
 {
 	// Do not support non uniform scale
 	mat3 model3x3= mat3(Model);
 	gl_Position  = Transform * Model * vec4(Position,1.f);
-	gPosition	 = model3x3 * Position;
-	gNormal	 	 = model3x3 * Normal;
-	gTangent 	 = model3x3 * Tangent;
-	gTexCoord 	 = TexCoord;
+	vPosition	 = (Model * vec4(Position,1.f)).xyz;
+	vNormal	 	 = model3x3 * Normal;
+	vTangent 	 = model3x3 * Tangent.xyz;
+	vTBNsign	 = Tangent.w;
+	vTexCoord 	 = TexCoord;
 }
 

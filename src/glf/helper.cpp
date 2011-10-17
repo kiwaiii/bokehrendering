@@ -315,4 +315,64 @@ namespace glf
 		helpers.push_back(ref);
 		return ref;
 	}
+	//--------------------------------------------------------------------------
+	Helper::Ptr HelperManager::CreateTangentSpace(	VertexBuffer3F& _pvbo,
+													VertexBuffer3F& _nvbo,
+													VertexBuffer4F& _tvbo,
+													IndexBuffer& _ibo,
+													int _startIndex,
+													int _countIndex,
+													float _vectorSize)
+	{
+		Helper::Ptr ref = Helper::Create();
+		ref->vbuffer.Allocate(6*_countIndex,GL_STATIC_DRAW);
+		ref->cbuffer.Allocate(6*_countIndex,GL_STATIC_DRAW);
+		ref->type  = GL_LINES;
+		ref->transform = glm::mat4(1.f);
+
+		glm::vec3* hvertices = ref->vbuffer.Lock();
+		glm::vec3* hcolors   = ref->cbuffer.Lock();
+
+		glm::vec3* vertices = _pvbo.Lock();
+		glm::vec4* tangents = _tvbo.Lock();
+		glm::vec3* normals  = _nvbo.Lock();
+		unsigned int* indices= _ibo.Lock();
+		int current = 0;
+		for(int i=_startIndex;i<_startIndex+_countIndex;++i)
+		{
+			int index = indices[i];
+
+			// Tangent
+			hvertices[current+0] = vertices[index];
+			hvertices[current+1] = vertices[index] + glm::vec3(tangents[index]) * _vectorSize;
+
+			// Bitangent
+			glm::vec3 bitangent = glm::cross(glm::vec3(tangents[index]),normals[index]) * glm::sign(tangents[index].w);
+			hvertices[current+2] = vertices[index];
+			hvertices[current+3] = vertices[index] + bitangent * _vectorSize;
+
+			// Normal
+			hvertices[current+4] = vertices[index];
+			hvertices[current+5] = vertices[index] + normals[index] * _vectorSize;
+
+			hcolors[current+0] = glm::vec3(1.f,0.f,0.f);
+			hcolors[current+1] = glm::vec3(1.f,0.f,0.f);
+			hcolors[current+2] = glm::vec3(0.f,1.f,0.f);
+			hcolors[current+3] = glm::vec3(0.f,1.f,0.f);
+			hcolors[current+4] = glm::vec3(0.f,0.f,1.f);
+			hcolors[current+5] = glm::vec3(0.f,0.f,1.f);
+
+			current += 6;
+		}
+		_ibo.Unlock();
+		_nvbo.Unlock();
+		_tvbo.Unlock();
+		_pvbo.Unlock();
+
+		ref->cbuffer.Unlock();
+		ref->vbuffer.Unlock();
+
+		helpers.push_back(ref);
+		return ref;
+	}
 }

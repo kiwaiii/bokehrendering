@@ -28,10 +28,11 @@ namespace glf
 		diffuseTexUnit	= program["DiffuseTex"].unit;
 		normalTexUnit	= program["NormalTex"].unit;
 		roughnessVar	= program["Roughness"].location;
+		specularityVar	= program["Specularity"].location;
 
 		// Initialize G-Buffer textures
 		positionTex.Allocate(GL_RGBA32F,_width,_height);
-		normalTex.Allocate(GL_RGB32F,_width,_height);
+		normalTex.Allocate(GL_RGBA32F,_width,_height);
 		diffuseTex.Allocate(GL_RGBA32F,_width,_height);
 		depthTex.Allocate(GL_DEPTH32F_STENCIL8,_width,_height);
 
@@ -94,6 +95,7 @@ namespace glf
 		{
 			glProgramUniformMatrix4fv(program.id, 	modelVar,  1, 	GL_FALSE, &_scene.transformations[i][0][0]);
 			glProgramUniform1f(program.id,			roughnessVar,	_scene.regularMeshes[i].roughness);
+			glProgramUniform1f(program.id,			specularityVar,	_scene.regularMeshes[i].specularity);
 
 			_scene.regularMeshes[i].diffuseTex->Bind(diffuseTexUnit);
 			_scene.regularMeshes[i].normalTex->Bind(normalTexUnit);

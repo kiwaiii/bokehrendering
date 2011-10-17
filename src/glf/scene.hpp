@@ -45,6 +45,7 @@ namespace glf
 		Texture2D*						diffuseTex;
 		Texture2D*						normalTex;
 		float 							roughness;
+		float 							specularity;
 		IndexBuffer*					indices;
 		unsigned int 					startIndices;
 		unsigned int 					countIndices;

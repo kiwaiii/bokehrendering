@@ -249,6 +249,7 @@ bool begin()
 						glm::rotate(90.f,1.f,0.f,0.f),
 						app->resources,
 						app->scene,
+						app->helpers,
 						true);
 
 	float farPlane = 2.f * glm::length(app->scene.wBound.pMax - app->scene.wBound.pMin);

@@ -17,6 +17,7 @@ namespace glf
 		extern GLint TexCoord;
 		extern GLint Tangent;
 		extern GLint Color;
+		extern GLint Bitangent;
 	};
 	//--------------------------------------------------------------------------
 	template<GLenum B, typename T>

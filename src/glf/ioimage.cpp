@@ -6820,11 +6820,11 @@ namespace glf
 
 			if(_srgb)
 			{
-				_texture.Allocate(GL_RGBA8,w,h,true);
+				_texture.Allocate(GL_SRGB8_ALPHA8,w,h,true);
 			}
 			else
 			{
-				_texture.Allocate(GL_SRGB8_ALPHA8,w,h,true);
+				_texture.Allocate(GL_RGBA8,w,h,true);
 			}
 			_texture.Fill(GL_RGBA,GL_UNSIGNED_BYTE,rout);
 

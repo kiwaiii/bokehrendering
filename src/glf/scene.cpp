@@ -71,6 +71,7 @@ namespace glf
 	diffuseTex(NULL),
 	normalTex(NULL),
 	roughness(1),
+	specularity(0),
 	indices(NULL),
 	startIndices(0),
 	countIndices(0),
