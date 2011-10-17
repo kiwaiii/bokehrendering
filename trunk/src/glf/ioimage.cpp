@@ -6801,8 +6801,13 @@ namespace glf
 			unsigned w; 
 			unsigned h;
 			unsigned error = LodePNG_decode32_file(&out, &w, &h, _filename.c_str());
-			unsigned char* rout = new unsigned char[4*w*h];
+			if(error!=0)
+			{
+				glf::Error("Texture does not exist : %s",_filename.c_str());
+				assert(false);
+			}
 
+			unsigned char* rout = new unsigned char[4*w*h];
 			// Vertical flip
 			for(int y=0;y<h;++y)
 			for(int x=0;x<w;++x)

@@ -6,15 +6,18 @@
 //-----------------------------------------------------------------------------
 #include <glf/wrapper.hpp>
 #include <glf/texture.hpp>
+#include <glf/pass.hpp>
 
 namespace glf
 {
 	//--------------------------------------------------------------------------
 	class DOFProcessor
 	{
+	private:
+ 					DOFProcessor(		const DOFProcessor&);
+ 		DOFProcessor operator=(			const DOFProcessor&);
 	public:
-		typedef		glf::SmartPointer<DOFProcessor> Ptr;
-		static Ptr	Create(				int _w, 
+					DOFProcessor(		int _w, 
 										int _h);
 		void 		Draw(				const Texture2D& _inputTex, 
 										const Texture2D& _positionTex, 
@@ -28,12 +31,8 @@ namespace glf
 										float 			_intensityThreshold,
 										float 			_cocThreshold,
 										float			_attenuation,
-										float			_areaFactor);
-	private:
-					DOFProcessor(		int _w, 
-										int _h);
- 					DOFProcessor(		const DOFProcessor&);
- 		DOFProcessor operator=(			const DOFProcessor&);
+										float			_areaFactor,
+										const RenderTarget& _target);
 	public:
 		//----------------------------------------------------------------------
 		struct CoCPass
@@ -42,20 +41,20 @@ namespace glf
 			GLint 						positionTexUnit;
 			GLint 						rotationTexUnit;
 			GLint 						inputTexUnit;
-			GLint 						sampleTexUnit;
-			GLint 						colorTexUnit;
-			GLint 						countTexUnit;
+			GLint 						bokehPosTexUnit;
+			GLint 						bokehColorTexUnit;
+			GLint 						bokehCountTexUnit;
 
-			GLint						nearStartVar;
-			GLint						nearEndVar;
-			GLint						farStartVar;
-			GLint						farEndVar;
-			GLint						maxRadiusVar;
-			GLint						viewMatVar;
-			GLint						nSamplesVar;
-			GLint						intThresholdVar;
-			GLint						cocThresholdVar;
-			GLint						areaFactorVar;
+			GLint						nearStartVar;		// Near start
+			GLint						nearEndVar;			// Near end
+			GLint						farStartVar;		// Far start
+			GLint						farEndVar;			// Far end
+			GLint						maxRadiusVar;		// Max CoC radius
+			GLint						viewMatVar;			// View matrix
+			GLint						nSamplesVar;		// #samples for computing blur
+			GLint						intThresholdVar;	// ?
+			GLint						cocThresholdVar;	// CoC threshold ?
+			GLint						areaFactorVar;		// Weight of the bokeh integral
 
 			Program 					program;
 			Texture2D					rotationTex;
@@ -64,26 +63,24 @@ namespace glf
 		struct BokehPass
 		{	
 										BokehPass():program("BokehPass"){}
-			GLint 						sampleTexUnit;
-			GLint 						bokehTexUnit;
-			GLint 						colorTexUnit;
+			GLint 						bokehPosTexUnit;
+			GLint 						bokehShapeTexUnit;
+			GLint 						bokehColorTexUnit;
 			GLint						attenuationVar;
 
 			Program 					program;
-			Texture2D					bokehTex;
+			Texture2D					bokehShapeTex;
 		};
+	private:
 		//----------------------------------------------------------------------
 		int								maxBokehCount;
-		GLuint 							framebuffer;
-		Texture2D						composeTex;
-		Texture2D						sampleTex;
-		Texture2D						colorTex;
-		GLuint							countTexID;
+		Texture2D						bokehPosTex;		// Store bokeh position
+		Texture2D						bokehColorTex;		// Store bokeh color
+		GLuint							bokehCountTexID;
 
-		GLint 							vbufferVar;
-		VertexBuffer<glm::vec3>::Buffer quadbuffer;
-		VertexBuffer<glm::vec3>::Buffer pointbuffer;
-		IndirectArrayBuffer::Buffer		indirectBuffer;
+		VertexBuffer3F					pointVBO;
+		VertexArray						pointVAO;
+		IndirectArrayBuffer				pointIndirectBuffer;
 
 		CoCPass 						cocPass;
 		BokehPass 						bokehPass;

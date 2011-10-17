@@ -15,6 +15,7 @@
 #include <glf/camera.hpp>
 #include <glf/wrapper.hpp>
 #include <glf/helper.hpp>
+#include <glf/dof.hpp>
 #include <glf/postprocessor.hpp>
 #include <glf/utils.hpp>
 #include <fstream>
@@ -37,7 +38,7 @@ namespace ctx
 	glf::Camera::Ptr						camera;
 	glf::Window 							window(glm::ivec2(1280, 720));
 	glui::GlutContext* 						ui;
-	bool									drawHelpers = true;
+	bool									drawHelpers = false;
 }
 //-----------------------------------------------------------------------------
 namespace
@@ -125,6 +126,7 @@ namespace
 		glf::SSAOPass						ssaoPass;
 		glf::BilateralPass					bilateralPass;
 
+		glf::DOFProcessor					dofProcessor;
 		glf::PostProcessor					postProcessor;
 
 		CSMParams 							csmParams;
@@ -158,8 +160,8 @@ namespace
 	shRenderer(_w,_h),
 	ssaoPass(_w,_h),
 	bilateralPass(_w,_h),
+	dofProcessor(_w,_h),
 	postProcessor(_w,_h)
-//	dofProcessPass	= glf::DOFProcessor::Create(ctx::window.Size.x,ctx::window.Size.y);
 	{
 		ssaoParams.beta				= 10e-04;
 		ssaoParams.epsilon			= 0.0722;
@@ -211,6 +213,9 @@ namespace
 //------------------------------------------------------------------------------
 void UpdateLight()
 {
+	glDisable(GL_STENCIL_TEST);
+	glDisable(GL_BLEND);
+
 	app->skyBuilder.SetSunFactor(app->skyParams.sunFactor);
 	app->skyBuilder.SetPosition(app->skyParams.sunTheta,app->skyParams.sunPhi);
 	app->skyBuilder.SetTurbidity(app->skyParams.turbidity);
@@ -531,180 +536,86 @@ void display()
 	switch(app->activeBuffer)
 	{
 		case bufferType::GB_COMPOSITION : 
-
-			glBindFramebuffer(GL_FRAMEBUFFER,app->renderTarget1.framebuffer);
-			glClear(GL_COLOR_BUFFER_BIT);
-
-			glDisable(GL_STENCIL_TEST);
-			glCullFace(GL_FRONT);
-			app->cubeMap.Draw(	projection,
-								view,
-								app->skyBuilder.skyTexture);
-			glCullFace(GL_BACK);
-			glEnable(GL_STENCIL_TEST);
-
-			app->shRenderer.Draw(	app->shLight,
-									app->gbuffer,
-									app->renderTarget1);
-
-
-			glBindFramebuffer(GL_FRAMEBUFFER,app->renderTarget2.framebuffer);
-			glClear(GL_COLOR_BUFFER_BIT);
-
-			app->ssaoPass.Draw(		app->gbuffer,
-									view,
-									near,
-									app->ssaoParams.beta,
-									app->ssaoParams.epsilon,
-									app->ssaoParams.kappa,
-									app->ssaoParams.sigma,
-									app->ssaoParams.radius,
-									app->ssaoParams.nSamples,
-									app->renderTarget2);
-
-			glBindFramebuffer(GL_FRAMEBUFFER,app->renderTarget1.framebuffer);
-
-			glEnable(GL_BLEND);
-			glBlendEquation(GL_FUNC_ADD);
-			glBlendFunc( GL_ZERO, GL_SRC_ALPHA); // Do a multiplication between SSAO and sky lighting
-
-			app->bilateralPass.Draw(app->renderTarget2.texture,
-									app->gbuffer.positionTex,
-									view,
-									app->ssaoParams.sigmaH,
-									app->ssaoParams.sigmaV,
-									app->ssaoParams.nTaps,
-									app->renderTarget1);
-
-			glBlendFunc( GL_ONE, GL_ONE);
-
-			app->csmRenderer.Draw(	app->csmLight,
-									app->gbuffer,
-									viewPos,
-									app->csmParams.blendFactor,
-									app->csmParams.bias,
-									app->renderTarget1);
-
-			glBindFramebuffer(GL_FRAMEBUFFER,0);
-
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			app->postProcessor.Apply(app->renderTarget1.texture,
-									 app->toneParams.toneExposure);
-
-
-
-
-
-
-
-
-
-//			glDisable(GL_BLEND);
-
-/*				glDepthMask(false);
-				glDisable(GL_DEPTH_TEST);
-				glEnable(GL_STENCIL_TEST);
-				glDisable(GL_BLEND);
-
-				glBindBuffer(GL_ARRAY_BUFFER, accBuffer->vbuffer.id);
-
-				glBindFramebuffer(GL_FRAMEBUFFER,accBuffer->framebuffer);
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-				// Add sky lighting
-				glEnable(GL_STENCIL_TEST);
-				glBindBuffer(GL_ARRAY_BUFFER, accBuffer->vbuffer.id);
-				shPass->Draw(shLight,*gbuffer);
-
-				// Add SSAO
-				glBindFramebuffer(GL_FRAMEBUFFER,accBufferTmp->framebuffer);
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				ssaoPass->Draw(		   *gbuffer,
-										view,
-										near,
-										ssaoParams.beta,
-										ssaoParams.epsilon,
-										ssaoParams.kappa,
-										ssaoParams.sigma,
-										ssaoParams.radius,
-										ssaoParams.nSamples);
-				glEnable(GL_BLEND);
-				glBlendFunc( GL_ZERO, GL_SRC_ALPHA);
-				glBlendEquation(GL_FUNC_ADD);
-				glBindFramebuffer(GL_FRAMEBUFFER,accBuffer->framebuffer);
-				bilateralPass->Draw(	accBufferTmp->texture,
-										gbuffer->positionTex,
-										view,
-										ssaoParams.sigmaH,
-										ssaoParams.sigmaV,
-										ssaoParams.nTaps);
-
-				glBlendFunc( GL_ONE, GL_ONE);
-				glBlendEquation(GL_FUNC_ADD);
-				csmPass->Draw(*csmLight,*gbuffer,
-										csmParams.bias,
-										csmParams.aperture,
-										csmParams.blendFactor,
-										csmParams.nSamples);
-
-				glDisable(GL_BLEND);
-				glEnable(GL_STENCIL_TEST);
-				glStencilFunc(GL_NOTEQUAL, 1, 1);
-				glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-				cubeMap->Draw(projection,view,sky->skyTexture);
-
+				glBindFramebuffer(GL_FRAMEBUFFER,app->renderTarget1.framebuffer);
+				glClear(GL_COLOR_BUFFER_BIT);
 
 				glDisable(GL_STENCIL_TEST);
-				glBindBuffer(GL_ARRAY_BUFFER, 0);
+				glCullFace(GL_FRONT);
+				app->cubeMap.Draw(	projection,
+									view,
+									app->skyBuilder.skyTexture);
+				glCullFace(GL_BACK);
+				glEnable(GL_STENCIL_TEST);
+
+				app->shRenderer.Draw(	app->shLight,
+										app->gbuffer,
+										app->renderTarget1);
+
+
+				glBindFramebuffer(GL_FRAMEBUFFER,app->renderTarget2.framebuffer);
+				glClear(GL_COLOR_BUFFER_BIT);
+
+				app->ssaoPass.Draw(		app->gbuffer,
+										view,
+										near,
+										app->ssaoParams.beta,
+										app->ssaoParams.epsilon,
+										app->ssaoParams.kappa,
+										app->ssaoParams.sigma,
+										app->ssaoParams.radius,
+										app->ssaoParams.nSamples,
+										app->renderTarget2);
+
+				glBindFramebuffer(GL_FRAMEBUFFER,app->renderTarget1.framebuffer);
+
+				glEnable(GL_BLEND);
+				glBlendEquation(GL_FUNC_ADD);
+				glBlendFunc( GL_ZERO, GL_SRC_ALPHA); // Do a multiplication between SSAO and sky lighting
+
+				app->bilateralPass.Draw(app->renderTarget2.texture,
+										app->gbuffer.positionTex,
+										view,
+										app->ssaoParams.sigmaH,
+										app->ssaoParams.sigmaV,
+										app->ssaoParams.nTaps,
+										app->renderTarget1);
+
+				glBlendFunc( GL_ONE, GL_ONE);
+
+				app->csmRenderer.Draw(	app->csmLight,
+										app->gbuffer,
+										viewPos,
+										app->csmParams.blendFactor,
+										app->csmParams.bias,
+										app->renderTarget1);
+
+				glBindFramebuffer(GL_FRAMEBUFFER,app->renderTarget2.framebuffer);
+				glClear(GL_COLOR_BUFFER_BIT);
+
+				glDisable(GL_STENCIL_TEST);
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+				app->dofProcessor.Draw(	app->renderTarget1.texture,
+										app->gbuffer.positionTex,
+										view,
+										app->dofParams.nearStart,
+										app->dofParams.nearEnd,
+										app->dofParams.farStart,
+										app->dofParams.farEnd,
+										app->dofParams.maxRadius,
+										app->dofParams.nSamples,
+										app->dofParams.intThreshold,
+										app->dofParams.cocThreshold,
+										app->dofParams.attenuation,
+										app->dofParams.areaFactor,
+										app->renderTarget2);
+
 				glBindFramebuffer(GL_FRAMEBUFFER,0);
 
-				dofProcessPass->Draw(	accBuffer->texture,
-										gbuffer->positionTex,
-										view,
-										dofParams.nearStart,
-										dofParams.nearEnd,
-										dofParams.farStart,
-										dofParams.farEnd,
-										dofParams.maxRadius,
-										dofParams.nSamples,
-										dofParams.intThreshold,
-										dofParams.cocThreshold,
-										dofParams.attenuation,
-										dofParams.areaFactor);
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				app->postProcessor.Apply(app->renderTarget2.texture,
+										 app->toneParams.toneExposure);
 
-
-//				postProcessPass->Apply(	accBuffer->texture,
-//				postProcessPass->Apply(	accBufferTmp->texture,
-				postProcessPass->Apply(	dofProcessPass->composeTex,
-										toneParams.toneExposure,
-										toneParams.bloomExposure,
-										toneParams.bloomMagnitude,
-										toneParams.bloomTaps,
-										toneParams.bloomSigma);
-//		if(doSave)
-//		{
-//			gli::Image image;
-//			image.Format(gli::PixelFormat::RGBA,gli::PixelFormat::FLOAT);
-//			image.Resize(accBufferTmp->texture.size.x,accBufferTmp->texture.size.y);
-//			glBindTexture(GL_TEXTURE_2D,accBufferTmp->texture.id);
-//			glGetTexImage(GL_TEXTURE_2D,0,GL_RGBA,GL_FLOAT,image.Pixels<float>());
-//			image.VerticalFlip();
-//			gli::io::Save("accBufferTmp.exr",image);
-//			doSave = false;
-//		}
-
-			glDisable(GL_STENCIL_TEST);
-			glDisable(GL_BLEND);
-
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//			surface->Draw(accBufferTmp->texture);
-//			surface->Draw(accBuffer->texture);
-//			surface->Draw(postProcessPass->toneMapping.toneMapTex);
-//			surface->Draw(postProcessPass->bloomThreshold.thresholdTex,3);
-//			surface->Draw(postProcessPass->bloomBlur.blurHTex,3);
-			surface->Draw(postProcessPass->bloomCompose.composeTex);
-//			surface->Draw(dofProcessPass->composeTex);
-*/
 				break;
 		case bufferType::GB_POSITION : 
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
