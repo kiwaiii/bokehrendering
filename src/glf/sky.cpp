@@ -65,7 +65,7 @@ namespace glf
 		program.Compile(LoadFile("../resources/shaders/skybuilder.vs"),
 						LoadFile("../resources/shaders/skybuilder.gs"),
 						LoadFile("../resources/shaders/skybuilder.fs"));
-glf::Info(program.ToString());
+
 		drawSunVar	 		= program["DrawSun"].location;
 		sunFactorVar 		= program["SunFactor"].location;
 		turbidityVar 		= program["Turbidity"].location;

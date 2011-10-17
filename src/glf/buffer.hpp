@@ -145,6 +145,8 @@ namespace glf
 		void Draw(		GLenum				_primitiveType, 
 						std::size_t			_count,
 						std::size_t			_first=0) const;
+		void Draw(		GLenum				_primitiveType, 
+						const IndirectArrayBuffer& _indirectBuffer) const;
 		//----------------------------------------------------------------------
 		GLuint 			id;
 	};

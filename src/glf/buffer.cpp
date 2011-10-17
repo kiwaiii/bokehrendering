@@ -1,6 +1,6 @@
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Includes
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 #include <glf/buffer.hpp>
 
 namespace glf
@@ -15,17 +15,17 @@ namespace glf
 		GLint Color	 	= 4;
 		GLint Bitangent	= 5;
 	};
-	//-------------------------------------------------------------------------
+	//--------------------------------------------------------------------------
 	VertexArray::VertexArray()
 	{
 		glGenVertexArrays(1, &id);
 	}
-	//-------------------------------------------------------------------------
+	//--------------------------------------------------------------------------
 	VertexArray::~VertexArray()
 	{
 		glDeleteVertexArrays(1, &id);
 	}
-	//-------------------------------------------------------------------------
+	//--------------------------------------------------------------------------
 	void VertexArray::Draw( 	GLenum _primitiveType,
 								const IndexBuffer& _buffer) const
 	{
@@ -34,7 +34,7 @@ namespace glf
 		glDrawElements(_primitiveType, _buffer.count, GL_UNSIGNED_INT, GLF_BUFFER_OFFSET(0) );
 		glBindVertexArray(0);
 	}
-	//-------------------------------------------------------------------------
+	//--------------------------------------------------------------------------
 	void VertexArray::Draw( 	GLenum _primitiveType,
 								const IndexBuffer& _buffer,
 								std::size_t _count,
@@ -45,7 +45,7 @@ namespace glf
 		glDrawElements(_primitiveType, _count, GL_UNSIGNED_INT, GLF_BUFFER_OFFSET(_first*sizeof(unsigned int)) );
 		glBindVertexArray(0);
 	}
-	//-------------------------------------------------------------------------
+	//--------------------------------------------------------------------------
 	void VertexArray::Draw(		GLenum _primitiveType, 
 								std::size_t _count,
 								std::size_t _first) const
@@ -54,5 +54,16 @@ namespace glf
 		glDrawArrays(_primitiveType, _first, _count);
 		glBindVertexArray(0);
 	}
+	//--------------------------------------------------------------------------
+	void VertexArray::Draw(		GLenum _primitiveType, 
+								const IndirectArrayBuffer& _indirectBuffer) const
+	{
+		glBindVertexArray(id);
+			glBindBuffer(GL_DRAW_INDIRECT_BUFFER,_indirectBuffer.id);
+			glDrawArraysIndirect(_primitiveType,NULL);
+			glBindBuffer(GL_DRAW_INDIRECT_BUFFER,0);
+		glBindVertexArray(0);
+	}
+	//--------------------------------------------------------------------------
 }
 

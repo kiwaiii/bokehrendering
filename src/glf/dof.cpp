@@ -2,13 +2,9 @@
 // Include
 //-----------------------------------------------------------------------------
 #include <glf/dof.hpp>
-#include <glm/gtx/transform.hpp>
 #include <glm/glm.hpp>
-#include <glf/window.hpp>
 #include <glf/rng.hpp>
-
-#include <gli/image.hpp>
-#include <gli/io.hpp>
+#include <glf/ioimage.hpp>
 
 //-----------------------------------------------------------------------------
 // Constants
@@ -18,63 +14,42 @@ namespace glf
 {
 	//-------------------------------------------------------------------------
 	DOFProcessor::DOFProcessor(int _w, int _h):
-	maxBokehCount(_w*_h),
-	vbufferVar(0)
+	maxBokehCount(_w*_h)
 	{
-		glm::mat4 proj 		= glm::ortho(-0.5f,0.5f,-0.5f,0.5f,0.1f,100.f);
-		glm::mat4 view 		= glm::lookAt(glm::vec3(0.5f,0.5f,5.0f),glm::vec3(0.5f,0.5f,-1.0f),glm::vec3(0.0f,1.0f,0.0f));
-		glm::mat4 transform	= proj * view;
+		glm::mat4 transform	= ScreenQuadTransform();
 
-		glm::vec3* vertices;
-		quadbuffer.Resize(6);
-		vertices = quadbuffer.Lock();
+		// Create point VBO and VAO
+		pointVBO.Allocate(1,GL_STATIC_DRAW);
+		glm::vec3* vertices = pointVBO.Lock();
 		vertices[0] = glm::vec3(0,0,0);
-		vertices[1] = glm::vec3(1,0,0);
-		vertices[2] = glm::vec3(1,1,0);
-		vertices[3] = glm::vec3(0,0,0);
-		vertices[4] = glm::vec3(1,1,0);
-		vertices[5] = glm::vec3(0,1,0);
-		quadbuffer.Unlock();
-
-		pointbuffer.Resize(1);
-		vertices = pointbuffer.Lock();
-		vertices[0] = glm::vec3(0,0,0);
-		pointbuffer.Unlock();
+		pointVBO.Unlock();
+		pointVAO.Add(pointVBO,semantic::Position,3,GL_FLOAT);
 
 		// Create texture for counting bokeh
-		sampleTex.Allocate(GL_RGBA32F,_w,_h);
-		sampleTex.SetFiltering(GL_NEAREST,GL_NEAREST);
-		colorTex.Allocate(GL_RGBA32F,_w,_h);
-		colorTex.SetFiltering(GL_NEAREST,GL_NEAREST);
+		// Texture size is set to the resolution in order to avoid overflow
+		bokehPosTex.Allocate(GL_RGBA32F,_w,_h);
+		bokehPosTex.SetFiltering(GL_NEAREST,GL_NEAREST);
+		bokehColorTex.Allocate(GL_RGBA32F,_w,_h);
+		bokehColorTex.SetFiltering(GL_NEAREST,GL_NEAREST);
 
 		// Setup the indirect buffer
-		indirectBuffer.Resize(1);
-		DrawArraysIndirectCommand* indirectCmd = indirectBuffer.Lock();
+		pointIndirectBuffer.Allocate(1);
+		DrawArraysIndirectCommand* indirectCmd = pointIndirectBuffer.Lock();
 		indirectCmd[0].count 				= 1;
 		indirectCmd[0].primCount 			= 6;
 		indirectCmd[0].first 				= 0;
 		indirectCmd[0].reservedMustBeZero 	= 0;
-		indirectBuffer.Unlock();
+		pointIndirectBuffer.Unlock();
 
 		// Create the texture proxy
-		glGenTextures(1, &countTexID);
-		glBindTexture(GL_TEXTURE_BUFFER, countTexID);
-		glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, indirectBuffer.id);
-
-		// Create framebuffer for composition
-		composeTex.Allocate(GL_RGBA32F,_w,_h);
-		glGenFramebuffers(1, &framebuffer);
-		glBindFramebuffer(GL_FRAMEBUFFER,framebuffer);
-		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, composeTex.target, composeTex.id, 0);
-		glDrawBuffer(GL_COLOR_ATTACHMENT0);
-		glBindFramebuffer(GL_FRAMEBUFFER,0);
-		glf::CheckFramebuffer(framebuffer);
+		glGenTextures(1, &bokehCountTexID);
+		glBindTexture(GL_TEXTURE_BUFFER, bokehCountTexID);
+		glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, pointIndirectBuffer.id);
 
 		// CoC Pass
 		cocPass.program.Compile(LoadFile("../resources/shaders/dof.vs"),
 								LoadFile("../resources/shaders/dof.fs"));
 
-		assert( vbufferVar	== cocPass.program["Position"].location);
 		cocPass.nearStartVar		= cocPass.program["NearStart"].location;
 		cocPass.nearEndVar			= cocPass.program["NearEnd"].location;
 		cocPass.farStartVar			= cocPass.program["FarStart"].location;
@@ -89,17 +64,53 @@ namespace glf
 		cocPass.positionTexUnit		= cocPass.program["PositionTex"].unit;
 		cocPass.rotationTexUnit		= cocPass.program["RotationTex"].unit;
 		cocPass.inputTexUnit		= cocPass.program["InputTex"].unit;
-		cocPass.sampleTexUnit		= cocPass.program["SampleTex"].unit;
-		cocPass.colorTexUnit		= cocPass.program["ColorTex"].unit;
-		cocPass.countTexUnit		= cocPass.program["CountTex"].unit;
+		cocPass.bokehPosTexUnit		= cocPass.program["BokehPosTex"].unit;
+		cocPass.bokehColorTexUnit	= cocPass.program["BokehColorTex"].unit;
+		cocPass.bokehCountTexUnit	= cocPass.program["BokehCountTex"].unit;
 
 		glProgramUniformMatrix4fv(cocPass.program.id, cocPass.program["Transformation"].location,	1, GL_FALSE, &transform[0][0]);
 		glProgramUniform1i(cocPass.program.id, 		  cocPass.program["PositionTex"].location,		cocPass.positionTexUnit);
 		glProgramUniform1i(cocPass.program.id, 		  cocPass.program["RotationTex"].location,		cocPass.rotationTexUnit);
 		glProgramUniform1i(cocPass.program.id, 		  cocPass.program["InputTex"].location,			cocPass.inputTexUnit);
-		glProgramUniform1i(cocPass.program.id, 		  cocPass.program["SampleTex"].location,		cocPass.sampleTexUnit);
-		glProgramUniform1i(cocPass.program.id, 		  cocPass.program["ColorTex"].location,			cocPass.colorTexUnit);
-		glProgramUniform1i(cocPass.program.id, 		  cocPass.program["CountTex"].location,			cocPass.countTexUnit);
+		glProgramUniform1i(cocPass.program.id, 		  cocPass.program["BokehPosTex"].location,		cocPass.bokehPosTexUnit);
+		glProgramUniform1i(cocPass.program.id, 		  cocPass.program["BokehColorTex"].location,	cocPass.bokehColorTexUnit);
+		glProgramUniform1i(cocPass.program.id, 		  cocPass.program["BokehCountTex"].location,	cocPass.bokehCountTexUnit);
+
+		// Sampling point
+		glm::vec2 Halton[32];
+		Halton[0]	= glm::vec2(-0.353553, 0.612372);
+		Halton[1]	= glm::vec2(-0.25, -0.433013);
+		Halton[2]	= glm::vec2(0.663414, 0.55667);
+		Halton[3]	= glm::vec2(-0.332232, 0.120922);
+		Halton[4]	= glm::vec2(0.137281, -0.778559);
+		Halton[5]	= glm::vec2(0.106337, 0.603069);
+		Halton[6]	= glm::vec2(-0.879002, -0.319931);
+		Halton[7]	= glm::vec2(0.191511, -0.160697);
+		Halton[8]	= glm::vec2(0.729784, 0.172962);
+		Halton[9]	= glm::vec2(-0.383621, 0.406614);
+		Halton[10]	= glm::vec2(-0.258521, -0.86352);
+		Halton[11]	= glm::vec2(0.258577, 0.34733);
+		Halton[12]	= glm::vec2(-0.82355, 0.0962588);
+		Halton[13]	= glm::vec2(0.261982, -0.607343);
+		Halton[14]	= glm::vec2(-0.0562987, 0.966608);
+		Halton[15]	= glm::vec2(-0.147695, -0.0971404);
+		Halton[16]	= glm::vec2(0.651341, -0.327115);
+		Halton[17]	= glm::vec2(0.47392, 0.238012);
+		Halton[18]	= glm::vec2(-0.738474, 0.485702);
+		Halton[19]	= glm::vec2(-0.0229837, -0.394616);
+		Halton[20]	= glm::vec2(0.320861, 0.74384);
+		Halton[21]	= glm::vec2(-0.633068, -0.0739953);
+		Halton[22]	= glm::vec2(0.568478, -0.763598);
+		Halton[23]	= glm::vec2(-0.0878153, 0.293323);
+		Halton[24]	= glm::vec2(-0.528785, -0.560479);
+		Halton[25]	= glm::vec2(0.570498, -0.13521);
+		Halton[26]	= glm::vec2(0.915797, 0.0711813);
+		Halton[27]	= glm::vec2(-0.264538, 0.385706);
+		Halton[28]	= glm::vec2(-0.365725, -0.76485);
+		Halton[29]	= glm::vec2(0.488794, 0.479406);
+		Halton[30]	= glm::vec2(-0.948199, 0.263949);
+		Halton[31]	= glm::vec2(0.0311802, -0.121049);
+		glProgramUniform2fv(cocPass.program.id, cocPass.program["Halton"].location, 32, &Halton[0][0]);
 
 		// Create and fill rotation texture
 		RNG rng;
@@ -114,50 +125,28 @@ namespace glf
 		cocPass.rotationTex.Fill(GL_RG,GL_FLOAT,(unsigned char*)rotations);
 		delete[] rotations;
 
-
 		// Bokeh Pass
 		bokehPass.program.Compile(	LoadFile("../resources/shaders/bokeh.vs"),
 									LoadFile("../resources/shaders/bokeh.gs"),
 									LoadFile("../resources/shaders/bokeh.fs"));
 
-		assert( vbufferVar	== bokehPass.program["Position"].location);
-		bokehPass.sampleTexUnit	= bokehPass.program["SampleTex"].unit;
-		bokehPass.bokehTexUnit	= bokehPass.program["BokehTex"].unit;
-		bokehPass.colorTexUnit	= bokehPass.program["ColorTex"].unit;
-		bokehPass.attenuationVar= bokehPass.program["Attenuation"].location;
+		bokehPass.bokehPosTexUnit	= bokehPass.program["BokehPosTex"].unit;
+		bokehPass.bokehColorTexUnit	= bokehPass.program["BokehColorTex"].unit;
+		bokehPass.bokehShapeTexUnit	= bokehPass.program["BokehShapeTex"].unit;
+		bokehPass.attenuationVar	= bokehPass.program["Attenuation"].location;
 
 		glProgramUniformMatrix4fv(bokehPass.program.id,	bokehPass.program["Transformation"].location,	1, GL_FALSE, &transform[0][0]);
 		glProgramUniform2f(bokehPass.program.id, 		bokehPass.program["PixelScale"].location,		1.f/_w, 1.f/_h);
-		glProgramUniform1i(bokehPass.program.id, 		bokehPass.program["SampleTex"].location,		bokehPass.sampleTexUnit);
-		glProgramUniform1i(bokehPass.program.id, 		bokehPass.program["BokehTex"].location,			bokehPass.bokehTexUnit);
-		glProgramUniform1i(bokehPass.program.id, 		bokehPass.program["ColorTex"].location,			bokehPass.colorTexUnit);
+		glProgramUniform1i(bokehPass.program.id, 		bokehPass.program["BokehPosTex"].location,		bokehPass.bokehPosTexUnit);
+		glProgramUniform1i(bokehPass.program.id, 		bokehPass.program["BokehShapeTex"].location,	bokehPass.bokehShapeTexUnit);
+		glProgramUniform1i(bokehPass.program.id, 		bokehPass.program["BokehColorTex"].location,	bokehPass.bokehColorTexUnit);
 
-		gli::Image img;
-		gli::io::Load("../resources/textures/HexaBokeh2.png",img);
-//		gli::io::Load("../resources/textures/CircleBokeh.png",img);
-		assert(img.Type()==gli::PixelFormat::NCHAR);
-		switch(img.Format())
-		{
-			case gli::PixelFormat::R :
-				bokehPass.bokehTex.Allocate(GL_R8,img.Width(),img.Height());
-				bokehPass.bokehTex.Fill(GL_RED,GL_UNSIGNED_BYTE,img.Raw());
-				break;
-			case gli::PixelFormat::RG :
-				bokehPass.bokehTex.Allocate(GL_RG8,img.Width(),img.Height());
-				bokehPass.bokehTex.Fill(GL_RG,GL_UNSIGNED_BYTE,img.Raw());
-				break;
-			case gli::PixelFormat::RGB :
-				bokehPass.bokehTex.Allocate(GL_RGB8,img.Width(),img.Height());
-				bokehPass.bokehTex.Fill(GL_RGB,GL_UNSIGNED_BYTE,img.Raw());
-				break;
-			case gli::PixelFormat::RGBA :
-				bokehPass.bokehTex.Allocate(GL_RGBA8,img.Width(),img.Height());
-				bokehPass.bokehTex.Fill(GL_RGBA,GL_UNSIGNED_BYTE,img.Raw());
-				break;
-			default:
-				assert(false);
-				break;
-		}
+		// Load bokeh texture
+		//io::LoadTexture("../resources/textures/CircleBokeh.png",
+		io::LoadTexture("../resources/textures/HexaBokeh.png",
+						bokehPass.bokehShapeTex,
+						true,
+						true);
 
 		glf::CheckError("DOFProcessor::Create");
 	}
@@ -174,18 +163,13 @@ namespace glf
 								float 			_intThreshold,
 								float 			_cocThreshold,
 								float 			_attenuation,
-								float			_areaFactor)
+								float			_areaFactor,
+								const RenderTarget& _renderTarget)
 	{
-		// Reset the number of bokeh
-		DrawArraysIndirectCommand* cmd = indirectBuffer.Lock();
+		// Reset the number of bokeh TODO : do it with a shader
+		DrawArraysIndirectCommand* cmd = pointIndirectBuffer.Lock();
 		cmd[0].primCount = 0;
-		indirectBuffer.Unlock();
-
-		glDisable(GL_STENCIL_TEST);
-		glDisable(GL_DEPTH_TEST);
-
-		glBindFramebuffer(GL_FRAMEBUFFER,framebuffer);
-		glClear(GL_COLOR_BUFFER_BIT);
+		pointIndirectBuffer.Unlock();
 
 		glUseProgram(cocPass.program.id);
 		glProgramUniform1f(cocPass.program.id,			cocPass.intThresholdVar,	_intThreshold);
@@ -199,25 +183,17 @@ namespace glf
 		glProgramUniform1i(cocPass.program.id,			cocPass.nSamplesVar,		_nSamples);
 		glProgramUniformMatrix4fv(cocPass.program.id, 	cocPass.viewMatVar,			1, GL_FALSE, &_view[0][0]);
 
-		glActiveTexture(GL_TEXTURE0 + cocPass.countTexUnit);
-		glBindTexture(GL_TEXTURE_BUFFER, countTexID);
-		glBindImageTextureEXT(cocPass.countTexUnit, 	countTexID, 	0, false, 0,  GL_READ_WRITE, GL_R32UI);
-		glActiveTexture(GL_TEXTURE0 + cocPass.sampleTexUnit);
-		glBindImageTextureEXT(cocPass.sampleTexUnit,	sampleTex.id,	0, false, 0,  GL_READ_WRITE, GL_RGBA32F);
-		glActiveTexture(GL_TEXTURE0 + cocPass.colorTexUnit);
-		glBindImageTextureEXT(cocPass.colorTexUnit, 	colorTex.id,	0, false, 0,  GL_READ_WRITE, GL_RGBA32F);
+		glActiveTexture(GL_TEXTURE0 + cocPass.bokehCountTexUnit);
+		glBindTexture(GL_TEXTURE_BUFFER, bokehCountTexID);
+		glBindImageTextureEXT(cocPass.bokehCountTexUnit, 	bokehCountTexID,	0, false, 0,  GL_READ_WRITE, GL_R32UI);
+		glActiveTexture(GL_TEXTURE0 + cocPass.bokehPosTexUnit);
+		glBindImageTextureEXT(cocPass.bokehPosTexUnit,		bokehPosTex.id, 	0, false, 0,  GL_READ_WRITE, GL_RGBA32F);
+		glActiveTexture(GL_TEXTURE0 + cocPass.bokehColorTexUnit);
+		glBindImageTextureEXT(cocPass.bokehColorTexUnit, 	bokehColorTex.id,	0, false, 0,  GL_READ_WRITE, GL_RGBA32F);
 		_inputTex.Bind(cocPass.inputTexUnit);
 		_positionTex.Bind(cocPass.positionTexUnit);
 		cocPass.rotationTex.Bind(cocPass.rotationTexUnit);
-		glBindBuffer(GL_ARRAY_BUFFER, quadbuffer.id);
-		glVertexAttribPointer(	vbufferVar, 
-								3, 
-								GL_FLOAT, 
-								false,
-								sizeof(glm::vec3),
-								GLF_BUFFER_OFFSET(0));
-		glEnableVertexAttribArray(vbufferVar);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		_renderTarget.Draw();
 
 
 		// Get number of bokeh point
@@ -237,35 +213,15 @@ namespace glf
 //		out << "reservedMustBeZero  : " << reservedMustBeZero << "\n";
 //		glf::Info("%s",out.str().c_str());
 
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-		glBlendEquation(GL_FUNC_ADD);
-//glClear(GL_COLOR_BUFFER_BIT);
-		glUseProgram(bokehPass.program.id);
-		glProgramUniform1f(bokehPass.program.id,	bokehPass.attenuationVar,	_attenuation);
-		bokehPass.bokehTex.Bind(bokehPass.bokehTexUnit);
-		colorTex.Bind(bokehPass.colorTexUnit);
-		sampleTex.Bind(bokehPass.sampleTexUnit);
-		glBindBuffer(GL_ARRAY_BUFFER, pointbuffer.id);
-		glVertexAttribPointer(	vbufferVar, 
-								3, 
-								GL_FLOAT, 
-								false,
-								sizeof(glm::vec3),
-								GLF_BUFFER_OFFSET(0));
-		glEnableVertexAttribArray(vbufferVar);
-		glBindBuffer(GL_DRAW_INDIRECT_BUFFER,indirectBuffer.id);
-		glDrawArraysIndirect(GL_POINTS,NULL);
-		glBindBuffer(GL_DRAW_INDIRECT_BUFFER,0);
 
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindFramebuffer(GL_FRAMEBUFFER,0);
+		glUseProgram(bokehPass.program.id);
+		glProgramUniform1f(bokehPass.program.id,bokehPass.attenuationVar,_attenuation);
+		bokehPass.bokehShapeTex.Bind(bokehPass.bokehShapeTexUnit);
+		bokehColorTex.Bind(bokehPass.bokehColorTexUnit);
+		bokehPosTex.Bind(bokehPass.bokehPosTexUnit);
+		pointVAO.Draw(GL_POINTS,pointIndirectBuffer);
+
 		glf::CheckError("DOFProcessor::Draw");
-	}
-	//-------------------------------------------------------------------------
-	DOFProcessor::Ptr DOFProcessor::Create(int _w, int _h)
-	{
-		return DOFProcessor::Ptr(new DOFProcessor(_w,_h));
 	}
 }
 
