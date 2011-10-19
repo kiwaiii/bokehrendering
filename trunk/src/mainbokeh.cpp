@@ -15,7 +15,7 @@
 #include <glf/camera.hpp>
 #include <glf/wrapper.hpp>
 #include <glf/helper.hpp>
-#include <glf/dof.hpp>
+#include <glf/dof2.hpp>
 #include <glf/postprocessor.hpp>
 #include <glf/utils.hpp>
 #include <fstream>
@@ -594,7 +594,9 @@ void display()
 
 				glDisable(GL_STENCIL_TEST);
 				glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+				glBindFramebuffer(GL_FRAMEBUFFER,0);
 
+				glDisable(GL_BLEND);
 				app->dofProcessor.Draw(	app->renderTarget1.texture,
 										app->gbuffer.positionTex,
 										view,
@@ -610,10 +612,11 @@ void display()
 										app->dofParams.areaFactor,
 										app->renderTarget2);
 
-				glBindFramebuffer(GL_FRAMEBUFFER,0);
 
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				app->postProcessor.Apply(app->renderTarget2.texture,
+//				app->postProcessor.Apply(app->renderTarget2.texture,
+				app->postProcessor.Apply(app->dofProcessor.hblurPass.blurTex,
+//				app->postProcessor.Apply(app->dofProcessor.cocPass.cocDepthTex,
 										 app->toneParams.toneExposure);
 
 				break;
@@ -656,4 +659,33 @@ int main(int argc, char* argv[])
 				return 0;
 	return 1;
 }
+
+
+/*
+static bool isinit = false;
+static glm::vec4* data= NULL;
+if(!isinit)
+{
+	data = new glm::vec4[ctx::window.Size.x*ctx::window.Size.y];
+	isinit = true;
+}
+glBindTexture(app->renderTarget2.texture.target,app->renderTarget2.texture.id);
+glGetTexImage(app->renderTarget2.texture.target,0,GL_RGBA,GL_FLOAT,data);
+glBindTexture(app->renderTarget2.texture.target,0);
+
+glf::Info("(0,0) = (%f,%f)",data[0].x,data[0].y);
+glf::Info("(1,0) = (%f,%f)",data[1].x,data[1].y);
+glf::Info("(2,0) = (%f,%f)",data[2].x,data[2].y);
+glf::Info("(3,0) = (%f,%f)",data[3].x,data[3].y);
+
+glf::Info("(0,1) = (%f,%f)",data[0+ctx::window.Size.x].x,data[0+ctx::window.Size.x].y);
+glf::Info("(1,1) = (%f,%f)",data[1+ctx::window.Size.x].x,data[1+ctx::window.Size.x].y);
+glf::Info("(2,1) = (%f,%f)",data[2+ctx::window.Size.x].x,data[2+ctx::window.Size.x].y);
+glf::Info("(3,1) = (%f,%f)",data[3+ctx::window.Size.x].x,data[3+ctx::window.Size.x].y);
+
+glf::Info("(0,2) = (%f,%f)",data[0+2*ctx::window.Size.x].x,data[0+2*ctx::window.Size.x].y);
+glf::Info("(1,2) = (%f,%f)",data[1+2*ctx::window.Size.x].x,data[1+2*ctx::window.Size.x].y);
+glf::Info("(2,2) = (%f,%f)",data[2+2*ctx::window.Size.x].x,data[2+2*ctx::window.Size.x].y);
+glf::Info("(3,2) = (%f,%f)",data[3+2*ctx::window.Size.x].x,data[3+2*ctx::window.Size.x].y);
+*/
 

@@ -24,6 +24,7 @@ uniform float			CoCThreshold;
 uniform float			AreaFactor;
 uniform vec2 			Halton[32];
 //------------------------------------------------------------------------------
+in  vec2				TexCoord;
 out vec4 				FragColor;
 
 //------------------------------------------------------------------------------
@@ -39,8 +40,8 @@ out vec4 				FragColor;
 //------------------------------------------------------------------------------
 float GaussianWeight(float _s, float _sigma)
 {
-	float twoSigma2 = 2.f * _sigma * _sigma;
-	float factor = 1.f / sqrt(3.141592654f * twoSigma2);
+	float twoSigma2	= 2.f * _sigma * _sigma;
+	float factor	= 1.f / sqrt(3.141592654f * twoSigma2);
 	return factor * exp(-(_s * _s) / twoSigma2);
 }
 //------------------------------------------------------------------------------
@@ -70,35 +71,47 @@ void main()
 		float z		= max(-(ViewMat * p).z,atInf*1000.f);
 		vec3 c		= textureLod(InputTex,samp,0).xyz;
 		int	toAdd	= int(z>=FarStart*0.8);
+
+//if(z>=zref)
+{
 		color		+= c*float(toAdd);
 		cneighs		+= c*float(toAdd);
 		count		+= toAdd;
+}
 	}
 	color /= count;
 	cneighs/= (count==1?1:count-1);
 
-	// Count point where intensity of neighbors is less than the current pixel
-	float lumNeighs = dot(cneighs, vec3(0.299f, 0.587f, 0.114f));
-	float lumCenter = dot(ccenter, vec3(0.299f, 0.587f, 0.114f));
-	if((lumCenter-lumNeighs)>IntThreshold && r>CoCThreshold)
-	{
-		ivec2 bufSize, coord;
-		int current = int(imageAtomicAdd(BokehCountTex, 1, 1));
-		bufSize 	= textureSize(InputTex,0).xy;
-		coord.y 	= int(floor(current/bufSize.y));
-		coord.x 	= current - coord.y*bufSize.y;
-		vec3 lcolor = ccenter.xyz / (M_PI*r*r*AreaFactor);
 
-		imageStore(BokehPosTex,coord,vec4(gl_FragCoord.x,gl_FragCoord.y,r,0));
-		imageStore(BokehColorTex,coord,vec4(lcolor,1));
-	}
+
+
+//	// Count point where intensity of neighbors is less than the current pixel
+//	float lumNeighs = dot(cneighs, vec3(0.299f, 0.587f, 0.114f));
+//	float lumCenter = dot(ccenter, vec3(0.299f, 0.587f, 0.114f));
+//	if((lumCenter-lumNeighs)>IntThreshold && r>CoCThreshold)
+//	{
+//		ivec2 bufSize, coord;
+//		int current = int(imageAtomicAdd(BokehCountTex, 1, 1));
+//		bufSize 	= textureSize(InputTex,0).xy;
+//		coord.y 	= int(floor(current/bufSize.y));
+//		coord.x 	= current - coord.y*bufSize.y;
+//		vec3 lcolor = ccenter.xyz / (M_PI*r*r*AreaFactor);
+
+//		imageStore(BokehPosTex,coord,vec4(gl_FragCoord.x,gl_FragCoord.y,r,0));
+//		imageStore(BokehColorTex,coord,vec4(lcolor,1));
+//	}
 	FragColor 	= vec4(color,1);
 
 
 	// To screw the compiler
 	if(pix.x<-10000)
 	{
-		float value = NearStart + NearEnd + FarStart + FarEnd + MaxRadius + float(nSamples) + ViewMat[0].x;
+		float value = NearStart + NearEnd + FarStart + FarEnd + MaxRadius + float(nSamples) + ViewMat[0].x + IntThreshold + CoCThreshold + AreaFactor;
+
+		imageStore(BokehPosTex,ivec2(0,0),vec4(0,0,0,0));
+		imageStore(BokehColorTex,ivec2(0,0),vec4(1,0,0,1));
+		imageAtomicAdd(BokehCountTex, 1, 1);
+
 		FragColor   = vec4(value);
 		return;
 	}

@@ -18,6 +18,7 @@ void main()
 	vec4 offsety = vec4(0,PixelScale.y*Radius[0],0,0);
 	Radiance 	 = Color[0];
 
+
 	// First triangle
 	gl_Position = Transformation * ( gl_in[0].gl_Position - offsetx - offsety);
 	TexCoord	= vec2(0,0);

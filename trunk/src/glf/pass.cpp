@@ -149,7 +149,8 @@ namespace glf
 		CreateQuad(vbo);
 		vao.Add(vbo,semantic::Position,3,GL_FLOAT);
 		transformation	= ScreenQuadTransform();
-		texture.Allocate(GL_RGBA32F,_width,_height);
+		texture.Allocate(GL_RGBA32F,_width,_height,true);
+		texture.SetFiltering(GL_LINEAR_MIPMAP_LINEAR,GL_LINEAR);
 
 		glGenFramebuffers(1, &framebuffer);
 		glBindFramebuffer(GL_FRAMEBUFFER,framebuffer);
