@@ -3,8 +3,8 @@ SET(GLF_SRCS
 				glf/buffer.cpp
 				glf/camera.cpp
 				glf/csm.cpp
-#				glf/dof.cpp
-				glf/dof2.cpp
+				glf/dof.cpp
+#				glf/dof2.cpp
 				glf/helper.cpp
 				glf/geometry.cpp
 				glf/ioimage.cpp
