@@ -51,14 +51,15 @@ A recent approach proposed by White~\cite{White11} reproduce pentagonal bokeh ef
 We observe that only high constrasted points produce distinct bokehs. We use this heuristic to detect bokeh positions in screen space~\cite{Pettineo11} and render final bokehs by splatting textured quad at those locations.
 
 \subsection{Overview}
-Our approch is divide into four passes. The first pass computes the circle of confusion size for each pixel based on the depth value of each pixel. The 
-Presentation of the overall pipeline
+Our approch is divide into four passes. The first pass computes the circle of confusion size for each pixel based on the depth value of each pixel and output a linear depth buffer\footnote{If you already have a linear depth buffer as input you can merge the two first passes together.}. Then, the second pass compute the contrast of the current pixel and append position, size, and color, if this constrast is enough. During the third pass, blur-based depth of field is computed with a previous methode (gaussian blur,...). Finally, the last pass, splat textured quad at bokeh positions.
 
 	\begin{figure}[htb]\centering
 	\includegraphics[width=\textwidth]{pipeline}
 	\caption{Overview of the pipeline.}
 	\label{YourName:fig1}
 	\end{figure}
+
+In order to ensure high performances, CPU/GPU synchronisation has to be avoided. We use an indirect draw command which use the bokeh counter to determine how many bokeh has to be drawn. This way, the number of detected bokehs is never read back by the CPU.
 
 \subsection{Circles of confusion computation}
 Settings field of view with focal length is not easy.
@@ -166,27 +167,18 @@ The two ImageBuffer allows to store size, position, and color of the register bo
 
 
 \subsection{Blur-based depth of field}
-We do not detail specific approch. Three different approachs are possible : 
+Several approach are possible for this pass. We refer readers to previous work for this step. Nevertheless, here a short sum up of main approaches :
 \begin{itemize}
-	\item Gaussian blur at different resolution + linear blending
-	\item Poisson disc sampling + rotation // need lot of sample
-	\item Bilateral filtering with variable radius // better
+	\item Do a constant kernel gaussian blur at various resolutions and apply a linear interpolation to blend them according to \coc size.
+	\item Do a Poisson disc sampling with a radius adapted to \coc size~\footnote{A random rotation can be applied to Poisson sampling pattern for transforming aliasing into noise.}.
+	\item Do a large bilateral filtering and rejecting invalid pixel~\footnote{For implementation details, we refer the reader to the code sample. Thsi approach offers a good compromise between quality and performances. However it need large radius. A \opencl implementation would allow better performances, since shared memory can be used to cache texture fetches.}.
 \end{itemize}
 
-The last one offer a good compromise between quality and performance. However it need large radius. A \opencl implementation allows better performances, since shared memory can be used to cache texture fetches.
-
-Depend on quality and performances requested
-We refer to previous techniques for this part.
 
 \subsection{Bokeh rendering}
+In order to avoir CPU/GPU synchonization, we use an indirect drawing command \codecmd{glDrawArraysIndirect}. This command draw instances of a given VBO/VAO. The number of instance is specified into a buffer located on the GPU memory. The buffer can be updated from the CPU or updated from the GPU. For performances concerns, we update this buffer from the GPU during the second pass. 
 
-In order to avoir CPU/GPU synchonization, we use an indirect drawing command. \opengl provide the \codecmd{glDrawArraysIndirectInstanced}, which read the number of objects to draw from a indirect buffer. In our case, we read this number from the \codecmd{BokehCounter} buffer.
-
-Simple point are drawn and 
-The vertex shader read from \codecmd{BokehPositionBuffer} and \codecmd{BokehColorBuffer} the position and the color of the current \bokeh. Data are read based on their \codecmd{InstanceID}
-They are expanded to quad in a geometry shader
-The pixel shader read \bokeh's texture
-
+We use this command in combinaison point VAO. The instanced points are translated into the vertex shader to be located at bokeh position. The position is read from BokehPositionBuffer by using the built-in \codecmd{gl\_InstanceID} index. Each point is expanded in a quad into the geometry shader. The size of the quad is adaped to bokeh size (also store into BokehPositionBuffer). Finally, the fragment shader applies the bokeh alpha-texture onto the quad and multiply it by the bokeh color (store into BokehColorBuffer).
 
 
 \begin{lstlisting}[language=C++,float={htb},caption={Your caption.},label={YourName:listing1}]
@@ -342,18 +334,16 @@ void main()
 
 %-------------------------------------------------------------------------------
 \section{Discussion}
-Temporal coherence and sub-pixel Aliasing
-Pre-allocation of a large chunk of memory
+One may concerns about temporal coherency for this approach. Just as all other approach, we base our approch of the final color buffer. If sub-pixel aliasing is handled properly by previous rendering steps, our approach is stale and bokehs are coherent frame-to-frame. In case of sub-pixel aliasing, our method exhib same limitation as all previous methods, and bokehs may flicked.
+
+Our methods need pre-allocated buffers for storing bokeh position and color information. Hence, a maximum number of bokehs has to be specified. If this number is too low artifacfs may arise, like bokeh popping. If this number is too large, GPU memory usage is wasted. Thus, the right maximal number as to be according the type of scenes displayed.
 
 %-------------------------------------------------------------------------------
 \section{Conclusion}
-Sum up
+We have presented an efficient implementation for rendering depth of field effect that produces bokehs. This method allow to combine efficient blur-approach with bokeh reproduction. We use an heuristique to identify pixels that produce distinct bokeh and render them with textured quads. This implementation avoids CPU/GPU synchronisation by calling indirect draw commands. These command read directly the number of instances to draw on GPU, without back reading from the CPU.
 
-\textbf{Future work:} Several improvments would be done in order to improve performances. 
-\begin{itemize}
-	\item \textbf{Tile-version} : divide screen into four part and set one atomic-counter per part
-	\item \textbf{Mipmap-rasterization} : rasterize bokeh at proper resolution (as done in 3DMark11)
-\end{itemize}
+
+\textbf{Future work:} While this approach provides good results, several improvments could be done for improving performances. Especially, atomic-counter are not super fast. By dividing screen into four parts, each part having an atomic counter, let concurrent operation would produce a the same time. Large \coc size require to rasterize quad on large portion of the screen. Using the hierarchical rasterization proposed in~\cite{Futurmark11} would also improve performances.
 
 %-------------------------------------------------------------------------------
 \bibliographystyle{akpbib}
