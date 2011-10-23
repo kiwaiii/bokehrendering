@@ -16,7 +16,7 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.48.1 r9760"
-   sodipodi:docname="camera.svg">
+   sodipodi:docname="camera.pdf">
   <defs
      id="defs4">
     <marker
@@ -1062,9 +1062,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.4142136"
-     inkscape:cx="398.87724"
-     inkscape:cy="192.08101"
+     inkscape:zoom="2.0000001"
+     inkscape:cx="247.0846"
+     inkscape:cy="79.705967"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -1085,7 +1085,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -1563,10 +1563,10 @@
     <rect
        style="color:#000000;fill:#ac0000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.04128134;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
        id="rect5818-5-6"
-       width="8.3834114"
-       height="8.0555086"
-       x="69.644569"
-       y="195.37547"
+       width="2.3189988"
+       height="2.2282953"
+       x="72.839203"
+       y="199.08844"
        transform="matrix(0.96194492,0.27324344,0,1,0,0)"
        ry="0" />
     <g
@@ -1682,15 +1682,6 @@
          id="rect6739-1-8"
          style="color:#000000;fill:#afafaf;fill-opacity:0.4456522;fill-rule:nonzero;stroke:#000000;stroke-width:0.96581173;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate" />
     </g>
-    <rect
-       style="color:#000000;fill:#ac0000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.04128134;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
-       id="rect5818-5-6-5"
-       width="8.3834114"
-       height="8.0555086"
-       x="239.65518"
-       y="157.99651"
-       transform="matrix(0.96194492,0.27324344,0,1,0,0)"
-       ry="0" />
     <text
        xml:space="preserve"
        style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
@@ -1724,7 +1715,7 @@
          id="tspan4132-9-3-8-5"
          x="346.59891"
          y="91.694901"
-         style="font-size:9px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;text-anchor:middle;font-family:Arial;-inkscape-font-specification:Arial">Hexagonal </tspan><tspan
+         style="font-size:9px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;text-anchor:middle;font-family:Arial;-inkscape-font-specification:Arial">Pentagonal </tspan><tspan
          sodipodi:role="line"
          x="345.35086"
          y="102.9449"
@@ -1750,18 +1741,18 @@
     <text
        xml:space="preserve"
        style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
-       x="352.58987"
-       y="228.4449"
+       x="354.83987"
+       y="230.4449"
        id="text4130-2-1-2"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan4132-9-3-3"
-         x="352.58987"
-         y="228.4449"
-         style="font-size:9px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;text-anchor:middle;font-family:Arial;-inkscape-font-specification:Arial">Hexagonal</tspan><tspan
+         x="354.83987"
+         y="230.4449"
+         style="font-size:9px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;text-anchor:middle;font-family:Arial;-inkscape-font-specification:Arial">Pentagonal</tspan><tspan
          sodipodi:role="line"
-         x="352.58987"
-         y="239.6949"
+         x="354.83987"
+         y="241.6949"
          style="font-size:9px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;text-anchor:middle;font-family:Arial;-inkscape-font-specification:Arial"
          id="tspan8078">aperture</tspan></text>
     <path
@@ -1791,5 +1782,67 @@
          y="113.03532"
          style="font-size:9px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;text-anchor:middle;font-family:Arial;-inkscape-font-specification:Arial"
          id="tspan3777">focused at</tspan></text>
+    <rect
+       style="color:#000000;fill:#ac0000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.04128134;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       id="rect5818-5-6-6"
+       width="2.3189988"
+       height="2.2282953"
+       x="242.75967"
+       y="161.8271"
+       transform="matrix(0.96194492,0.27324344,0,1,0,0)"
+       ry="0" />
+    <path
+       style="color:#000000;fill:#ac0000;fill-opacity:0.53260869;fill-rule:nonzero;stroke:#ac0000;stroke-width:0.505;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       d="m 225.82056,223.69306 3.46667,11.7 11.09333,3.16333 3.51,-9.49 -9.05666,-9.31666 z"
+       id="path3297-1"
+       inkscape:connector-curvature="0" />
+    <text
+       xml:space="preserve"
+       style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="83.421967"
+       y="272.06174"
+       id="text4130-4"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan4132-0"
+         x="83.421967"
+         y="272.06174"
+         style="font-size:9px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Arial;-inkscape-font-specification:Arial">Bokeh</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 72.043058,228.46556 0,26.75 10.125,10.125"
+       id="path4134-9"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccc" />
+    <path
+       sodipodi:type="arc"
+       style="color:#000000;fill:#ac0000;fill-opacity:0.53260869;stroke:#ac0000;stroke-width:4.28311396;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       id="path6224-2-9-1-7-1-8-4"
+       sodipodi:cx="-556.42859"
+       sodipodi:cy="-705"
+       sodipodi:rx="67.85714"
+       sodipodi:ry="67.85714"
+       d="m -488.57145,-705 a 67.85714,67.85714 0 1 1 -135.71428,0 67.85714,67.85714 0 1 1 135.71428,0 z"
+       transform="matrix(0.11790487,0.03423049,0,0.11790487,137.37827,322.47195)" />
+    <path
+       sodipodi:type="arc"
+       style="color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.505;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       id="path4590"
+       sodipodi:cx="178.6875"
+       sodipodi:cy="67.440338"
+       sodipodi:rx="0.75"
+       sodipodi:ry="0.75"
+       d="m 179.4375,67.440338 a 0.75,0.75 0 1 1 -1.5,0 0.75,0.75 0 1 1 1.5,0 z"
+       transform="translate(21.321327,61.487626)" />
+    <path
+       sodipodi:type="arc"
+       style="color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.505;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       id="path4590-5"
+       sodipodi:cx="178.6875"
+       sodipodi:cy="67.440338"
+       sodipodi:rx="0.75"
+       sodipodi:ry="0.75"
+       d="m 179.4375,67.440338 a 0.75,0.75 0 1 1 -1.5,0 0.75,0.75 0 1 1 1.5,0 z"
+       transform="translate(184.91769,70.478554)" />
   </g>
 </svg>
