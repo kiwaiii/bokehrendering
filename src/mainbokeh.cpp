@@ -15,7 +15,7 @@
 #include <glf/camera.hpp>
 #include <glf/wrapper.hpp>
 #include <glf/helper.hpp>
-#include <glf/dof2.hpp>
+#include <glf/dof.hpp>
 #include <glf/postprocessor.hpp>
 #include <glf/utils.hpp>
 #include <fstream>
@@ -594,9 +594,8 @@ void display()
 
 				glDisable(GL_STENCIL_TEST);
 				glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-				glBindFramebuffer(GL_FRAMEBUFFER,0);
+//				glDisable(GL_BLEND);
 
-				glDisable(GL_BLEND);
 				app->dofProcessor.Draw(	app->renderTarget1.texture,
 										app->gbuffer.positionTex,
 										view,
@@ -612,10 +611,12 @@ void display()
 										app->dofParams.areaFactor,
 										app->renderTarget2);
 
+				glBindFramebuffer(GL_FRAMEBUFFER,0);
+
 
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//				app->postProcessor.Apply(app->renderTarget2.texture,
-				app->postProcessor.Apply(app->dofProcessor.hblurPass.blurTex,
+				app->postProcessor.Apply(app->renderTarget2.texture,
+//				app->postProcessor.Apply(app->dofProcessor.hblurPass.blurTex,
 //				app->postProcessor.Apply(app->dofProcessor.cocPass.cocDepthTex,
 										 app->toneParams.toneExposure);
 

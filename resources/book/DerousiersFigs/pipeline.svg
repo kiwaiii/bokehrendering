@@ -1206,9 +1206,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="2"
-     inkscape:cx="185.53838"
-     inkscape:cy="89.577768"
+     inkscape:zoom="2.8284271"
+     inkscape:cx="220.81544"
+     inkscape:cy="24.430786"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -1505,7 +1505,7 @@
        sodipodi:nodetypes="ccc" />
     <text
        xml:space="preserve"
-       style="font-size:9px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       style="font-size:8px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
        x="73.421341"
        y="243.99062"
        id="text4130-2-1-0-9-2-8-3-7-8"
@@ -1514,10 +1514,10 @@
          id="tspan4132-9-3-1-2-9-88-6-5-6"
          x="73.421341"
          y="243.99062"
-         style="font-size:9px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Arial;-inkscape-font-specification:Arial">Start near</tspan></text>
+         style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Arial;-inkscape-font-specification:Arial">Start near</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:9px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       style="font-size:8px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
        x="73.147614"
        y="257.0834"
        id="text4130-2-1-0-9-2-8-3-7-8-6"
@@ -1526,10 +1526,10 @@
          id="tspan4132-9-3-1-2-9-88-6-5-6-1"
          x="73.147614"
          y="257.0834"
-         style="font-size:9px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Arial;-inkscape-font-specification:Arial">End near</tspan></text>
+         style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Arial;-inkscape-font-specification:Arial">End near</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:9px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       style="font-size:8px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
        x="73.421341"
        y="270.27005"
        id="text4130-2-1-0-9-2-8-3-7-8-6-2"
@@ -1538,10 +1538,10 @@
          id="tspan4132-9-3-1-2-9-88-6-5-6-1-2"
          x="73.421341"
          y="270.27005"
-         style="font-size:9px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Arial;-inkscape-font-specification:Arial">Start far</tspan></text>
+         style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Arial;-inkscape-font-specification:Arial">Start far</tspan></text>
     <text
        xml:space="preserve"
-       style="font-size:9px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       style="font-size:8px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
        x="73.147614"
        y="283.41174"
        id="text4130-2-1-0-9-2-8-3-7-8-6-28"
@@ -1550,7 +1550,7 @@
          id="tspan4132-9-3-1-2-9-88-6-5-6-1-6"
          x="73.147614"
          y="283.41174"
-         style="font-size:9px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Arial;-inkscape-font-specification:Arial">End far</tspan></text>
+         style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Arial;-inkscape-font-specification:Arial">End far</tspan></text>
     <rect
        style="color:#000000;fill:#afafaf;fill-opacity:0.4456522;fill-rule:nonzero;stroke:#000000;stroke-width:0.35592535;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
        id="rect8584-0-8-5"
@@ -1562,15 +1562,15 @@
     <text
        xml:space="preserve"
        style="font-size:9px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
-       x="235.66609"
+       x="240.41609"
        y="243.89284"
        id="text4130-2-1-0-9-2-8-3-7-8-4"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan4132-9-3-1-2-9-88-6-5-6-2"
-         x="235.66609"
+         x="240.41609"
          y="243.89284"
-         style="font-size:9px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Arial;-inkscape-font-specification:Arial">Max radius</tspan></text>
+         style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Arial;-inkscape-font-specification:Arial">Max radius</tspan></text>
     <rect
        style="color:#000000;fill:#afafaf;fill-opacity:0.4456522;fill-rule:nonzero;stroke:#000000;stroke-width:0.35592535;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
        id="rect8584-0-8-2"
@@ -1582,15 +1582,15 @@
     <text
        xml:space="preserve"
        style="font-size:9px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
-       x="153.17201"
+       x="149.79701"
        y="243.89284"
        id="text4130-2-1-0-9-2-8-3-7-8-7"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
          id="tspan4132-9-3-1-2-9-88-6-5-6-5"
-         x="153.17201"
+         x="149.79701"
          y="243.89284"
-         style="font-size:9px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Arial;-inkscape-font-specification:Arial">Threshold</tspan></text>
+         style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Arial;-inkscape-font-specification:Arial">Lum. Threshold</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:9px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
