@@ -7,11 +7,11 @@
 %-------------------------------------------------------------------------------
 \section{Introduction}
 
-In order to increase realism and immersion, current games make frequent use of depth of field to simulate lenticular phenomena. Typical implementations use blur based approaches to simulate a camera’s circle of confusion out-of-focus parts of a scene. While such approaches give reasonable results, important features are still missing. In particular, real cameras produce a typical effect that photographers call bokeh (blur in Japanese) appearing at contrasted locations of the final image. Bokeh reveals itself as  bright blurry spots whose shape depends on the camera’s aperture (typically, a circle, a pentagon, or octagon).
+In order to increase realism and immersion, current games make frequent use of depth of field to simulate lenticular phenomena. Typical implementations use blur based approaches to simulate a camera’s circle of confusion out-of-focus parts of a scene. While such approaches give reasonable results, important features are still missing. In particular, real cameras produce a typical effect that photographers call \bokeh (blur in Japanese) appearing at contrasted locations of the final image. \Bokeh reveals itself as  bright blurry spots whose shape depends on the camera’s aperture (typically, a circle, a pentagon, or octagon).
 
 Current and upcoming DirectX11 engines (i.e. Cry engine, Unreal Engine, ...) have recently shown a particular interest for such effects as attested by their most recent demos. Still, it  remains an up-coming technology and precise implementation details are not available yet.
 
-Explicitly drawing the aperture’s shape with quad rendering for every pixel would be rather inefficient. Instead, we propose an hybrid method, mixing previous blur based approaches with quad rendering. Our method selects high contrasted points, and for each of them, renders a quad with an aperture texture. In order to achieve high performance, we use both atomic counters, image texture for random memory access, and indirect draw command for avoiding CPU / GPU synchronizations. This efficient OpenGL 4.2 implementation allows to draw thousands of aperture’s shape at high frame-rate and ensures the temporal coherency of the rendered bokeh.
+Explicitly drawing the aperture’s shape with quad rendering for every pixel would be rather inefficient. Instead, we propose an hybrid method, mixing previous blur based approaches with quad rendering. Our method selects high contrasted points, and for each of them, renders a quad with an aperture texture. In order to achieve high performance, we use both atomic counters, image texture for random memory access, and indirect draw command for avoiding CPU / GPU synchronizations. This efficient OpenGL 4.2 implementation allows to draw thousands of aperture’s shape at high frame-rate and ensures the temporal coherency of the rendered \bokeh.
 
 %-------------------------------------------------------------------------------
 \section{Depth of Field Phenomemon}\label{Derousiers:DOFPhenomenon}
@@ -19,66 +19,64 @@ Depth of field is an important effect to convey realism, especially in opened sc
 
 	\begin{figure}[htb]\centering
 	\includegraphics[width=\textwidth]{focus}
-	\caption{An object appears blurred depending of its positions in the camera's field of view. 
-If an object is in the focused area, then it appear clearly. Otherwise, it appears blurred. }
+	\caption{Depth of field phenomenon. Thin lens introduces a limited depth of field. In focus objects appear sharp. Out-of-focused object appear blurred. The size of the circle of convolution depends of the distance. We use a linear approximation in order to simplify settings and computations. }
 	\label{DeRousiers:focus}
 	\end{figure}
 
 
-The "blurriness" of an object is defined by its circle of confusion (\coc). The size of this \coc depends on the distance to the focused area. Further a object is from focused area, blurrier it appears. The \coc size is not linearly dependent from this distance. It increase faster in the unfocused foreground area than in the unfocused background area, see Figure~\ref{Derousiers:focus}. \coc depends on focal distance and lens' size. It is not obvious how to set up these two parameters to obtain the desire depth of field. This is why we use a linear approximation as proposed by~\cite{Hammon07}, see Figure~\ref{DeRousiers:focus}.
+The "blurriness" of an object is defined by its \emph{circle of confusion} (\coc). The size of this \coc depends on the distance to the focused area. Further a object is from the focused area, blurrier it appears. The size of the \coc is not linearly dependent from this distance. It increase faster in the out-of-focus foreground area than in the out-of-focus background area, see Figure~\ref{DeRousiers:focus}. \coc depends on focal distance and lens' size. It is not obvious how to set up these two parameters to obtain the desire depth of field. This is why we use a linear approximation as proposed by~\cite{Hammon07}, see Figure~\ref{DeRousiers:focus}.
 
 	\begin{figure}[htb]\centering
 	\includegraphics[width=\textwidth]{camera}
-	\caption{Aperture's shape of a camera. Aperture's shape modifies pixel integration, and changes bokeh shape }
+	\caption{Aperture's shape of a camera. Aperture blocks part of the incoming light. Its shape modifies the pixel integration, and hence, its changes the \bokehs' shape. }
 	\label{DeRousiers:camera}
 	\end{figure}
 
-Additionally, real cameras have an aperture which is in charge of letting light come in when a photograph is taken\footnote{If an object or the camera moves during aperture opening, objects will appear blurred : it is the motion blur.}. Aperture shape impact directly the final image aspect. Each point out of focus is convolved with the aperture shape. Changing the aperture shape, modify the final image, see Figure~\ref{DeRousiers:camera}.
+Additionally, real cameras have an aperture which is in charge of letting light come in when a photograph is taken\footnote{If an object or the camera moves during aperture opening, objects will appear blurred : it is the motion blur.}. Aperture shape impacts directly the final image aspect. Each point out-of-focus is convolved with the aperture shape. Changing the aperture shape, modify the final image, see Figure~\ref{DeRousiers:camera}.
 
-While it is hard to see bokeh for low contrasted area, bokehs appear clearly for highly contrasted point. We use this observation as an heuristic to determine where bokehs have to be drawn.
+While it is hard to see \bokeh for low contrasted area, \bokehs appear clearly for highly contrasted point. We use this observation as an heuristic to determine where \bokehs have to be drawn.
 
 %-------------------------------------------------------------------------------
 \section{Relative Work}\label{Derousiers:RelativeWork}
 
-Several methods have been proposed during the last decade to approximate efficiently depth of field effect. But those methods use Gaussian blur or heat diffusion to process unfocused areas~\cite{Kosloff07,Hammon07} and are not able to reproduce bokeh effects.
+Several methods have been proposed during the last decade to approximate efficiently depth of field effect. But those methods use Gaussian blur or heat diffusion to process out-of-focus areas~\cite{Hammon07,Kosloff07} and are not able to reproduce \bokeh effects.
 
-The earlier approach from Krivanek~\cite{Krivanek03} use sprite splatting for rendering depth of field effect. While this brute force method would allow to render bokehs, it is quite inefficient due to overdraw. Video game industry has shown a recent interest for bokeh effects~\cite{Sousa11,Futurmark11,Mittring11}. While implementation details are uncovered, all those methods seem use a sprite for each pixel as Krivanek. However those techniques use clever tricks to optimize performances (hierarchical rasterization,...). 
+An earlier approach, from Krivanek~\cite{Krivanek03}, uses sprite splatting for rendering depth of field effect. While this brute force method would allow to render \bokehs, it is quite inefficient due to overdraw. Video game industry has shown a recent interest for \bokeh effects~\cite{Sousa11,Futurmark11,Mittring11}. While implementation details are uncovered, all those methods seem spatting a sprite for each pixel as Krivanek. However those techniques use clever tricks to optimize performances (hierarchical rasterization, ...). 
 
-A recent approach proposed by White~\cite{White11} reproduces pentagonal bokeh efficiently using several directional blur passes. While efficient, this method does not support arbitrary bokeh shape.
+A recent approach proposed by White~\cite{White11} reproduces pentagonal \bokeh using several directional blur passes. While efficient, this method does not support arbitrary aperture shape.
 
 %-------------------------------------------------------------------------------
 \section{Algorithm}
-We observe that only high contrasted points produce distinct bokehs. We use this heuristic to detect bokeh positions in screen space~\cite{Pettineo11} and render final bokehs by splatting textured quad at those locations.
+We observe that only high contrasted points produce distinct \bokehs. We use this heuristic to detect \bokeh positions in screen space~\cite{Pettineo11} and render final \bokehs by splatting textured quad at those locations. Every other points are rendered with a blur based approach.
 
 \subsection{Overview}
-Our approach is divide into four passes. The first pass computes the \coc size for each pixel based on its depth value and output a linear depth buffer\footnote{If you already have a linear depth buffer as input, you can merge together the first two passes.}. Then, the second pass compute the contrast of the current pixel and append its position, \coc size, and averaged color to a buffer, if this contrast is enough. During the third pass, blur-based depth of field is computed with one of the previous methods (Gaussian blur,...). Finally, the last pass splats textured quad at bokeh positions.
+Our approach is divide into four passes, see Figure~\ref{DeRousiers:pipeline}. The first pass computes the \coc size for each pixel based on its depth value and output a linear depth buffer\footnote{If you already have a linear depth buffer as input, you can merge together the first two passes.}. Then, the second pass computes the contrast of the current pixel. If this contrast is enough, its position, \coc size, and averaged color are append to a buffer. During the third pass, a blur-based depth of field is computed with one of the previous methods (Gaussian blur,...). Finally, the last pass splats textured quad at \bokeh positions.
 
 	\begin{figure}[htb]\centering
 	\includegraphics[width=\textwidth]{pipeline}
-	\caption{Overview of the pipeline.}
-	\label{YourName:fig1}
+	\caption{Overview of the pipeline. It is composed of four passes and takes as input the color and depth buffers of the current frame. It outputs a final color image with depth of field and \bokeh effects.}
+	\label{DeRousiers:pipeline}
 	\end{figure}
 
-In order to ensure high performances, CPU/GPU synchronization has to be avoided. We use an indirect draw command which read from a GPU buffer how many bokeh has to be drawn. This way, the number of detected bokehs is never read back by the CPU.
+In order to ensure high performances, CPU/GPU synchronization has to be avoided. We use an indirect draw command which read how many \bokeh has to be drawn from a GPU buffer. This way, the number of detected \bokehs is never read back by the CPU.
 
 \subsection{Circles of confusion computation}
-Settings field of view with focal length is not easy.
-We define two areas where geometry is unfocused : a foreground area and a background area. Both areas are delimited with a near and far depth values, see Figure~\ref{DeRousiers:focus}. Blur amount is linearly interpolated between those bounds. It allows a easy and intuitive way to set up field of view.
+Set up field of view with focal length is not easy. We define two areas where geometry is out-of-focus : a near/foreground area and a far/background area. Both areas are delimited with a near and far depth values, see Figure~\ref{DeRousiers:focus}. Blur amount is linearly interpolated between those bounds. It allows a easy and intuitive way to set up field of view.
 
 $$
-	CoC = \frac{Z_{pixel} - Z_{near} }{ Z_{far} - Z_{near} }
+	CoC = \frac{Z_{pixel} - Z_{start} }{ Z_{end} - Z_{start} }
 $$
 
 This way the \coc size is normalized between [0,1]. An extra parameter \codecmd{MaxRadius} determines a posteriori what is final size of the blur. This lets artists to play with, in order to achieve the desired appearance and also balances performances (lesser the \codecmd{MaxRadius} is, greater the performances are).
 
 
-\subsection{Bokeh detection}
-This pass aims to detect pixels which will generate \bokehs. To detect them we use the following heuristic : \emph{an highly contrasted pixel in a given neighborhood will generate a bokeh}. We compare the current pixel luminance $L_{pixel}$ to its neighborhood luminance $L_{neigh}$. If the difference $L_{pixel}-L_{neigh}$ is greater than the threshold \codecmd{LumThreshold}, then the current pixel is registered as a bokeh. Pixels detected as bokeh are sparse. Storing them into a texture render target would be a waste of space and reading them back would be a waste of time due to their no-coherency in space. To address this problem, we use the \opengl \codecmd{ImageBuffers} in combination with an \codecmd{AtomicCounter}. This allows us to built a vector in which we append detected bokehs parameters. \codecmd{ImageBuffers} have to be preallocated with a given size (\ie the maximum number of bokehs which can be display on screen). The \codecmd{AtomicCounter} stores the number of appended bokehs. Its current value indicates the next free cells in the \codecmd{ImageBuffers} vector. Two \codecmd{ImageBuffers} are used to store \coc size, position, and color of the registered bokeh. 
+\subsection{\Bokeh detection}
+This pass aims to detect pixels which will generate \bokehs. To detect them, we use the following heuristic : \emph{an highly contrasted pixel in a given neighborhood will generate a \bokeh}. We compare the current pixel luminance $L_{pixel}$ to its neighborhood luminance $L_{neigh}$. If the difference $L_{pixel}-L_{neigh}$ is greater than the threshold \codecmd{LumThreshold}, then the current pixel is registered as a \bokeh. Pixels detected as \bokeh are sparse. Storing them into a texture render target would be a waste of space and reading them back would be a waste of time due to their no-coherency in space. To address this problem, we use the \opengl \codecmd{ImageBuffers} in combination with an \codecmd{AtomicCounter}. This allows us to built a vector in which we append detected \bokehs parameters. \codecmd{ImageBuffers} have to be preallocated with a given size (\ie the maximum number of \bokehs which can be display on screen). The atomic counter \codecmd{BokehCounter} stores the number of appended \bokehs. Its current value indicates the next free cells in the \codecmd{ImageBuffers} vector. Two \codecmd{ImageBuffers} \codecmd{BokehPosition} and, \codecmd{BokehColor}, are used to store \coc size, position, and color of the registered \bokehs. 
 
 	\begin{figure}[htb]\centering
 	\includegraphics[width=\textwidth]{extraction}
-	\caption{Detection of a bokeh and appending of its attributes into buffers.}
-	\label{YourName:fig1}
+	\caption{\Bokeh detection. The luminance the current pixel is compared to its neighborhood. If the difference is greater than \codecmd{LunThreshod}, \bokeh parameters (position, color, \coc) are appended into \codecmd{BokehPosition} and \codecmd{BokehColor} buffers and the atomic counter \codecmd{BokehCounter} is incremented.}
+	\label{DeRousiers:detection}
 	\end{figure}
 
 \subsection{Blur-based depth of field}
@@ -90,10 +88,10 @@ Several approaches are possible for this pass. We refer readers to previous work
 \end{itemize}
 
 
-\subsection{Bokeh rendering}
-In order to avoid CPU/GPU synchronization, we use the indirect drawing command \codecmd{glDrawArraysIndirect}. This command draw instances of a given VBO/VAO. The number of instance is specified into a buffer located on the GPU memory. The buffer can be updated from the CPU or updated from the GPU. For performances concerns, we update this buffer from the GPU during the second pass. The atomic counter used in pass 2 is bound to this indirect buffer. Thus, the number of drawn instance is equal to the number of detected bokeh.
+\subsection{\Bokeh rendering}
+In order to avoid CPU/GPU synchronization, we use the indirect drawing command \codecmd{glDrawArraysIndirect}. This command draw instances of a given VBO/VAO. The number of instance is specified into a buffer located on the GPU memory. This buffer can be updated from the CPU or from the GPU. For performances concerns, we update this buffer from the GPU during the second pass. The atomic counter, used in pass 2, is bound to this indirect buffer. Thus, the number of drawn instance is equal to the number of detected \bokeh.
 
-We use this command in combination point VAO. The instanced points are translated into the vertex shader to be located at bokeh position. The position is read from \codecmd{BokehPositionBuffer} by using the built-in \codecmd{gl\_InstanceID} index. Each point is expanded in a quad into the geometry shader. The size of the quad is adapted to bokeh size (also store into \codecmd{BokehPositionBuffer}). Finally, the fragment shader applies the bokeh alpha-texture onto the quad and multiply it by the bokeh color (store into BokehColorBuffer).
+We use this command in combination point VAO. The instanced points are translated into the vertex shader to be located at \bokeh position. The position is read from the \codecmd{BokehPosition} buffer by using the built-in \codecmd{gl\_InstanceID} index. Each point is expanded in a quad into the geometry shader. The size of the quad is adapted to \bokeh size (also store into the \codecmd{BokehPosition} buffer ). Finally, the fragment shader applies the \bokeh alpha-texture onto the quad and multiplies it by the \bokeh color (stored into the \codecmd{BokehColor} buffer).
 
 %-------------------------------------------------------------------------------
 \section{Results}
@@ -120,22 +118,20 @@ We use this command in combination point VAO. The instanced points are translate
 
 %-------------------------------------------------------------------------------
 \section{Discussion}
-One may concerns about temporal coherency for this approach. Just as all others methods, we base our approach on the final color buffer. If sub-pixel aliasing is handled properly by previous rendering steps, our approach is stable and bokehs are coherent frame-to-frame. In case of sub-pixel aliasing, our method exhibits same limitations as all previous methods, and bokehs may flicked.
+One may concerns about temporal coherency for this approach. Just as all others methods, we base our approach on the final color buffer. If sub-pixel aliasing is handled properly by previous rendering steps, our approach is stable and \bokehs are coherent frame-to-frame. In case of sub-pixel aliasing, our method exhibits same limitations as all previous methods, and \bokehs may flicked.
 
-Also, Our methods need preallocated buffers for storing bokehs' position and color. Hence, a maximum number of bokehs has to be specified. If this number is too low, artifacts may arise like bokeh popping. If this number is too large, GPU memory usage is wasted. Thus, the right maximal number as to be set up according the type of scenes displayed.
+Also, Our methods need preallocated buffers for storing \bokehs' position and color. Hence, a maximum number of \bokehs has to be specified. If this number is too low, artifacts may arise like \bokeh popping. If this number is too large, GPU memory usage is wasted. Thus, the right maximal number as to be set up according the type of scenes displayed.
 
 %-------------------------------------------------------------------------------
 \section{Conclusion}
-We have presented an efficient implementation for rendering depth of field effect with bokehs. This method allows to combine efficient blur-approach with bokeh reproduction. We use an heuristic to identify pixels that produce distinct bokeh and render them with textured quads. This implementation avoids CPU/GPU synchronization by calling indirect draw commands. These command read directly the number of instances to draw on GPU, without back reading from the CPU.
+We have presented an efficient implementation for rendering depth of field effect with \bokehs. This method allows to combine efficient blur-approach with \bokeh reproduction. We use an heuristic to identify pixels that produce distinct \bokeh and render them with textured quads. This implementation avoids CPU/GPU synchronization by calling indirect draw commands. These command read directly the number of instances to draw on GPU, without back reading from the CPU.
 
 
-While this approach provides good results, several improvements could be done for improving performances. Especially, \codecmd{AtomicCounters} are not super fast. By dividing screen into four parts for example, each part having an atomic counter, let concurrent operation would produce a the same time. Large \coc size requires to rasterize quad on a large portion of the screen. Using the hierarchical rasterization, as proposed in~\cite{Futurmark11}, would also improve performances.
+While this approach provides good results, several improvements could be done for improving performances. Especially, \codecmd{AtomicCounters} are not super fast. By dividing screen into four parts for example, each part having an atomic counter, would allow better scheduling. Large \coc size requires to rasterize quad on a large portion of the screen. Using the hierarchical rasterization, as proposed in~\cite{Futurmark11}, would also improve performances.
 
 
 
-\begin{lstlisting}[language=C++,float={htb},caption={Initialization and drawing for extracting bokehs.},label={YourName:bokehextraction}]
-
-
+\begin{lstlisting}[language=C++,float={htb},caption={Host application for extracting \bokehs \emph{(Pass 2)}.},label={DeRousiers:bokehextractioncpp}]
 		// Indirect buffer definition
 		struct DrawArraysIndirectCommand
 		{
@@ -146,43 +142,36 @@ While this approach provides good results, several improvements could be done fo
 			GLuint reservedMustBeZero;
 		};
 
-		...
-
 		// Create atomic counter
 		GLuint indirectBufferID;
-
 		glGenBuffers(1,&indirectBufferID);
 		glBindBuffer(GL_DRAW_INDIRECT_BUFFER,indirectBufferID);
 		DrawArraysIndirectCommand indirectCmd;
 		indirectCmd.count              = 1;
-		indirectCmd.primCount          = 6;
+		indirectCmd.primCount          = 1;
 		indirectCmd.first              = 0;
 		indirectCmd.reservedMustBeZero = 0;
-
 		glBufferData(GL_DRAW_INDIRECT_BUFFER,sizeof(DrawArraysIndirectCommand),&indirecCmd,GL_DYNAMIC_DRAW);
 
-		// Create a texture proxy for the indirect buffer
+		// Create a texture proxy for the indirect buffer 
+		// (for using it as an atomic counter)
 		glGenTextures(1, &bokehCountTexID);
 		glBindTexture(GL_TEXTURE_BUFFER, bokehCountTexID);
 		glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, pointIndirectBuffer.id);
 
-
 		// Create position and color textures with a GL_RGBA32F inner format
-
 		...
 
 		// Bind atomic counter
 		glActiveTexture(GL_TEXTURE0 + bokehCountTexUnit);
 		glBindTexture(GL_TEXTURE_BUFFER, bokehCountTexID);
-
 		glBindImageTexture(bokehCountTexUnit,bokehCountTexID,0,false,0,GL_READ_WRITE,GL_R32UI);
 
 		// Bind position image buffer
-		glActiveTexture(GL_TEXTURE0 + bokehPosTexUnit);
-		glBindImageTexture(bokehPosTexUnit,bokehPosTex.id,0,false,0,GL_READ_WRITE,GL_RGBA32F);
+		glActiveTexture(GL_TEXTURE0 + bokehPosionTexUnit);
+		glBindImageTexture(bokehPostionTexUnit,bokehPositionTex.id,0,false,0,GL_READ_WRITE,GL_RGBA32F);
 
 		// Bind color image buffer
-
 		glActiveTexture(GL_TEXTURE0 + bokehColorTexUnit);
 		glBindImageTexture(bokehColorTexUnit,bokehColorTex.id,0,false,0,GL_READ_WRITE,GL_RGBA32F);
 
@@ -190,32 +179,28 @@ While this approach provides good results, several improvements could be done fo
 \end{lstlisting}
 
 
-\begin{lstlisting}[language=GLSL,float={htb},caption={Fragment shader for extracting bokehs.},label={YourName:listing1}]
+\begin{lstlisting}[language=GLSL,float={htb},caption={Fragment shader for extracting \bokehs \emph{(Pass 2)}.},label={DeRousiers:bokehextractionfs}]	
 	#version 420
-
 	// Bokeh counter, position (x,y,z,size), and color
 	layout(size1x32) coherent uniform uimage1D 	BokehCountTex;
-	layout(size4x32) coherent uniform  image1D 	BokehPosTex;
+	layout(size4x32) coherent uniform  image1D 	BokehPositionTex;
 	layout(size4x32) coherent uniform  image1D 	BokehColorTex;
 
-
 	// Constrast threshold
-	uniform float lumThreshold;
-
+	uniform float LumThreshold;
 	...
 
 	float sizeCenter; // Current CoC size
-
 	vec3 colorCenter; // Current pixel color
 	vec3 colorNeighs; // Average color of the neighborhood
 
 	// Append pixel whose constrast is greater than the user's threshold
 	float lumNeighs = dot(colorNeighs, vec3(0.299f, 0.587f, 0.114f));
 	float lumCenter = dot(colorCenter, vec3(0.299f, 0.587f, 0.114f));
-	if((lumCenter-lumNeighs)>lumThreshold)
+	if((lumCenter-lumNeighs)>LumThreshold)
 	{
 		int current = int(imageAtomicAdd(BokehCountTex, 1, 1));
-		imageStore(BokehPosTex,current,vec4(gl_FragCoord.x,gl_FragCoord.y,gl_FragCoord.z,sizeCenter));
+		imageStore(BokehPositionTex,current,vec4(gl_FragCoord.x,gl_FragCoord.y,gl_FragCoord.z,sizeCenter));
 		imageStore(BokehColorTex,current,vec4(colorCenter,1));
 	}
 \end{lstlisting}
@@ -223,12 +208,10 @@ While this approach provides good results, several improvements could be done fo
 
 
 
-\begin{lstlisting}[language=C++,float={htb},caption={Your caption.},label={YourName:listing1}]
-
+\begin{lstlisting}[language=C++,float={htb},caption={Host application for rendering bokeh \emph{(Pass 4)}.},label={DeRousiers:renderingbokehcpp}]
 	// Create point VBO
 	GLuint pointVboID;
 	glm::vec3 defaultPosition(0,0,0);
-
 	glGenBuffers(1,&pointVboID);
 	glBindBuffer(GL_ARRAY_BUFFER,pointVboID);
 	glBufferData(GL_ARRAY_BUFFER,sizeof(glm::vec3),&defaultPosition,GL_STATIC_DRAW);
@@ -236,16 +219,14 @@ While this approach provides good results, several improvements could be done fo
 	// Create point VAO
 	GLuint pointVaoID;
 	glGenVertexArrays(1, &pointVaoID);
-
 	glBindVertexArray(pointVaoID);
 	glVertexAttribPointer(semantic::PositionLocation,3, GL_RGB,false,GL_FLOAT,GLF_BUFFER_OFFSET(_offset));
 	glEnableVertexAttribArray(semantic::PositionLocation);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
-
 	...
 
-
+	// Wait for atomic counter synchronization and draw bokehs
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 	glUseProgram(bokehRenderingProgramID);
 
@@ -254,51 +235,43 @@ While this approach provides good results, several improvements could be done fo
 	glActiveTexture(GL_TEXTURE0 + bokehColorTexUnit);
 
 	glBindTexture(GL_TEXTURE_1D,bokehColorTexID);
-	glActiveTexture(GL_TEXTURE0 + bokehPosTexUnit);
-	glBindTexture(GL_TEXTURE_1D,bokehPosTexID);
+	glActiveTexture(GL_TEXTURE0 + bokehPositionTexUnit);
+	glBindTexture(GL_TEXTURE_1D,bokehPositionTexID);
 
 	glBindVertexArray(pointVaoID);
 		glBindBuffer(GL_DRAW_INDIRECT_BUFFER,indirectBufferID);
 		glDrawArraysIndirect(GL_POINTS,NULL);
-
 		glBindBuffer(GL_DRAW_INDIRECT_BUFFER,0);
 	glBindVertexArray(0);
-
 \end{lstlisting}
 
 
-\begin{lstlisting}[language=C++,float={htb},caption={Vertex shader for rendering bokeh.},label={YourName:listing1}]
+\begin{lstlisting}[language=C++,float={htb},caption={Pixel shader application for rendering bokeh \emph{(Pass 4)}.},label={DeRousiers:renderingbokehps}]
 #version 420
-
-uniform vec2      PixelScale;    // (1/xResolution,1/yResolution)
-uniform sampler1D BokehPosTex;   // (x,y,z,scale)
+uniform vec2      PixelScale;       // (1/xResolution,1/yResolution)
+uniform sampler1D BokehPositionTex; // (x,y,z,scale)
 uniform sampler1D BokehColorTex;
 in vec3           Position;
-
 out float         Radius;
 out vec4          Color;
 
 int main()
 {
-	vec3 pos     = texelFetch(BokehPosTex,gl_InstanceID,0).xyzw;
+	vec3 pos     = texelFetch(BokehPositionTex,gl_InstanceID,0).xyzw;
 	Radius       = pos.w;
-
 	Color        = texelFetch(BokehColorTex,gl_InstanceID,0);
 	gl_Position	 = vec4( (Position.xy+pos.xy)*PixelScale,pos.z,1);
 }
 \end{lstlisting}
 
-\begin{lstlisting}[language=GLSL,float={htb},caption={Geometry shader for rendering bokeh.},label={YourName:listing1}]
+\begin{lstlisting}[language=GLSL,float={htb},caption={Geometry shader for rendering bokeh \emph{(Pass 4)}.},label={DeRousiers:renderingbokehgs}]
 #version 420
-
-
 uniform mat4     Transformation;
 uniform vec2     PixelScale;
 in  float        Radius[1];
 in  vec4         Color[1];
 out vec4         Radiance;
 out vec2         TexCoord;
-
 layout(points)   in;
 layout(triangle_strip, max_vertices = 6) out;
 
@@ -306,55 +279,43 @@ void main()
 {
 	gl_Layer     = 0;
 	vec4 offsetx = vec4(PixelScale.x*Radius[0],0,0,0);
-
 	vec4 offsety = vec4(0,PixelScale.y*Radius[0],0,0);
 	Radiance     = Color[0];
 
 	// First triangle
-	gl_Position = Transformation * ( gl_in[0].gl_Position-offsetx-offsety);
+	gl_Position = Transformation*(gl_in[0].gl_Position-offsetx-offsety);
 	TexCoord    = vec2(0,0);
 	EmitVertex();
-
-
-	gl_Position = Transformation * ( gl_in[0].gl_Position+offsetx-offsety);
+	gl_Position = Transformation*(gl_in[0].gl_Position+offsetx-offsety);
 	TexCoord    = vec2(1,0);
 	EmitVertex();
-
-	gl_Position = Transformation * ( gl_in[0].gl_Position+offsetx+offsety);
+	gl_Position = Transformation*(gl_in[0].gl_Position+offsetx+offsety);
 	TexCoord    = vec2(1,1);
-
 	EmitVertex();
 	EndPrimitive();
-
 	// Second triangle
-	gl_Position = Transformation * ( gl_in[0].gl_Position-offsetx-offsety);
-	TexCoord    = vec2(0,0);
-	EmitVertex();
-
-
-	gl_Position = Transformation * ( gl_in[0].gl_Position+offsetx+offsety);
-	TexCoord    = vec2(1,1);
-	EmitVertex();
-
-	gl_Position = Transformation * ( gl_in[0].gl_Position-offsetx+offsety);
-	TexCoord    = vec2(0,1);
-
-	EmitVertex();
-	EndPrimitive();
+	...
 }
 \end{lstlisting}
 
-\begin{lstlisting}[language=GLSL,float={htb},caption={Fragment shader for rendering bokeh.},label={YourName:listing1}]
+%	gl_Position = Transformation*(gl_in[0].gl_Position-offsetx-offsety);
+%	TexCoord    = vec2(0,0);
+%	EmitVertex();
+%	gl_Position = Transformation*(gl_in[0].gl_Position+offsetx+offsety);
+%	TexCoord    = vec2(1,1);
+%	EmitVertex();
+%	gl_Position = Transformation*(gl_in[0].gl_Position-offsetx+offsety);
+%	TexCoord    = vec2(0,1);
+%	EmitVertex();
+%	EndPrimitive();
+
+\begin{lstlisting}[language=GLSL,float={htb},caption={Fragment shader for rendering bokeh \emph{(Pass 4)}.},label={DeRousiers:renderingbokehfs}]
 #version 420
-
-
 uniform sampler2D    BokehShapeTex; // Bokeh shape texture
 uniform float        Attenuation;   // Factor for attenuating bokeh borders
 in  vec4             Radiance;
 in  vec2             TexCoord;
 out vec4             FragColor;
-
-
 void main()
 {
 	// Add an attenuation function in order to avoid hard edge on the 
