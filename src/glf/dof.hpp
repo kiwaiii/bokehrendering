@@ -28,7 +28,7 @@ namespace glf
 										float 			_farEnd,
 										float 			_maxRadius,
 										int 			_nSamples,
-										float 			_intensityThreshold,
+										float 			_luminosityThreshold,
 										float 			_cocThreshold,
 										float			_attenuation,
 										float			_areaFactor,
@@ -41,7 +41,7 @@ namespace glf
 			GLint 						positionTexUnit;
 			GLint 						rotationTexUnit;
 			GLint 						inputTexUnit;
-			GLint 						bokehPosTexUnit;
+			GLint 						bokehPositionTexUnit;
 			GLint 						bokehColorTexUnit;
 			GLint 						bokehCountTexUnit;
 
@@ -52,8 +52,8 @@ namespace glf
 			GLint						maxRadiusVar;		// Max CoC radius
 			GLint						viewMatVar;			// View matrix
 			GLint						nSamplesVar;		// #samples for computing blur
-			GLint						intThresholdVar;	// ?
-			GLint						cocThresholdVar;	// CoC threshold ?
+			GLint						lumThresholdVar;	// Luminosity threshold used to determine if a pixel is a bokeh
+			GLint						cocThresholdVar;	// CoC threshold used to determine if a pixel is a bokeh
 			GLint						areaFactorVar;		// Weight of the bokeh integral
 
 			Program 					program;
@@ -63,7 +63,7 @@ namespace glf
 		struct BokehPass
 		{	
 										BokehPass():program("BokehPass"){}
-			GLint 						bokehPosTexUnit;
+			GLint 						bokehPositionTexUnit;
 			GLint 						bokehShapeTexUnit;
 			GLint 						bokehColorTexUnit;
 			GLint						attenuationVar;
@@ -74,7 +74,7 @@ namespace glf
 	private:
 		//----------------------------------------------------------------------
 		int								maxBokehCount;
-		Texture2D						bokehPosTex;		// Store bokeh position
+		Texture2D						bokehPositionTex;	// Store bokeh position
 		Texture2D						bokehColorTex;		// Store bokeh color
 		GLuint							bokehCountTexID;
 

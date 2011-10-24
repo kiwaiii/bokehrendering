@@ -92,7 +92,7 @@ namespace
 		float								farStart;
 		float								farEnd;
 		float								maxRadius;
-		float								intThreshold;
+		float								lumThreshold;
 		float								cocThreshold;
 		float								attenuation;
 		float								areaFactor;
@@ -198,7 +198,7 @@ namespace
 		dofParams.farEnd			= 20.f;
 		dofParams.maxRadius			= 10.f;
 		dofParams.nSamples			= 24;
-		dofParams.intThreshold		= 5000.f;
+		dofParams.lumThreshold		= 5000.f;
 		dofParams.cocThreshold		= 3.5f;
 		dofParams.attenuation		= 5.f;
 		dofParams.areaFactor		= 1.f;
@@ -471,9 +471,9 @@ void interface()
 				update |= ctx::ui->HorizontalSlider(sliderRect,1.f,32.f,&fnSamples);
 				app->dofParams.nSamples = fnSamples;
 
-				sprintf(labelBuffer,"Int. Threshold : %.0f",app->dofParams.intThreshold);
+				sprintf(labelBuffer,"Lum. Threshold : %.0f",app->dofParams.lumThreshold);
 				ctx::ui->Label(none,labelBuffer);
-				ctx::ui->HorizontalSlider(sliderRect,100.0f,15000.1f,&app->dofParams.intThreshold);
+				ctx::ui->HorizontalSlider(sliderRect,100.0f,15000.1f,&app->dofParams.lumThreshold);
 
 				sprintf(labelBuffer,"CoC. Threshold : %.2f",app->dofParams.cocThreshold);
 				ctx::ui->Label(none,labelBuffer);
@@ -605,7 +605,7 @@ void display()
 										app->dofParams.farEnd,
 										app->dofParams.maxRadius,
 										app->dofParams.nSamples,
-										app->dofParams.intThreshold,
+										app->dofParams.lumThreshold,
 										app->dofParams.cocThreshold,
 										app->dofParams.attenuation,
 										app->dofParams.areaFactor,
