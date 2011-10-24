@@ -27,8 +27,8 @@ namespace glf
 
 		// Create texture for counting bokeh
 		// Texture size is set to the resolution in order to avoid overflow
-		bokehPosTex.Allocate(GL_RGBA32F,_w,_h);
-		bokehPosTex.SetFiltering(GL_NEAREST,GL_NEAREST);
+		bokehPositionTex.Allocate(GL_RGBA32F,_w,_h);
+		bokehPositionTex.SetFiltering(GL_NEAREST,GL_NEAREST);
 		bokehColorTex.Allocate(GL_RGBA32F,_w,_h);
 		bokehColorTex.SetFiltering(GL_NEAREST,GL_NEAREST);
 
@@ -56,7 +56,7 @@ namespace glf
 		cocPass.farEndVar			= cocPass.program["FarEnd"].location;
 		cocPass.maxRadiusVar		= cocPass.program["MaxRadius"].location;
 		cocPass.nSamplesVar			= cocPass.program["nSamples"].location;
-		cocPass.intThresholdVar		= cocPass.program["IntThreshold"].location;
+		cocPass.lumThresholdVar		= cocPass.program["LumThreshold"].location;
 		cocPass.cocThresholdVar		= cocPass.program["CoCThreshold"].location;
 		cocPass.viewMatVar			= cocPass.program["ViewMat"].location;
 		cocPass.areaFactorVar		= cocPass.program["AreaFactor"].location;
@@ -64,7 +64,7 @@ namespace glf
 		cocPass.positionTexUnit		= cocPass.program["PositionTex"].unit;
 		cocPass.rotationTexUnit		= cocPass.program["RotationTex"].unit;
 		cocPass.inputTexUnit		= cocPass.program["InputTex"].unit;
-		cocPass.bokehPosTexUnit		= cocPass.program["BokehPosTex"].unit;
+		cocPass.bokehPositionTexUnit= cocPass.program["BokehPositionTex"].unit;
 		cocPass.bokehColorTexUnit	= cocPass.program["BokehColorTex"].unit;
 		cocPass.bokehCountTexUnit	= cocPass.program["BokehCountTex"].unit;
 
@@ -72,7 +72,7 @@ namespace glf
 		glProgramUniform1i(cocPass.program.id, 		  cocPass.program["PositionTex"].location,		cocPass.positionTexUnit);
 		glProgramUniform1i(cocPass.program.id, 		  cocPass.program["RotationTex"].location,		cocPass.rotationTexUnit);
 		glProgramUniform1i(cocPass.program.id, 		  cocPass.program["InputTex"].location,			cocPass.inputTexUnit);
-		glProgramUniform1i(cocPass.program.id, 		  cocPass.program["BokehPosTex"].location,		cocPass.bokehPosTexUnit);
+		glProgramUniform1i(cocPass.program.id, 		  cocPass.program["BokehPositionTex"].location,	cocPass.bokehPositionTexUnit);
 		glProgramUniform1i(cocPass.program.id, 		  cocPass.program["BokehColorTex"].location,	cocPass.bokehColorTexUnit);
 		glProgramUniform1i(cocPass.program.id, 		  cocPass.program["BokehCountTex"].location,	cocPass.bokehCountTexUnit);
 
@@ -130,14 +130,14 @@ namespace glf
 									LoadFile("../resources/shaders/bokeh.gs"),
 									LoadFile("../resources/shaders/bokeh.fs"));
 
-		bokehPass.bokehPosTexUnit	= bokehPass.program["BokehPosTex"].unit;
+		bokehPass.bokehPositionTexUnit= bokehPass.program["BokehPositionTex"].unit;
 		bokehPass.bokehColorTexUnit	= bokehPass.program["BokehColorTex"].unit;
 		bokehPass.bokehShapeTexUnit	= bokehPass.program["BokehShapeTex"].unit;
 		bokehPass.attenuationVar	= bokehPass.program["Attenuation"].location;
 
 		glProgramUniformMatrix4fv(bokehPass.program.id,	bokehPass.program["Transformation"].location,	1, GL_FALSE, &transform[0][0]);
 		glProgramUniform2f(bokehPass.program.id, 		bokehPass.program["PixelScale"].location,		1.f/_w, 1.f/_h);
-		glProgramUniform1i(bokehPass.program.id, 		bokehPass.program["BokehPosTex"].location,		bokehPass.bokehPosTexUnit);
+		glProgramUniform1i(bokehPass.program.id, 		bokehPass.program["BokehPositionTex"].location, bokehPass.bokehPositionTexUnit);
 		glProgramUniform1i(bokehPass.program.id, 		bokehPass.program["BokehShapeTex"].location,	bokehPass.bokehShapeTexUnit);
 		glProgramUniform1i(bokehPass.program.id, 		bokehPass.program["BokehColorTex"].location,	bokehPass.bokehColorTexUnit);
 
@@ -160,7 +160,7 @@ namespace glf
 								float 			_farEnd,
 								float 			_maxRadius,
 								int 			_nSamples,
-								float 			_intThreshold,
+								float 			_lumThreshold,
 								float 			_cocThreshold,
 								float 			_attenuation,
 								float			_areaFactor,
@@ -172,7 +172,7 @@ namespace glf
 		pointIndirectBuffer.Unlock();
 
 		glUseProgram(cocPass.program.id);
-		glProgramUniform1f(cocPass.program.id,			cocPass.intThresholdVar,	_intThreshold);
+		glProgramUniform1f(cocPass.program.id,			cocPass.lumThresholdVar,	_lumThreshold);
 		glProgramUniform1f(cocPass.program.id,			cocPass.cocThresholdVar,	_cocThreshold);
 		glProgramUniform1f(cocPass.program.id,			cocPass.nearStartVar,		_nearStart);
 		glProgramUniform1f(cocPass.program.id,			cocPass.nearEndVar,			_nearEnd);
@@ -186,8 +186,8 @@ namespace glf
 		glActiveTexture(GL_TEXTURE0 + cocPass.bokehCountTexUnit);
 		glBindTexture(GL_TEXTURE_BUFFER, bokehCountTexID);
 		glBindImageTextureEXT(cocPass.bokehCountTexUnit, 	bokehCountTexID,	0, false, 0,  GL_READ_WRITE, GL_R32UI);
-		glActiveTexture(GL_TEXTURE0 + cocPass.bokehPosTexUnit);
-		glBindImageTextureEXT(cocPass.bokehPosTexUnit,		bokehPosTex.id, 	0, false, 0,  GL_READ_WRITE, GL_RGBA32F);
+		glActiveTexture(GL_TEXTURE0 + cocPass.bokehPositionTexUnit);
+		glBindImageTextureEXT(cocPass.bokehPositionTexUnit,	bokehPositionTex.id, 	0, false, 0,  GL_READ_WRITE, GL_RGBA32F);
 		glActiveTexture(GL_TEXTURE0 + cocPass.bokehColorTexUnit);
 		glBindImageTextureEXT(cocPass.bokehColorTexUnit, 	bokehColorTex.id,	0, false, 0,  GL_READ_WRITE, GL_RGBA32F);
 		_inputTex.Bind(cocPass.inputTexUnit);
@@ -218,7 +218,7 @@ namespace glf
 		glProgramUniform1f(bokehPass.program.id,bokehPass.attenuationVar,_attenuation);
 		bokehPass.bokehShapeTex.Bind(bokehPass.bokehShapeTexUnit);
 		bokehColorTex.Bind(bokehPass.bokehColorTexUnit);
-		bokehPosTex.Bind(bokehPass.bokehPosTexUnit);
+		bokehPositionTex.Bind(bokehPass.bokehPositionTexUnit);
 		pointVAO.Draw(GL_POINTS,pointIndirectBuffer);
 
 		glf::CheckError("DOFProcessor::Draw");
