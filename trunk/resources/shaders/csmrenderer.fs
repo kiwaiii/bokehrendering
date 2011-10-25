@@ -51,7 +51,7 @@ vec3 BRDF(	in vec3 _viewDir,
 	// Max function prevents "nan" value due to the denominator
 	float val	= max(0.f,D * F *G / (M_PI * NdotL * NdotV));
 
-	return _diffuse * NdotL / M_PI + BlendFactor*_specularity*vec3(val);
+	return _diffuse * NdotL / M_PI + BlendFactor*_diffuse*_specularity*val;
 }
 //------------------------------------------------------------------------------
 float ShadowTest(const vec3 _pos, int _cascadeIndex)

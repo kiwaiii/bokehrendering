@@ -15,7 +15,7 @@
 #include <glf/camera.hpp>
 #include <glf/wrapper.hpp>
 #include <glf/helper.hpp>
-#include <glf/dof.hpp>
+#include <glf/dof2.hpp>
 #include <glf/postprocessor.hpp>
 #include <glf/utils.hpp>
 #include <fstream>
@@ -91,7 +91,8 @@ namespace
 		float								nearEnd;
 		float								farStart;
 		float								farEnd;
-		float								maxRadius;
+		float								maxCoCRadius;
+		float								maxBokehRadius;
 		float								lumThreshold;
 		float								cocThreshold;
 		float								attenuation;
@@ -184,7 +185,7 @@ namespace
 		csmParams.nSamples			= 1;
 		csmParams.bias				= 0.0016f;
 		csmParams.aperture			= 0.0f;
-		csmParams.blendFactor		= 0.f;
+		csmParams.blendFactor		= 1.f;
 		csmParams.cascadeAlpha		= 0.5f;
 
 		skyParams.sunTheta			= 0.63;
@@ -196,7 +197,8 @@ namespace
 		dofParams.nearEnd			= 3.00;
 		dofParams.farStart			= 10.f;
 		dofParams.farEnd			= 20.f;
-		dofParams.maxRadius			= 10.f;
+		dofParams.maxCoCRadius		= 10.f;
+		dofParams.maxBokehRadius	= 10.f;
 		dofParams.nSamples			= 24;
 		dofParams.lumThreshold		= 5000.f;
 		dofParams.cocThreshold		= 3.5f;
@@ -461,9 +463,13 @@ void interface()
 				ctx::ui->Label(none,labelBuffer);
 				ctx::ui->HorizontalSlider(sliderRect,1.f,100.f,&app->dofParams.farEnd);
 
-				sprintf(labelBuffer,"Max Radius : %.2f",app->dofParams.maxRadius);
+				sprintf(labelBuffer,"Max CoC Radius : %.2f",app->dofParams.maxCoCRadius);
 				ctx::ui->Label(none,labelBuffer);
-				ctx::ui->HorizontalSlider(sliderRect,1.f,30.f,&app->dofParams.maxRadius);
+				ctx::ui->HorizontalSlider(sliderRect,1.f,30.f,&app->dofParams.maxCoCRadius);
+
+				sprintf(labelBuffer,"Max Bokeh Radius : %.2f",app->dofParams.maxBokehRadius);
+				ctx::ui->Label(none,labelBuffer);
+				ctx::ui->HorizontalSlider(sliderRect,1.f,30.f,&app->dofParams.maxBokehRadius);
 
 				float fnSamples = app->dofParams.nSamples;
 				sprintf(labelBuffer,"nSamples : %d",app->dofParams.nSamples);
@@ -589,6 +595,7 @@ void display()
 										app->csmParams.bias,
 										app->renderTarget1);
 
+				#if 0
 				glBindFramebuffer(GL_FRAMEBUFFER,app->renderTarget2.framebuffer);
 				glClear(GL_COLOR_BUFFER_BIT);
 
@@ -603,7 +610,7 @@ void display()
 										app->dofParams.nearEnd,
 										app->dofParams.farStart,
 										app->dofParams.farEnd,
-										app->dofParams.maxRadius,
+										app->dofParams.maxCoCRadius,
 										app->dofParams.nSamples,
 										app->dofParams.lumThreshold,
 										app->dofParams.cocThreshold,
@@ -613,12 +620,39 @@ void display()
 
 				glBindFramebuffer(GL_FRAMEBUFFER,0);
 
-
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 				app->postProcessor.Apply(app->renderTarget2.texture,
 //				app->postProcessor.Apply(app->dofProcessor.hblurPass.blurTex,
 //				app->postProcessor.Apply(app->dofProcessor.cocPass.cocDepthTex,
 										 app->toneParams.toneExposure);
+				#endif
+
+				#if 1
+				glBindFramebuffer(GL_FRAMEBUFFER,0);
+				glDisable(GL_STENCIL_TEST);
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+				app->dofProcessor.Draw(	app->renderTarget1.texture,
+										app->gbuffer.positionTex,
+										view,
+										app->dofParams.nearStart,
+										app->dofParams.nearEnd,
+										app->dofParams.farStart,
+										app->dofParams.farEnd,
+										app->dofParams.maxCoCRadius,
+										app->dofParams.maxBokehRadius,
+										app->dofParams.nSamples,
+										app->dofParams.lumThreshold,
+										app->dofParams.cocThreshold,
+										app->dofParams.attenuation,
+										app->dofParams.areaFactor,
+										app->renderTarget2);
+
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//				app->postProcessor.Apply(app->dofProcessor.detectionTex,
+				app->postProcessor.Apply(app->dofProcessor.renderingTex,
+//				app->postProcessor.Apply(app->dofProcessor.cocPass.cocDepthTex,
+										 app->toneParams.toneExposure);
+				#endif
 
 				break;
 		case bufferType::GB_POSITION : 
