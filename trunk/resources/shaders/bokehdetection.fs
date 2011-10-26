@@ -27,49 +27,22 @@ void main()
 	vec3  color   = textureLod(ColorTex,coord,0).xyz;
 	float cocSize = blur * MaxCoCRadius;
 
-	// Compute neighborhood color
-	#if 1
+	// Compute 5x5 neighborhood color with 9 samples
 	vec3 avgColor   = vec3(0);
-	vec2 avgCoord[9];
-	avgCoord[0] = vec2(-1.5f, -1.5f);
-	avgCoord[1] = vec2(0.5f, -1.5f);
-	avgCoord[2] = vec2(1.5f, -1.5f);
-	avgCoord[3] = vec2(-1.5f, 0.5f);
-	avgCoord[4] = vec2(0.5f, 0.5f);
-	avgCoord[5] = vec2(1.5f, 0.5f);
-	avgCoord[6] = vec2(-1.5f, 1.5f);
-	avgCoord[7] = vec2(0.5f, 1.5f);
-	avgCoord[8] = vec2(1.5f, 1.5f);
-	for(int i=0;i<9;++i)
-	{
-		avgColor += textureLod(ColorTex,(gl_FragCoord.xy+avgCoord[i])*rcpSize,0).xyz;
-	}
+	avgColor += textureLod(ColorTex,(gl_FragCoord.xy+vec2(-1.5f,-1.5f))*rcpSize,0).xyz;
+	avgColor += textureLod(ColorTex,(gl_FragCoord.xy+vec2( 0.5f,-1.5f))*rcpSize,0).xyz;
+	avgColor += textureLod(ColorTex,(gl_FragCoord.xy+vec2( 1.5f,-1.5f))*rcpSize,0).xyz;
+	avgColor += textureLod(ColorTex,(gl_FragCoord.xy+vec2(-1.5f, 0.5f))*rcpSize,0).xyz;
+	avgColor += textureLod(ColorTex,(gl_FragCoord.xy+vec2( 0.5f, 0.5f))*rcpSize,0).xyz;
+	avgColor += textureLod(ColorTex,(gl_FragCoord.xy+vec2( 1.5f, 0.5f))*rcpSize,0).xyz;
+	avgColor += textureLod(ColorTex,(gl_FragCoord.xy+vec2(-1.5f, 1.5f))*rcpSize,0).xyz;
+	avgColor += textureLod(ColorTex,(gl_FragCoord.xy+vec2( 0.5f, 1.5f))*rcpSize,0).xyz;
+	avgColor += textureLod(ColorTex,(gl_FragCoord.xy+vec2( 1.5f, 1.5f))*rcpSize,0).xyz;
 	avgColor /= 9;
-	#endif
 
-	#if 0
-	int count       = 0;
-	vec3 avgColor   = vec3(0);
-	for(int y=-2;y<2;++y)
-	for(int x=-2;x<2;++x)
-	{
-		vec2 i  = (gl_FragCoord.xy+vec2(0.5f+0.5f*x,0.5f+0.5f*y))*rcpSize;
-		vec3 c  = textureLod(ColorTex,i,0).xyz;
-		float d = ExtractDepth(i);
-		if(d>depth)
-		{
-			avgColor += c;
-			++count;
-		}
-	}
-	avgColor /= max(count,1);
-	#endif
-
-	// Compute luminosity
-//	vec3  lumWeights = vec3(0.299f, 0.587f, 0.114f);
-	vec3  lumWeights = vec3(1, 1, 1);
-	float colorLum   = dot(lumWeights, color);
-	float avgLum     = dot(lumWeights, avgColor);
+	// Compute luminosity (with equal weights)
+	float colorLum   = dot(vec3(1), color);
+	float avgLum     = dot(vec3(1), avgColor);
 	float difLum     = max(colorLum-avgLum,0);
 
 	// Count point where intensity of neighbors is less than the current pixel
@@ -80,7 +53,9 @@ void main()
 		bufSize 	= textureSize(ColorTex,0).xy;
 		coord.y 	= int(floor(current/bufSize.y));
 		coord.x 	= current - coord.y*bufSize.y;
-		vec3 lcolor = color.xyz / (3.141592654f*cocSize*cocSize*1.f);
+		
+		// Compute energy of the bokeh according to CoC size
+		vec3 lcolor = color.xyz / (3.141592654f*cocSize*cocSize);
 		imageStore(BokehPositionTex,coord,vec4(gl_FragCoord.x,gl_FragCoord.y,depth,blur));
 		imageStore(BokehColorTex,coord,vec4(lcolor,1));
 		color 		= vec3(0);

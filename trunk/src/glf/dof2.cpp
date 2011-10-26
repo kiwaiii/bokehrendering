@@ -33,8 +33,6 @@ namespace glf
 			detectionTex.SetFiltering(GL_LINEAR,GL_LINEAR);
 			blurTex.Allocate(GL_RGBA32F,_w,_h);
 			blurTex.SetFiltering(GL_LINEAR,GL_LINEAR);
-			renderingTex.Allocate(GL_RGBA32F,_w,_h);
-			renderingTex.SetFiltering(GL_LINEAR,GL_LINEAR);
 
 			glGenFramebuffers(1, &blurDepthFBO);
 			glBindFramebuffer(GL_FRAMEBUFFER,blurDepthFBO);
@@ -56,13 +54,6 @@ namespace glf
 			glDrawBuffer(GL_COLOR_ATTACHMENT0);
 			glBindFramebuffer(GL_FRAMEBUFFER,0);
 			glf::CheckFramebuffer(blurFBO);
-
-			glGenFramebuffers(1, &renderingFBO);
-			glBindFramebuffer(GL_FRAMEBUFFER,renderingFBO);
-			glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0, renderingTex.target, renderingTex.id, 0);
-			glDrawBuffer(GL_COLOR_ATTACHMENT0);
-			glBindFramebuffer(GL_FRAMEBUFFER,0);
-			glf::CheckFramebuffer(renderingFBO);
 
 			// Create texture for counting bokeh
 			// Texture size is set to the resolution in order to avoid overflow
@@ -155,8 +146,8 @@ namespace glf
 			renderingPass.bokehPositionTexUnit	= renderingPass.program["BokehPositionTex"].unit;
 			renderingPass.bokehColorTexUnit		= renderingPass.program["BokehColorTex"].unit;
 			renderingPass.bokehShapeTexUnit		= renderingPass.program["BokehShapeTex"].unit;
-			renderingPass.attenuationVar		= renderingPass.program["Attenuation"].location;
 			renderingPass.maxBokehRadiusVar		= renderingPass.program["MaxBokehRadius"].location;
+			renderingPass.bokehDepthCutoffVar	= renderingPass.program["BokehDepthCutoff"].location;
 
 			glProgramUniformMatrix4fv(renderingPass.program.id,	renderingPass.program["Transformation"].location,1, GL_FALSE, &transform[0][0]);
 			glProgramUniform2f(renderingPass.program.id, renderingPass.program["PixelScale"].location,1.f/_w, 1.f/_h);
@@ -181,8 +172,7 @@ namespace glf
 								int				_nSamples,
 								float			_lumThreshold,
 								float			_cocThreshold,
-								float			_attenuation,
-								float			_areaFactor,
+								float			_bokehDepthCutoff,
 								const RenderTarget& _renderTarget)
 	{
 		glf::CheckError("DOFProcessor::DrawBegin");
@@ -223,7 +213,7 @@ namespace glf
 			blurDepthTex.Bind(detectionPass.blurDepthTexUnit);
 			_colorTex.Bind(detectionPass.colorTexUnit);
 			_renderTarget.Draw();
-			glf::CheckError("DOFProcessor::DrawBLURDEPTH");
+			glf::CheckError("DOFProcessor::DrawDETECTION");
 
 			// Print indirect buffer
 			#if 0
@@ -254,7 +244,7 @@ namespace glf
 			glf::CheckError("DOFProcessor::DrawVBLUR");
 
 		// H-Blur
-			glBindFramebuffer(GL_FRAMEBUFFER,renderingFBO);
+			glBindFramebuffer(GL_FRAMEBUFFER,_renderTarget.framebuffer);
 			glClear(GL_COLOR_BUFFER_BIT);
 			glProgramUniform1f(blurPass.program.id,		blurPass.maxCoCRadiusVar,	_maxCoCRadius);
 			glProgramUniform2f(blurPass.program.id,		blurPass.directionVar,		0,1);
@@ -266,13 +256,14 @@ namespace glf
 		// Bokeh rendering (with additive blending)
 		glUseProgram(renderingPass.program.id);
 			glMemoryBarrierEXT(GL_ALL_BARRIER_BITS_EXT);
-			glProgramUniform1f(renderingPass.program.id,renderingPass.attenuationVar,_attenuation);
 			glProgramUniform1f(renderingPass.program.id,renderingPass.maxBokehRadiusVar,_maxBokehRadius);
+			glProgramUniform1f(renderingPass.program.id,renderingPass.bokehDepthCutoffVar,_bokehDepthCutoff);
 			bokehShapeTex.Bind(renderingPass.bokehShapeTexUnit);
 			bokehColorTex.Bind(renderingPass.bokehColorTexUnit);
 			blurDepthTex.Bind(renderingPass.blurDepthTexUnit);
 			bokehPositionTex.Bind(renderingPass.bokehPositionTexUnit);
 			pointVAO.Draw(GL_POINTS,pointIndirectBuffer);
+			glf::CheckError("DOFProcessor::DrawRENDERING");
 
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
 		glf::CheckError("DOFProcessor::DrawEnd");
