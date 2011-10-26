@@ -14,8 +14,8 @@ namespace glf
 	SSAOPass::SSAOPass(int _w, int _h):
 	program("SSAOPass")
 	{
-		program.Compile(LoadFile("../resources/shaders/ssaopass.vs"),
-						LoadFile("../resources/shaders/ssaopass.fs"));
+		program.Compile(LoadFile("../resources/shaders/ssao.vs"),
+						LoadFile("../resources/shaders/ssao.fs"));
 
 		betaVar				= program["Beta"].location;
 		epsilonVar			= program["Epsilon"].location;
