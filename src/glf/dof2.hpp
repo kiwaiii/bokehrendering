@@ -31,8 +31,7 @@ namespace glf
 										int 			_nSamples,
 										float 			_intensityThreshold,
 										float 			_cocThreshold,
-										float			_attenuation,
-										float			_areaFactor,
+										float			_bokehDepthCutoff,
 										const RenderTarget& _target);
 	public:
 		//----------------------------------------------------------------------
@@ -85,8 +84,8 @@ namespace glf
 			GLint 						bokehColorTexUnit;
 			GLint 						bokehShapeTexUnit;
 			GLint 						blurDepthTexUnit;
-			GLint						attenuationVar;
 			GLint						maxBokehRadiusVar;
+			GLint						bokehDepthCutoffVar;
 
 			Program 					program;
 		};
@@ -95,7 +94,6 @@ namespace glf
 		Texture2D						blurDepthTex;
 		Texture2D						detectionTex;
 		Texture2D						blurTex;
-		Texture2D						renderingTex;
 		Texture2D						bokehShapeTex;
 
 		Texture2D						bokehPositionTex;	// Store bokeh position
@@ -105,7 +103,6 @@ namespace glf
 		GLuint							blurDepthFBO;
 		GLuint							detectionFBO;
 		GLuint							blurFBO;
-		GLuint							renderingFBO;
 
 		CoCPass 						cocPass;
 		DetectionPass					detectionPass;

@@ -95,8 +95,7 @@ namespace
 		float								maxBokehRadius;
 		float								lumThreshold;
 		float								cocThreshold;
-		float								attenuation;
-		float								areaFactor;
+		float								bokehDepthCutoff;
 	};
 
 	struct Application
@@ -198,12 +197,11 @@ namespace
 		dofParams.farStart			= 10.f;
 		dofParams.farEnd			= 20.f;
 		dofParams.maxCoCRadius		= 10.f;
-		dofParams.maxBokehRadius	= 10.f;
+		dofParams.maxBokehRadius	= 15.f;
 		dofParams.nSamples			= 24;
 		dofParams.lumThreshold		= 5000.f;
 		dofParams.cocThreshold		= 3.5f;
-		dofParams.attenuation		= 5.f;
-		dofParams.areaFactor		= 1.f;
+		dofParams.bokehDepthCutoff	= 1.f;
 
 		activeBuffer				= 0;
 		activeMenu					= 2;
@@ -485,13 +483,9 @@ void interface()
 				ctx::ui->Label(none,labelBuffer);
 				ctx::ui->HorizontalSlider(sliderRect,1.0f,30.f,&app->dofParams.cocThreshold);
 
-				sprintf(labelBuffer,"Attenuation : %.2f",app->dofParams.attenuation);
+				sprintf(labelBuffer,"Bokeh depth cutoff : %.2f",app->dofParams.bokehDepthCutoff);
 				ctx::ui->Label(none,labelBuffer);
-				ctx::ui->HorizontalSlider(sliderRect,1.0f,10.f,&app->dofParams.attenuation);
-
-				sprintf(labelBuffer,"Area Factor : %.2f",app->dofParams.areaFactor);
-				ctx::ui->Label(none,labelBuffer);
-				ctx::ui->HorizontalSlider(sliderRect,0.001f,1.f,&app->dofParams.areaFactor);
+				ctx::ui->HorizontalSlider(sliderRect,0.001f,1.f,&app->dofParams.bokehDepthCutoff);
 			}
 			ctx::ui->EndFrame();
 		ctx::ui->EndGroup();
@@ -643,14 +637,11 @@ void display()
 										app->dofParams.nSamples,
 										app->dofParams.lumThreshold,
 										app->dofParams.cocThreshold,
-										app->dofParams.attenuation,
-										app->dofParams.areaFactor,
+										app->dofParams.bokehDepthCutoff,
 										app->renderTarget2);
 
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//				app->postProcessor.Apply(app->dofProcessor.detectionTex,
-				app->postProcessor.Apply(app->dofProcessor.renderingTex,
-//				app->postProcessor.Apply(app->dofProcessor.cocPass.cocDepthTex,
+				app->postProcessor.Apply(app->renderTarget2.texture,
 										 app->toneParams.toneExposure);
 				#endif
 
@@ -694,33 +685,4 @@ int main(int argc, char* argv[])
 				return 0;
 	return 1;
 }
-
-
-/*
-static bool isinit = false;
-static glm::vec4* data= NULL;
-if(!isinit)
-{
-	data = new glm::vec4[ctx::window.Size.x*ctx::window.Size.y];
-	isinit = true;
-}
-glBindTexture(app->renderTarget2.texture.target,app->renderTarget2.texture.id);
-glGetTexImage(app->renderTarget2.texture.target,0,GL_RGBA,GL_FLOAT,data);
-glBindTexture(app->renderTarget2.texture.target,0);
-
-glf::Info("(0,0) = (%f,%f)",data[0].x,data[0].y);
-glf::Info("(1,0) = (%f,%f)",data[1].x,data[1].y);
-glf::Info("(2,0) = (%f,%f)",data[2].x,data[2].y);
-glf::Info("(3,0) = (%f,%f)",data[3].x,data[3].y);
-
-glf::Info("(0,1) = (%f,%f)",data[0+ctx::window.Size.x].x,data[0+ctx::window.Size.x].y);
-glf::Info("(1,1) = (%f,%f)",data[1+ctx::window.Size.x].x,data[1+ctx::window.Size.x].y);
-glf::Info("(2,1) = (%f,%f)",data[2+ctx::window.Size.x].x,data[2+ctx::window.Size.x].y);
-glf::Info("(3,1) = (%f,%f)",data[3+ctx::window.Size.x].x,data[3+ctx::window.Size.x].y);
-
-glf::Info("(0,2) = (%f,%f)",data[0+2*ctx::window.Size.x].x,data[0+2*ctx::window.Size.x].y);
-glf::Info("(1,2) = (%f,%f)",data[1+2*ctx::window.Size.x].x,data[1+2*ctx::window.Size.x].y);
-glf::Info("(2,2) = (%f,%f)",data[2+2*ctx::window.Size.x].x,data[2+2*ctx::window.Size.x].y);
-glf::Info("(3,2) = (%f,%f)",data[3+2*ctx::window.Size.x].x,data[3+2*ctx::window.Size.x].y);
-*/
 
