@@ -41,11 +41,11 @@ namespace glf
 		GLuint	 						framebuffer;
 	};
 	//--------------------------------------------------------------------------
-	struct Surface
+	struct RenderSurface
 	{
 	private:
-					Surface(			const Surface&);
-		Surface&	operator=(			const Surface&);
+					RenderSurface(		const RenderSurface&);
+		RenderSurface&	operator=(		const RenderSurface&);
 	public:
 		GLint 							textureUnit;
 		GLint 							levelVar;
@@ -54,7 +54,7 @@ namespace glf
 		VertexBuffer3F					vbo;
 		VertexArray						vao;
 
-					Surface(			unsigned int _width, 
+					RenderSurface(		unsigned int _width, 
 										unsigned int _height);
 		void 		Draw(				const Texture2D& _texture,
 										int 			 _level=0);
@@ -70,12 +70,14 @@ namespace glf
 		Texture2D						texture;
 		GLuint							framebuffer;
 		glm::mat4						transformation;
-		VertexBuffer3F					vbo;
+		VertexBuffer3F					vbo; 
 		VertexArray						vao;
 
 					RenderTarget(		unsigned int _width, 
 										unsigned int _height);
 				   ~RenderTarget(		);
+		void		Bind(				) const;
+		void		Unbind(				) const;
 		void		Draw(				) const;
 		void		AttachDepthStencil(	const Texture2D& _depthStencilTex);
 	};

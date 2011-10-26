@@ -20,11 +20,7 @@ namespace glf
 		// Resources initialization
 		{
 			// Load bokeh texture
-			//io::LoadTexture("../resources/textures/CircleBokeh.png",
-			io::LoadTexture("../resources/textures/HexaBokeh.png",
-							bokehShapeTex,
-							true,
-							true);
+			BokehTexture("../resources/textures/HexaBokeh.png");
 
 			// TODO : 16F
 			blurDepthTex.Allocate(GL_RGBA32F,_w,_h);
@@ -83,6 +79,15 @@ namespace glf
 			vertices[0] = glm::vec3(0,0,0);
 			pointVBO.Unlock();
 			pointVAO.Add(pointVBO,semantic::Position,3,GL_FLOAT);
+		}
+
+		// Reset Pass
+		{
+			resetPass.program.Compile(	LoadFile("../resources/shaders/bokehreset.vs"),
+										LoadFile("../resources/shaders/bokehreset.fs"));
+
+			resetPass.bokehCountTexUnit = resetPass.program["BokehCountTex"].unit;
+			glProgramUniform1i(resetPass.program.id,resetPass.program["BokehCountTex"].location,resetPass.bokehCountTexUnit);
 		}
 
 		// CoC Pass
@@ -160,6 +165,14 @@ namespace glf
 		glf::CheckError("DOFProcessor::Create");
 	}
 	//-------------------------------------------------------------------------
+	void BokehTexture(		const std::string& _filename)
+	{
+		io::LoadTexture(_filename,
+						bokehShapeTex,
+						true,
+						true);
+	}
+	//-------------------------------------------------------------------------
 	void DOFProcessor::Draw(	const Texture2D& _colorTex, 
 								const Texture2D& _positionTex, 
 								const glm::mat4& _view,
@@ -177,15 +190,15 @@ namespace glf
 	{
 		glf::CheckError("DOFProcessor::DrawBegin");
 
-		// Reset 
-		// Reset the number of bokeh TODO : do it with a shader
-		DrawArraysIndirectCommand* cmd = pointIndirectBuffer.Lock();
-		cmd[0].primCount = 0;
-		pointIndirectBuffer.Unlock();
+		// Reset bokeh counter (draw a fake point)
+		glUseProgram(resetPass.program.id);
+			glBindFramebuffer(GL_FRAMEBUFFER,blurDepthFBO);
+			glActiveTexture(GL_TEXTURE0 + resetPass.bokehCountTexUnit);
+			glBindImageTextureEXT(resetPass.bokehCountTexUnit, bokehCountTexID,0,false,0,GL_WRITE_ONLY, GL_R32UI);
+			pointVAO.Draw(GL_POINTS,1,0);
 
 		// Blur / Depth
 		glUseProgram(cocPass.program.id);
-			glBindFramebuffer(GL_FRAMEBUFFER,blurDepthFBO);
 			glClear(GL_COLOR_BUFFER_BIT);
 			glProgramUniform1f(cocPass.program.id,			cocPass.farStartVar,	_farStart);
 			glProgramUniform1f(cocPass.program.id,			cocPass.farEndVar,		_farEnd);
@@ -202,7 +215,6 @@ namespace glf
 			glProgramUniform1f(detectionPass.program.id,detectionPass.lumThresholdVar,_lumThreshold);
 			glProgramUniform1f(detectionPass.program.id,detectionPass.maxCoCRadiusVar,_maxCoCRadius);
 
-			// TODO write only for Position and Color
 			glActiveTexture(GL_TEXTURE0 + detectionPass.bokehCountTexUnit);
 			glBindImageTextureEXT(detectionPass.bokehCountTexUnit, bokehCountTexID,0,false,0,GL_READ_WRITE, GL_R32UI);
 			glActiveTexture(GL_TEXTURE0 + detectionPass.bokehPositionTexUnit);
@@ -228,7 +240,7 @@ namespace glf
 			out << "count : " << count << "  ";
 			out << "primCount : " << primCount << "  ";
 			out << "first : " << first << "  ";
-			out << "reservedMustBeZero  : " << reservedMustBeZero << "\n";
+			out << "reservedMustBeZero  : " << reservedMustBeZero;
 			glf::Info("%s",out.str().c_str());
 			#endif
 
