@@ -48,17 +48,24 @@ void main()
 	// Count point where intensity of neighbors is less than the current pixel
 	if(difLum>LumThreshold && cocSize>CoCThreshold)
 	{
+if(coord.x > 10000)
+{
 		ivec2 bufSize, coord;
 		int current = int(imageAtomicAdd(BokehCountTex, 1, 1));
 		bufSize 	= textureSize(ColorTex,0).xy;
 		coord.y 	= int(floor(current/bufSize.y));
 		coord.x 	= current - coord.y*bufSize.y;
-		
+}
+
+ivec2 coord = ivec2(int(floor(gl_FragCoord.x)),int(floor(gl_FragCoord.y)));
+//if(coord.x > 100)
+{
 		// Compute energy of the bokeh according to CoC size
 		vec3 lcolor = color.xyz / (3.141592654f*cocSize*cocSize);
 		imageStore(BokehPositionTex,coord,vec4(gl_FragCoord.x,gl_FragCoord.y,depth,blur));
 		imageStore(BokehColorTex,coord,vec4(lcolor,1));
 		color 		= vec3(0);
+}
 	}
 
 	FragColor = vec4(color,1);
