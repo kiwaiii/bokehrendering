@@ -19,7 +19,8 @@ namespace glf
 	public:
 					DOFProcessor(		int _w, 
 										int _h);
-		void 		Draw(				const Texture2D& _colorTex, 
+		void		BokehTexture(		const std::string& _filename);
+		void		Draw(				const Texture2D& _colorTex, 
 										const Texture2D& _positionTex, 
 										const glm::mat4& _view,
 										float 			_nearStart,
@@ -37,7 +38,9 @@ namespace glf
 		//----------------------------------------------------------------------
 		struct ResetPass
 		{
-
+										ResetPass():program("DOF::Reset"){}
+			GLint						bokehCountTexUnit;
+			Program 					program;
 		};
 		//----------------------------------------------------------------------
 		struct CoCPass
@@ -90,7 +93,7 @@ namespace glf
 			Program 					program;
 		};
 
-//	private:
+	private:
 		Texture2D						blurDepthTex;
 		Texture2D						detectionTex;
 		Texture2D						blurTex;
@@ -104,6 +107,7 @@ namespace glf
 		GLuint							detectionFBO;
 		GLuint							blurFBO;
 
+		ResetPass 						resetPass;
 		CoCPass 						cocPass;
 		DetectionPass					detectionPass;
 		BlurPass						blurPass;

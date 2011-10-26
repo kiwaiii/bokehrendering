@@ -108,7 +108,7 @@ namespace
 		glf::HelperRenderer					helperRenderer;
 
 		glf::GBuffer						gbuffer;
-		glf::Surface						surface;
+		glf::RenderSurface					renderSurface;
 		glf::RenderTarget					renderTarget1;
 		glf::RenderTarget					renderTarget2;
 
@@ -147,7 +147,7 @@ namespace
 
 	Application::Application(int _w, int _h):
 	gbuffer(_w,_h),
-	surface(_w,_h),
+	renderSurface(_w,_h),
 	renderTarget1(_w,_h),
 	renderTarget2(_w,_h),
 	csmLight(1024,1024,4),
@@ -648,15 +648,15 @@ void display()
 				break;
 		case bufferType::GB_POSITION : 
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				app->surface.Draw(app->gbuffer.positionTex);
+				app->renderSurface.Draw(app->gbuffer.positionTex);
 				break;
 		case bufferType::GB_NORMAL : 
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				app->surface.Draw(app->gbuffer.normalTex);
+				app->renderSurface.Draw(app->gbuffer.normalTex);
 				break;
 		case bufferType::GB_DIFFUSE : 
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				app->surface.Draw(app->gbuffer.diffuseTex);
+				app->renderSurface.Draw(app->gbuffer.diffuseTex);
 				break;
 		case bufferType::GB_SPECULAR : 
 				assert(false);

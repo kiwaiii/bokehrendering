@@ -105,7 +105,7 @@ namespace glf
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
 	}
 	//--------------------------------------------------------------------------
-	Surface::Surface(				unsigned int _width, 
+	RenderSurface::RenderSurface(	unsigned int _width, 
 									unsigned int _height):
 	program("Surface")
 	{
@@ -130,7 +130,7 @@ namespace glf
 		glf::CheckError("Surface::Surface");
 	}
 	//--------------------------------------------------------------------------
-	void Surface::Draw(				const Texture2D& _texture,
+	void RenderSurface::Draw(		const Texture2D& _texture,
 									int _level)
 	{
 		assert(_texture.size.x==frameSize.x);
@@ -159,6 +159,16 @@ namespace glf
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
 		glf::CheckFramebuffer(framebuffer);
 		glf::CheckError("RenderTarget::RenderTarget");
+	}
+	//--------------------------------------------------------------------------
+	void RenderTarget::Bind() const
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER,framebuffer);
+	}
+	//--------------------------------------------------------------------------
+	void RenderTarget::Unbind() const
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER,0);
 	}
 	//--------------------------------------------------------------------------
 	RenderTarget::~RenderTarget()
