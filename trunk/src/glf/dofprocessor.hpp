@@ -7,9 +7,18 @@
 #include <glf/wrapper.hpp>
 #include <glf/texture.hpp>
 #include <glf/pass.hpp>
+#include <glf/timing.hpp>
 
 namespace glf
 {
+	struct DOFTimings
+	{
+		GPUSectionTimer resetTimer;
+		GPUSectionTimer blurDepthTimer;
+		GPUSectionTimer detectionTimer;
+		GPUSectionTimer blurTimer;
+		GPUSectionTimer renderingTimer;
+	};
 	//--------------------------------------------------------------------------
 	class DOFProcessor
 	{
@@ -19,7 +28,11 @@ namespace glf
 	public:
 					DOFProcessor(		int _w, 
 										int _h);
+
+		// Load bokeh/aperture shape from a file
 		void		BokehTexture(		const std::string& _filename);
+
+		// Take position and color buffer and output DOF result into _target
 		void		Draw(				const Texture2D& _colorTex, 
 										const Texture2D& _positionTex, 
 										const glm::mat4& _view,
@@ -33,6 +46,8 @@ namespace glf
 										float 			_intensityThreshold,
 										float 			_cocThreshold,
 										float			_bokehDepthCutoff,
+										bool			_poissonFiltering,
+										DOFTimings& 	_timings,
 										const RenderTarget& _target);
 	public:
 		//----------------------------------------------------------------------
@@ -69,12 +84,23 @@ namespace glf
 			Program 					program;
 		};
 		//----------------------------------------------------------------------
-		struct BlurPass
+		struct BlurSeparablePass
 		{
-										BlurPass():program("DOF::BlurPass"){}
+										BlurSeparablePass():program("DOF::BlurSeparablePass"){}
 			GLint 						colorTexUnit;
 			GLint						blurDepthTexUnit;
 			GLint						directionVar;
+			GLint						maxCoCRadiusVar;
+
+			Program 					program;
+		};
+		//----------------------------------------------------------------------
+		struct BlurPoissonPass
+		{
+										BlurPoissonPass():program("DOF::BlurPoissonPass"){}
+			GLint 						colorTexUnit;
+			GLint						blurDepthTexUnit;
+			GLint						nSamplesVar;
 			GLint						maxCoCRadiusVar;
 
 			Program 					program;
@@ -94,28 +120,29 @@ namespace glf
 		};
 
 	private:
-		Texture2D						blurDepthTex;
-		Texture2D						detectionTex;
-		Texture2D						blurTex;
-		Texture2D						bokehShapeTex;
+		Texture2D						blurDepthTex;		// Store pixel blur / linear-depth
+		Texture2D						detectionTex;		// Store color of pixels which are not bokeh
+		Texture2D						blurTex;			// Store result of vertical blur
+		Texture2D						bokehShapeTex;		// Store aperture/bokeh shape
 
 		Texture2D						bokehPositionTex;	// Store bokeh position
 		Texture2D						bokehColorTex;		// Store bokeh color
 		GLuint							bokehCountTexID;	// Atomic bokeh counter
 
-		GLuint							blurDepthFBO;
-		GLuint							detectionFBO;
-		GLuint							blurFBO;
+		GLuint							blurDepthFBO;		// Framebuffers
+		GLuint							detectionFBO;		//
+		GLuint							blurFBO;			//
 
-		ResetPass 						resetPass;
-		CoCPass 						cocPass;
-		DetectionPass					detectionPass;
-		BlurPass						blurPass;
-		RenderingPass					renderingPass;
+		ResetPass 						resetPass;			// Reset bokeh counter
+		CoCPass 						cocPass;			// Compute pixel blur and linear depth
+		DetectionPass					detectionPass;		// Detect pixel which are bokeh
+		BlurSeparablePass				blurSeparablePass;	// Blur pixel which are not bokeh (with a separable filter)
+		BlurPoissonPass					blurPoissonPass;	// Blur pixel which are not bokeh (with a poisson filter)
+		RenderingPass					renderingPass;		// Render bokehs
 		
-		VertexBuffer3F					pointVBO;
-		VertexArray						pointVAO;
-		IndirectArrayBuffer				pointIndirectBuffer;
+		VertexBuffer3F					pointVBO;			// Point VBO
+		VertexArray						pointVAO;			// Point VAO
+		IndirectArrayBuffer				pointIndirectBuffer;// Indirect buffer for instancing bokeh
 	};
 }
 

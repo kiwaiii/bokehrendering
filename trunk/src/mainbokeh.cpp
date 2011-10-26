@@ -15,8 +15,9 @@
 #include <glf/camera.hpp>
 #include <glf/wrapper.hpp>
 #include <glf/helper.hpp>
-#include <glf/dof2.hpp>
+#include <glf/dofprocessor.hpp>
 #include <glf/postprocessor.hpp>
+#include <glf/timing.hpp>
 #include <glf/utils.hpp>
 #include <fstream>
 #include <cstring>
@@ -30,7 +31,8 @@
 #define MAJOR_VERSION	4
 #define MINOR_VERSION	1
 #define BBOX_SCENE		1
-
+#define DETAIL_TIMINGS	0
+#define GLOBAL_TIMINGS	1
 
 //-----------------------------------------------------------------------------
 namespace ctx
@@ -54,12 +56,7 @@ namespace
 	struct ToneParams
 	{
 		float 								expToneExposure;
-		float 								expBloomExposure;
 		float								toneExposure;
-		float								bloomExposure;
-		float								bloomMagnitude;
-		float								bloomSigma;
-		int									bloomTaps;
 	};
 
 	struct CSMParams
@@ -96,6 +93,7 @@ namespace
 		float								lumThreshold;
 		float								cocThreshold;
 		float								bokehDepthCutoff;
+		bool								poissonFiltering;
 	};
 
 	struct Application
@@ -137,6 +135,19 @@ namespace
 
 		int									activeBuffer;
 		int									activeMenu;
+
+		glf::DOFTimings						dofTimings;
+		glf::GPUSectionTimer				gbufferTimer;
+		glf::GPUSectionTimer				csmBuilerTimer;
+		glf::GPUSectionTimer				csmRenderTimer;
+		glf::GPUSectionTimer				skyRenderTimer;
+		glf::GPUSectionTimer				ssaoRenderTimer;
+		glf::GPUSectionTimer				ssaoBlurTimer;
+		glf::GPUSectionTimer				dofProcessTimer;
+		glf::GPUSectionTimer				postProcessTimer;
+		glf::GPUSectionTimer				frameTimer;			// GPU frame time
+		float								previousFrameTime;	// CPU frame time
+		float								elapsedFrameTime;	//
 	};
 	Application*							app;
 
@@ -168,18 +179,13 @@ namespace
 		ssaoParams.sigma			= 1.f;
 		ssaoParams.kappa			= 1.f;
 		ssaoParams.radius			= 1.0f;
-		ssaoParams.nSamples			= 24;
+		ssaoParams.nSamples			= 16;
 		ssaoParams.sigmaH			= 1.f;
 		ssaoParams.sigmaV			= 1.f;
-		ssaoParams.nTaps			= 4;
+		ssaoParams.nTaps			= 1;//4;
 
 		toneParams.expToneExposure 	=-4.08f;
-		toneParams.expBloomExposure	=-4.33f;
 		toneParams.toneExposure		= pow(10.f,toneParams.expToneExposure);
-		toneParams.bloomExposure	= pow(10.f,toneParams.expBloomExposure);
-		toneParams.bloomMagnitude	= 0.f;
-		toneParams.bloomSigma		= 3.f;
-		toneParams.bloomTaps		= 4;
 
 		csmParams.nSamples			= 1;
 		csmParams.bias				= 0.0016f;
@@ -202,9 +208,12 @@ namespace
 		dofParams.lumThreshold		= 5000.f;
 		dofParams.cocThreshold		= 3.5f;
 		dofParams.bokehDepthCutoff	= 1.f;
+		dofParams.poissonFiltering	= false;
 
 		activeBuffer				= 0;
 		activeMenu					= 2;
+		previousFrameTime			= 0;
+		elapsedFrameTime			= 0;
 
 		csmLight.direction			= glm::vec3(0,0,-1);
 	}
@@ -297,7 +306,7 @@ void interface()
 	ctx::ui->Begin();
 
 		ctx::ui->BeginGroup(glui::Flags::Grow::DOWN_FROM_LEFT);
-			ctx::ui->BeginFrame();
+/*			ctx::ui->BeginFrame();
 			for(int i=0;i<bufferType::MAX;++i)
 			{
 				bool active = i==app->activeBuffer;
@@ -314,10 +323,52 @@ void interface()
 				app->activeMenu = active?i:app->activeMenu;
 			}
 			ctx::ui->EndFrame();
+*/
+			ctx::ui->BeginFrame();
+			#if 0
+			sprintf(labelBuffer,"GBuffer      : %.2fms",app->gbufferTimer.Current());
+			ctx::ui->Label(none,labelBuffer);
+			sprintf(labelBuffer,"CSM Builder  : %.2fms",app->csmBuilerTimer.Current());
+			ctx::ui->Label(none,labelBuffer);
+			sprintf(labelBuffer,"CSM Render   : %.2fms",app->csmRenderTimer.Current());
+			ctx::ui->Label(none,labelBuffer);
+			sprintf(labelBuffer,"SKY Render   : %.2fms",app->skyRenderTimer.Current());
+			ctx::ui->Label(none,labelBuffer);
+			sprintf(labelBuffer,"SSAO Render  : %.2fms",app->ssaoRenderTimer.Current());
+			ctx::ui->Label(none,labelBuffer);
+			sprintf(labelBuffer,"SSAO Blur    : %.2fms",app->ssaoBlurTimer.Current());
+			ctx::ui->Label(none,labelBuffer);
+			sprintf(labelBuffer,"DOF Process  : %.2fms",app->dofProcessTimer.Current());
+			ctx::ui->Label(none,labelBuffer);
+			sprintf(labelBuffer,"POST Process : %.2fms",app->postProcessTimer.Current());
+			ctx::ui->Label(none,labelBuffer);
+			#endif
+
+			#if 0
+			sprintf(labelBuffer,"DOF Reset time      : %.2fms",app->dofTimings.resetTimer.Current());
+			ctx::ui->Label(none,labelBuffer);
+			sprintf(labelBuffer,"DOF Blur/depth time : %.2fms",app->dofTimings.blurDepthTimer.Current());
+			ctx::ui->Label(none,labelBuffer);
+			sprintf(labelBuffer,"DOF Detection time  : %.2fms",app->dofTimings.detectionTimer.Current());
+			ctx::ui->Label(none,labelBuffer);
+			sprintf(labelBuffer,"DOF Blur time       : %.2fms",app->dofTimings.blurTimer.Current());
+			ctx::ui->Label(none,labelBuffer);
+			sprintf(labelBuffer,"DOF Rendering time  : %.2fms",app->dofTimings.renderingTimer.Current());
+			ctx::ui->Label(none,labelBuffer);
+			#endif
+
+			#if 1
+			sprintf(labelBuffer,"GPU frame time : %.2fms",app->frameTimer.Current());
+			ctx::ui->Label(none,labelBuffer);
+			sprintf(labelBuffer,"CPU frame time : %.2fms",app->elapsedFrameTime);
+			ctx::ui->Label(none,labelBuffer);
+			#endif
+			ctx::ui->EndFrame();
+
 
 			ctx::ui->CheckButton(none,"Helpers",&ctx::drawHelpers);
 		ctx::ui->EndGroup();
-
+/*
 		bool update = false;
 		ctx::ui->BeginGroup(glui::Flags::Grow::DOWN_FROM_RIGHT);
 			ctx::ui->BeginFrame();
@@ -421,26 +472,6 @@ void interface()
 				ctx::ui->Label(none,labelBuffer);
 				ctx::ui->HorizontalSlider(sliderRect,-6.f,6.f,&app->toneParams.expToneExposure);
 				app->toneParams.toneExposure = pow(10.f,app->toneParams.expToneExposure);
-
-				static float expBloomExposure = -4;
-				sprintf(labelBuffer,"Bloom Exposure : 10^%.2f",app->toneParams.expBloomExposure);
-				ctx::ui->Label(none,labelBuffer);
-				ctx::ui->HorizontalSlider(sliderRect,-6.f,6.f,&app->toneParams.expBloomExposure);
-				app->toneParams.bloomExposure = pow(10.f,app->toneParams.expBloomExposure);
-
-				sprintf(labelBuffer,"Bloom Magnitude : %.2f",app->toneParams.bloomMagnitude);
-				ctx::ui->Label(none,labelBuffer);
-				ctx::ui->HorizontalSlider(sliderRect,0.f,1.f,&app->toneParams.bloomMagnitude);
-
-				sprintf(labelBuffer,"Bloom Sigma : %.2f",app->toneParams.bloomSigma);
-				ctx::ui->Label(none,labelBuffer);
-				ctx::ui->HorizontalSlider(sliderRect,0.f,3.f,&app->toneParams.bloomSigma);
-
-				float fbloomTaps = app->toneParams.bloomTaps;
-				sprintf(labelBuffer,"Bloom Taps : %d",app->toneParams.bloomTaps);
-				ctx::ui->Label(none,labelBuffer);
-				ctx::ui->HorizontalSlider(sliderRect,1.f,6.f,&fbloomTaps);
-				app->toneParams.bloomTaps = fbloomTaps;
 			}
 
 			if(app->activeMenu == menuType::MN_DOF)
@@ -486,10 +517,12 @@ void interface()
 				sprintf(labelBuffer,"Bokeh depth cutoff : %.2f",app->dofParams.bokehDepthCutoff);
 				ctx::ui->Label(none,labelBuffer);
 				ctx::ui->HorizontalSlider(sliderRect,0.001f,1.f,&app->dofParams.bokehDepthCutoff);
+
+				ctx::ui->CheckButton(none,"Poisson filtering",&app->dofParams.poissonFiltering);
 			}
 			ctx::ui->EndFrame();
 		ctx::ui->EndGroup();
-
+*/
 	ctx::ui->End();
 
 	glf::CheckError("Interface");
@@ -497,33 +530,51 @@ void interface()
 //------------------------------------------------------------------------------
 void display()
 {
+	float currentFrameTime = glutGet(GLUT_ELAPSED_TIME);
+	app->elapsedFrameTime  = currentFrameTime - app->previousFrameTime;
+	#if GLOBAL_TIMINGS
+	app->frameTimer.StartSection();
+	#endif
+
 	// Optimize far plane
 	glm::mat4 projection		= ctx::camera->Projection();
 	glm::mat4 view				= ctx::camera->View();
 	float near					= ctx::camera->Near();
 	glm::vec3 viewPos			= ctx::camera->Eye();
 
-
 	// Enable writting into the depth buffer
+	glDisable(GL_BLEND);
 	glDepthMask(true);
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_STENCIL_TEST);
 
+	#if DETAILED_TIMINGS
+	app->csmBuilerTimer.StartSection();
+	#endif
 	app->csmBuilder.Draw(	app->csmLight,
 							*ctx::camera,
 							app->csmParams.cascadeAlpha,
 							app->csmParams.blendFactor,
 							app->scene,
 							app->helpers);
+	#if DETAILED_TIMINGS
+	app->csmBuilerTimer.EndSection();
+	#endif
 
 	// Enable writting into the stencil buffer
 	glEnable(GL_STENCIL_TEST);
 	glStencilFunc(GL_ALWAYS, 1, 1);
 	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
+	#if DETAILED_TIMINGS
+	app->gbufferTimer.StartSection();
+	#endif
 	app->gbuffer.Draw(		projection,
 							view,
 							app->scene);
+	#if DETAILED_TIMINGS
+	app->gbufferTimer.EndSection();
+	#endif
 
 	glDisable(GL_DEPTH_TEST);
 	glDepthMask(false);
@@ -547,14 +598,22 @@ void display()
 				glCullFace(GL_BACK);
 				glEnable(GL_STENCIL_TEST);
 
+				#if DETAILED_TIMINGS
+				app->skyRenderTimer.StartSection();
+				#endif
 				app->shRenderer.Draw(	app->shLight,
 										app->gbuffer,
 										app->renderTarget1);
-
+				#if DETAILED_TIMINGS
+				app->skyRenderTimer.EndSection();
+				#endif
 
 				glBindFramebuffer(GL_FRAMEBUFFER,app->renderTarget2.framebuffer);
 				glClear(GL_COLOR_BUFFER_BIT);
 
+				#if DETAILED_TIMINGS
+				app->ssaoRenderTimer.StartSection();
+				#endif
 				app->ssaoPass.Draw(		app->gbuffer,
 										view,
 										near,
@@ -565,13 +624,18 @@ void display()
 										app->ssaoParams.radius,
 										app->ssaoParams.nSamples,
 										app->renderTarget2);
-
+				#if DETAILED_TIMINGS
+				app->ssaoRenderTimer.EndSection();
+				#endif
 				glBindFramebuffer(GL_FRAMEBUFFER,app->renderTarget1.framebuffer);
 
 				glEnable(GL_BLEND);
 				glBlendEquation(GL_FUNC_ADD);
 				glBlendFunc( GL_ZERO, GL_SRC_ALPHA); // Do a multiplication between SSAO and sky lighting
 
+				#if DETAILED_TIMINGS
+				app->ssaoBlurTimer.StartSection();
+				#endif
 				app->bilateralPass.Draw(app->renderTarget2.texture,
 										app->gbuffer.positionTex,
 										view,
@@ -579,52 +643,33 @@ void display()
 										app->ssaoParams.sigmaV,
 										app->ssaoParams.nTaps,
 										app->renderTarget1);
+				#if DETAILED_TIMINGS
+				app->ssaoBlurTimer.EndSection();
+				#endif
 
 				glBlendFunc( GL_ONE, GL_ONE);
 
+				#if DETAILED_TIMINGS
+				app->csmRenderTimer.StartSection();
+				#endif
 				app->csmRenderer.Draw(	app->csmLight,
 										app->gbuffer,
 										viewPos,
 										app->csmParams.blendFactor,
 										app->csmParams.bias,
 										app->renderTarget1);
-
-				#if 0
-				glBindFramebuffer(GL_FRAMEBUFFER,app->renderTarget2.framebuffer);
-				glClear(GL_COLOR_BUFFER_BIT);
-
-				glDisable(GL_STENCIL_TEST);
-				glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-//				glDisable(GL_BLEND);
-
-				app->dofProcessor.Draw(	app->renderTarget1.texture,
-										app->gbuffer.positionTex,
-										view,
-										app->dofParams.nearStart,
-										app->dofParams.nearEnd,
-										app->dofParams.farStart,
-										app->dofParams.farEnd,
-										app->dofParams.maxCoCRadius,
-										app->dofParams.nSamples,
-										app->dofParams.lumThreshold,
-										app->dofParams.cocThreshold,
-										app->dofParams.attenuation,
-										app->dofParams.areaFactor,
-										app->renderTarget2);
-
-				glBindFramebuffer(GL_FRAMEBUFFER,0);
-
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				app->postProcessor.Apply(app->renderTarget2.texture,
-//				app->postProcessor.Apply(app->dofProcessor.hblurPass.blurTex,
-//				app->postProcessor.Apply(app->dofProcessor.cocPass.cocDepthTex,
-										 app->toneParams.toneExposure);
+				#if DETAILED_TIMINGS
+				app->csmRenderTimer.EndSection();
 				#endif
 
-				#if 1
 				glBindFramebuffer(GL_FRAMEBUFFER,0);
+
 				glDisable(GL_STENCIL_TEST);
 				glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+				#if DETAILED_TIMINGS
+				app->dofProcessTimer.StartSection();
+				#endif
 				app->dofProcessor.Draw(	app->renderTarget1.texture,
 										app->gbuffer.positionTex,
 										view,
@@ -638,11 +683,24 @@ void display()
 										app->dofParams.lumThreshold,
 										app->dofParams.cocThreshold,
 										app->dofParams.bokehDepthCutoff,
+										app->dofParams.poissonFiltering,
+										app->dofTimings,
 										app->renderTarget2);
+				#if DETAILED_TIMINGS
+				app->dofProcessTimer.EndSection();
+				#endif
 
+				glBindFramebuffer(GL_FRAMEBUFFER,0);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				app->postProcessor.Apply(app->renderTarget2.texture,
-										 app->toneParams.toneExposure);
+
+				#if DETAILED_TIMINGS
+				app->postProcessTimer.StartSection();
+				#endif
+				app->postProcessor.Draw(app->renderTarget2.texture,
+										app->toneParams.toneExposure,
+										app->renderTarget1);
+				#if DETAILED_TIMINGS
+				app->postProcessTimer.EndSection();
 				#endif
 
 				break;
@@ -671,6 +729,11 @@ void display()
 		interface();
 
 	glf::CheckError("display");
+
+	#if GLOBAL_TIMINGS
+	app->frameTimer.EndSection();
+	#endif
+	app->previousFrameTime = currentFrameTime;
 	glf::SwapBuffers();
 }
 //------------------------------------------------------------------------------

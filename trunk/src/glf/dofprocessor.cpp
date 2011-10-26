@@ -1,14 +1,14 @@
 //-----------------------------------------------------------------------------
 // Include
 //-----------------------------------------------------------------------------
-#include <glf/dof2.hpp>
+#include <glf/dofprocessor.hpp>
 #include <glm/glm.hpp>
-#include <glf/rng.hpp>
 #include <glf/ioimage.hpp>
 
 //-----------------------------------------------------------------------------
 // Constants
 //-----------------------------------------------------------------------------
+#define RUN_TIMINGS 0
 
 namespace glf
 {
@@ -126,19 +126,70 @@ namespace glf
 			glProgramUniform1i(detectionPass.program.id, detectionPass.program["BokehPositionTex"].location,detectionPass.bokehPositionTexUnit);
 		}
 
-		// Blur pass
+		// Blur separable pass
 		{
-			blurPass.program.Compile(	LoadFile("../resources/shaders/bokehblur.vs"),
-										LoadFile("../resources/shaders/bokehblur.fs"));
+			blurSeparablePass.program.Compile(	LoadFile("../resources/shaders/bokehblur.vs"),
+												LoadFile("../resources/shaders/bokehblur.fs"));
 
-			blurPass.blurDepthTexUnit	= blurPass.program["BlurDepthTex"].unit;
-			blurPass.colorTexUnit		= blurPass.program["ColorTex"].unit;
-			blurPass.maxCoCRadiusVar	= blurPass.program["MaxCoCRadius"].location;
-			blurPass.directionVar		= blurPass.program["Direction"].location;
+			blurSeparablePass.blurDepthTexUnit	= blurSeparablePass.program["BlurDepthTex"].unit;
+			blurSeparablePass.colorTexUnit		= blurSeparablePass.program["ColorTex"].unit;
+			blurSeparablePass.maxCoCRadiusVar	= blurSeparablePass.program["MaxCoCRadius"].location;
+			blurSeparablePass.directionVar		= blurSeparablePass.program["Direction"].location;
 
-			glProgramUniformMatrix4fv(blurPass.program.id,  blurPass.program["Transformation"].location,1,GL_FALSE, &transform[0][0]);
-			glProgramUniform1i(blurPass.program.id, 		blurPass.program["BlurDepthTex"].location,blurPass.blurDepthTexUnit);
-			glProgramUniform1i(blurPass.program.id, 		blurPass.program["ColorTex"].location,blurPass.colorTexUnit);
+			glProgramUniformMatrix4fv(blurSeparablePass.program.id, blurSeparablePass.program["Transformation"].location,1,GL_FALSE, &transform[0][0]);
+			glProgramUniform1i(blurSeparablePass.program.id, 		blurSeparablePass.program["BlurDepthTex"].location,blurSeparablePass.blurDepthTexUnit);
+			glProgramUniform1i(blurSeparablePass.program.id, 		blurSeparablePass.program["ColorTex"].location,blurSeparablePass.colorTexUnit);
+		}
+
+		// Blur poisson pass
+		{
+			// Sampling point
+			glm::vec2 Halton[32];
+			Halton[0]       = glm::vec2(-0.353553, 0.612372);
+			Halton[1]       = glm::vec2(-0.25, -0.433013);
+			Halton[2]       = glm::vec2(0.663414, 0.55667);
+			Halton[3]       = glm::vec2(-0.332232, 0.120922);
+			Halton[4]       = glm::vec2(0.137281, -0.778559);
+			Halton[5]       = glm::vec2(0.106337, 0.603069);
+			Halton[6]       = glm::vec2(-0.879002, -0.319931);
+			Halton[7]       = glm::vec2(0.191511, -0.160697);
+			Halton[8]       = glm::vec2(0.729784, 0.172962);
+			Halton[9]       = glm::vec2(-0.383621, 0.406614);
+			Halton[10]      = glm::vec2(-0.258521, -0.86352);
+			Halton[11]      = glm::vec2(0.258577, 0.34733);
+			Halton[12]      = glm::vec2(-0.82355, 0.0962588);
+			Halton[13]      = glm::vec2(0.261982, -0.607343);
+			Halton[14]      = glm::vec2(-0.0562987, 0.966608);
+			Halton[15]      = glm::vec2(-0.147695, -0.0971404);
+			Halton[16]      = glm::vec2(0.651341, -0.327115);
+			Halton[17]      = glm::vec2(0.47392, 0.238012);
+			Halton[18]      = glm::vec2(-0.738474, 0.485702);
+			Halton[19]      = glm::vec2(-0.0229837, -0.394616);
+			Halton[20]      = glm::vec2(0.320861, 0.74384);
+			Halton[21]      = glm::vec2(-0.633068, -0.0739953);
+			Halton[22]      = glm::vec2(0.568478, -0.763598);
+			Halton[23]      = glm::vec2(-0.0878153, 0.293323);
+			Halton[24]      = glm::vec2(-0.528785, -0.560479);
+			Halton[25]      = glm::vec2(0.570498, -0.13521);
+			Halton[26]      = glm::vec2(0.915797, 0.0711813);
+			Halton[27]      = glm::vec2(-0.264538, 0.385706);
+			Halton[28]      = glm::vec2(-0.365725, -0.76485);
+			Halton[29]      = glm::vec2(0.488794, 0.479406);
+			Halton[30]      = glm::vec2(-0.948199, 0.263949);
+			Halton[31]      = glm::vec2(0.0311802, -0.121049);
+
+			blurPoissonPass.program.Compile(	LoadFile("../resources/shaders/bokehblurpoisson.vs"),
+												LoadFile("../resources/shaders/bokehblurpoisson.fs"));
+
+			blurPoissonPass.blurDepthTexUnit	= blurPoissonPass.program["BlurDepthTex"].unit;
+			blurPoissonPass.colorTexUnit		= blurPoissonPass.program["ColorTex"].unit;
+			blurPoissonPass.maxCoCRadiusVar		= blurPoissonPass.program["MaxCoCRadius"].location;
+			blurPoissonPass.nSamplesVar			= blurPoissonPass.program["NSamples"].location;
+
+			glProgramUniformMatrix4fv(blurPoissonPass.program.id, blurPoissonPass.program["Transformation"].location,1,GL_FALSE, &transform[0][0]);
+			glProgramUniform1i(blurPoissonPass.program.id,		  blurPoissonPass.program["BlurDepthTex"].location,blurPoissonPass.blurDepthTexUnit);
+			glProgramUniform1i(blurPoissonPass.program.id,		  blurPoissonPass.program["ColorTex"].location,blurPoissonPass.colorTexUnit);
+			glProgramUniform2fv(blurPoissonPass.program.id,		  blurPoissonPass.program["Samples"].location,32,&Halton[0][0]);
 		}
 
 		// Rendering pass
@@ -165,7 +216,7 @@ namespace glf
 		glf::CheckError("DOFProcessor::Create");
 	}
 	//-------------------------------------------------------------------------
-	void BokehTexture(		const std::string& _filename)
+	void DOFProcessor::BokehTexture(		const std::string& _filename)
 	{
 		io::LoadTexture(_filename,
 						bokehShapeTex,
@@ -186,18 +237,29 @@ namespace glf
 								float			_lumThreshold,
 								float			_cocThreshold,
 								float			_bokehDepthCutoff,
+								bool 			_poissonFiltering,
+								DOFTimings&		_timings,
 								const RenderTarget& _renderTarget)
 	{
 		glf::CheckError("DOFProcessor::DrawBegin");
 
 		// Reset bokeh counter (draw a fake point)
+		#if RUN_TIMINGS
+		_timings.resetTimer.StartSection();
+		#endif
 		glUseProgram(resetPass.program.id);
 			glBindFramebuffer(GL_FRAMEBUFFER,blurDepthFBO);
 			glActiveTexture(GL_TEXTURE0 + resetPass.bokehCountTexUnit);
 			glBindImageTextureEXT(resetPass.bokehCountTexUnit, bokehCountTexID,0,false,0,GL_WRITE_ONLY, GL_R32UI);
 			pointVAO.Draw(GL_POINTS,1,0);
+		#if RUN_TIMINGS
+		_timings.resetTimer.EndSection();
+		#endif
 
-		// Blur / Depth
+		// Compute amount of blur and linear depth for each pixel
+		#if RUN_TIMINGS
+		_timings.blurDepthTimer.StartSection();
+		#endif
 		glUseProgram(cocPass.program.id);
 			glClear(GL_COLOR_BUFFER_BIT);
 			glProgramUniform1f(cocPass.program.id,			cocPass.farStartVar,	_farStart);
@@ -206,8 +268,14 @@ namespace glf
 			_positionTex.Bind(cocPass.positionTexUnit);
 			_renderTarget.Draw();
 			glf::CheckError("DOFProcessor::DrawBLURDEPTH");
+		#if RUN_TIMINGS
+		_timings.blurDepthTimer.EndSection();
+		#endif
 
-		// Bokeh Extraction 
+		// Detect pixel which are bokeh and output color of pixels which are not bokeh
+		#if RUN_TIMINGS
+		_timings.detectionTimer.StartSection();
+		#endif
 		glUseProgram(detectionPass.program.id);
 			glBindFramebuffer(GL_FRAMEBUFFER,detectionFBO);
 			glClear(GL_COLOR_BUFFER_BIT);
@@ -226,7 +294,9 @@ namespace glf
 			_colorTex.Bind(detectionPass.colorTexUnit);
 			_renderTarget.Draw();
 			glf::CheckError("DOFProcessor::DrawDETECTION");
-
+		#if RUN_TIMINGS
+		_timings.detectionTimer.EndSection();
+		#endif
 			// Print indirect buffer
 			#if 0
 			int count, primCount,first,reservedMustBeZero;
@@ -244,28 +314,52 @@ namespace glf
 			glf::Info("%s",out.str().c_str());
 			#endif
 
-		// V-Blur
-		glUseProgram(blurPass.program.id);
+		#if RUN_TIMINGS
+		_timings.blurTimer.StartSection();
+		#endif
+		if(_poissonFiltering)
+		{
+		glUseProgram(blurPoissonPass.program.id);
+			glBindFramebuffer(GL_FRAMEBUFFER,_renderTarget.framebuffer);
+			glClear(GL_COLOR_BUFFER_BIT);
+			glProgramUniform1f(blurPoissonPass.program.id,		blurPoissonPass.maxCoCRadiusVar,	_maxCoCRadius);
+			glProgramUniform1i(blurPoissonPass.program.id,		blurPoissonPass.nSamplesVar,		_nSamples);
+			blurDepthTex.Bind(blurPoissonPass.blurDepthTexUnit);
+			detectionTex.Bind(blurPoissonPass.colorTexUnit);
+			_renderTarget.Draw();
+			glf::CheckError("DOFProcessor::DrawPOISSONBLUR");
+		}
+		else
+		{
+		// Vertical blur of pixels which are not bokehs
+		glUseProgram(blurSeparablePass.program.id);
 			glBindFramebuffer(GL_FRAMEBUFFER,blurFBO);
 			glClear(GL_COLOR_BUFFER_BIT);
-			glProgramUniform1f(blurPass.program.id,		blurPass.maxCoCRadiusVar,	_maxCoCRadius);
-			glProgramUniform2f(blurPass.program.id,		blurPass.directionVar,		1,0);
-			blurDepthTex.Bind(blurPass.blurDepthTexUnit);
-			detectionTex.Bind(blurPass.colorTexUnit);
+			glProgramUniform1f(blurSeparablePass.program.id,		blurSeparablePass.maxCoCRadiusVar,	_maxCoCRadius);
+			glProgramUniform2f(blurSeparablePass.program.id,		blurSeparablePass.directionVar,		1,0);
+			blurDepthTex.Bind(blurSeparablePass.blurDepthTexUnit);
+			detectionTex.Bind(blurSeparablePass.colorTexUnit);
 			_renderTarget.Draw();
 			glf::CheckError("DOFProcessor::DrawVBLUR");
 
-		// H-Blur
+		// Horizontal blur of pixels which are not bokehs
 			glBindFramebuffer(GL_FRAMEBUFFER,_renderTarget.framebuffer);
 			glClear(GL_COLOR_BUFFER_BIT);
-			glProgramUniform1f(blurPass.program.id,		blurPass.maxCoCRadiusVar,	_maxCoCRadius);
-			glProgramUniform2f(blurPass.program.id,		blurPass.directionVar,		0,1);
-			blurDepthTex.Bind(blurPass.blurDepthTexUnit);
-			blurTex.Bind(blurPass.colorTexUnit);
+			glProgramUniform1f(blurSeparablePass.program.id,		blurSeparablePass.maxCoCRadiusVar,	_maxCoCRadius);
+			glProgramUniform2f(blurSeparablePass.program.id,		blurSeparablePass.directionVar,		0,1);
+			blurDepthTex.Bind(blurSeparablePass.blurDepthTexUnit);
+			blurTex.Bind(blurSeparablePass.colorTexUnit);
 			_renderTarget.Draw();
 			glf::CheckError("DOFProcessor::DrawHBLUR");
+		}
+		#if RUN_TIMINGS
+		_timings.blurTimer.EndSection();
+		#endif
 
-		// Bokeh rendering (with additive blending)
+		// Render bokeh as textured quad (with additive blending)
+		#if RUN_TIMINGS
+		_timings.renderingTimer.StartSection();
+		#endif
 		glUseProgram(renderingPass.program.id);
 			glMemoryBarrierEXT(GL_ALL_BARRIER_BITS_EXT);
 			glProgramUniform1f(renderingPass.program.id,renderingPass.maxBokehRadiusVar,_maxBokehRadius);
@@ -276,6 +370,9 @@ namespace glf
 			bokehPositionTex.Bind(renderingPass.bokehPositionTexUnit);
 			pointVAO.Draw(GL_POINTS,pointIndirectBuffer);
 			glf::CheckError("DOFProcessor::DrawRENDERING");
+		#if RUN_TIMINGS
+		_timings.renderingTimer.EndSection();
+		#endif
 
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
 		glf::CheckError("DOFProcessor::DrawEnd");

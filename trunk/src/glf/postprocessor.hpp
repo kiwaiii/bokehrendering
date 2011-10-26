@@ -7,6 +7,7 @@
 #include <glf/buffer.hpp>
 #include <glf/wrapper.hpp>
 #include <glf/texture.hpp>
+#include <glf/pass.hpp>
 
 namespace glf
 {
@@ -21,24 +22,22 @@ namespace glf
 					PostProcessor(		unsigned int _width, 
 										unsigned int _height);
 					~PostProcessor(		);
-		void 		Apply(				const Texture2D& _texture,
-										float _toneExposure);
+		void 		Draw(				const Texture2D& 	_colorTex,
+										float 				_toneExposure,
+										const RenderTarget& _renderTarget);
 
 	private:
 		struct ToneMapping
 		{
 										ToneMapping();
 			GLint 						luminanceTexUnit;
-			GLint 						inputTexUnit;
+			GLint 						colorTexUnit;
 			GLint 						exposureVar;
 			GLint 						keyValueVar;
-			GLuint 						framebuffer;
 			Program						program;
 		};
 
 		ToneMapping						toneMapping;
-		VertexBuffer3F					vbo;
-		VertexArray						vao;
 	};
 	//--------------------------------------------------------------------------
 }

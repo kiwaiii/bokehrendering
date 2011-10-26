@@ -1,15 +1,13 @@
 
-SET(GLF_SRCS	
+SET(GLF_SRCS
 				glf/buffer.cpp
 				glf/camera.cpp
 				glf/csm.cpp
-#				glf/dof.cpp
-				glf/dof2.cpp
+				glf/dofprocessor.cpp
 				glf/helper.cpp
 				glf/geometry.cpp
 				glf/ioimage.cpp
 				glf/iomodel.cpp
-#				glf/light.cpp
 				glf/memory.cpp
 				glf/pass.cpp
 				glf/postprocessor.cpp
@@ -19,6 +17,7 @@ SET(GLF_SRCS
 				glf/sky.cpp
 				glf/ssao.cpp
 				glf/texture.cpp
+				glf/timing.cpp
 				glf/utils.cpp
 				glf/window.cpp
 				glf/wrapper.cpp

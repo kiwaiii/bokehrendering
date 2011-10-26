@@ -205,6 +205,7 @@ namespace glf
 	//--------------------------------------------------------------------------
 	bool CheckError(const char* Title)
 	{
+		#if 0
 		int Error;
 		if((Error = glGetError()) != GL_NO_ERROR)
 		{
@@ -234,6 +235,9 @@ namespace glf
 		}
 		assert(Error == GL_NO_ERROR);
 		return Error == GL_NO_ERROR;
+		#else
+		return true;
+		#endif
 	}
 	//--------------------------------------------------------------------------
 	bool CheckFramebuffer(GLuint FramebufferName)
