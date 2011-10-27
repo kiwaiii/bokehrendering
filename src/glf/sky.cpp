@@ -85,6 +85,7 @@ namespace glf
 		glProgramUniformMatrix4fv(program.id, program["Transformations"].location, 6, GL_FALSE, &transformations[0][0][0]);
 
 		// Init sky map & sky framebuffer
+		// 32FP is needed, otherwise we lack of contrast
 		skyTexture.Allocate(GL_RGBA32F,resolution,resolution,6,true);
 		skyTexture.SetWrapping(GL_CLAMP_TO_EDGE,GL_CLAMP_TO_EDGE);
 		skyTexture.SetFiltering(GL_LINEAR_MIPMAP_LINEAR,GL_LINEAR);

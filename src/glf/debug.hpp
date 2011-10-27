@@ -16,8 +16,8 @@
 #define ENABLE_OBJECT_TBN_HELPERS		0
 //------------------------------------------------------------------------------
 #define ENABLE_DOF_PASS_TIMING			0
-#define ENABLE_GPU_PASSES_TIMING		0
-#define ENABLE_GPU_FRAME_TIMING			1
+#define ENABLE_GPU_PASSES_TIMING		1
+#define ENABLE_GPU_FRAME_TIMING			0
 
 namespace glf
 {

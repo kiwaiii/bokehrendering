@@ -38,9 +38,8 @@ namespace glf
 
 		// Create and fill rotation texture
 		RNG rng;
-		rotationTex.Allocate(GL_RG32F,_w,_h);
+		rotationTex.Allocate(GL_RG16F,_w,_h);
 		glm::vec2* rotations = new glm::vec2[_w * _h];
-
 		for(int y=0;y<_h;++y)
 		for(int x=0;x<_w;++x)
 		{	

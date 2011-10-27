@@ -14,8 +14,8 @@ namespace glf
 	class DOFProcessor
 	{
 	private:
- 					DOFProcessor(		const DOFProcessor&);
- 		DOFProcessor operator=(			const DOFProcessor&);
+					DOFProcessor(		const DOFProcessor&);
+		DOFProcessor operator=(			const DOFProcessor&);
 	public:
 					DOFProcessor(		int _w, 
 										int _h);

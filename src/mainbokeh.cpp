@@ -633,14 +633,15 @@ void display()
 	if(ctx::drawHelpers)
 		app->helperRenderer.Draw(projection,view,glf::manager::helpers->helpers);
 
-	if(ctx::drawUI)
-		interface();
+	//if(ctx::drawUI)
+	//	interface();
 
 	glf::CheckError("display");
 
 
 	glEnable(GL_BLEND);
-		app->timingRenderer.Draw(*glf::manager::timings);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	app->timingRenderer.Draw(*glf::manager::timings);
 	glDisable(GL_BLEND);
 
 	glf::SwapBuffers();

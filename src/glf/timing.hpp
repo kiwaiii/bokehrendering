@@ -108,12 +108,14 @@ namespace glf
 										int _sectionID,
 										int _x,
 										int _y,
-										const glm::vec4& _color);
+										const glm::vec4& _color,
+										char* _buffer);
 		void 		DrawCPULine(		const TimingManager& _timings,
 										int _sectionID,
 										int _x,
 										int _y,
-										const glm::vec4& _color);
+										const glm::vec4& _color,
+										char* _buffer);
 	private:
 		Font							font;
 		FontRenderer 					fontRenderer;
