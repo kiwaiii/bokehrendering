@@ -44,7 +44,8 @@ namespace glf
 
 		texProjectionUnit  = programProjection["CubeMap"].unit;
 		glProgramUniform1i(programProjection.id, programProjection["CubeMap"].location, texProjectionUnit);
-		
+
+		// Would be 16FP enough precise ?
 		shTexture.Allocate(GL_RGBA32F,_resolution,_resolution,7,true);
 		shTexture.SetWrapping(GL_CLAMP_TO_EDGE,GL_CLAMP_TO_EDGE);
 		shTexture.SetFiltering(GL_LINEAR_MIPMAP_LINEAR,GL_LINEAR);

@@ -17,6 +17,11 @@ namespace glf
 				case GL_RG32F   			: _format = GL_RG;   _type = GL_FLOAT; break;
 				case GL_R32F    			: _format = GL_RED;  _type = GL_FLOAT; break;
 
+				case GL_RGBA16F 			: _format = GL_RGBA; _type = GL_FLOAT; break;
+				case GL_RGB16F  			: _format = GL_RGB;  _type = GL_FLOAT; break;
+				case GL_RG16F   			: _format = GL_RG;   _type = GL_FLOAT; break;
+				case GL_R16F    			: _format = GL_RED;  _type = GL_FLOAT; break;
+
 				case GL_RGBA32UI			: _format = GL_RGBA_INTEGER; _type = GL_UNSIGNED_INT; break;
 				case GL_RGB32UI 			: _format = GL_RGB_INTEGER;  _type = GL_UNSIGNED_INT; break;
 				case GL_RG32UI  			: _format = GL_RG_INTEGER;   _type = GL_UNSIGNED_INT; break;

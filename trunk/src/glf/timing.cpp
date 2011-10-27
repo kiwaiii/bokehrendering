@@ -255,61 +255,67 @@ namespace glf
 										int _sectionID,
 										int _x,
 										int _y,
-										const glm::vec4& _color)
+										const glm::vec4& _color,
+										char* _buffer)
 	{
-		static char buffer[128];
 		float timing = _timings.GPUTiming(_sectionID);
-		sprintf(buffer,"[GPU] %s : %.2fms",_timings.Name(_sectionID).c_str(),timing);
-		fontRenderer.Draw(_x,_y,font,buffer,_color);
+		sprintf(_buffer,"[GPU] %s : %.2fms",_timings.Name(_sectionID).c_str(),timing);
+		fontRenderer.Draw(_x,_y,font,_buffer,_color);
 	}
 	//--------------------------------------------------------------------------
 	void TimingRenderer::DrawCPULine(	const TimingManager& _timings,
 										int _sectionID,
 										int _x,
 										int _y,
-										const glm::vec4& _color)
+										const glm::vec4& _color,
+										char* _buffer)
 	{
-		static char buffer[128];
 		float timing = _timings.CPUTiming(_sectionID);
-		sprintf(buffer,"[CPU] %s : %.2fms",_timings.Name(_sectionID).c_str(),timing);
-		fontRenderer.Draw(_x,_y,font,buffer,_color);
+		sprintf(_buffer,"[CPU] %s : %.2fms",_timings.Name(_sectionID).c_str(),timing);
+		fontRenderer.Draw(_x,_y,font,_buffer,_color);
 	}
 	//--------------------------------------------------------------------------
 	void TimingRenderer::Draw(			const TimingManager& _timings)
 	{
+		static char buffer[128];
+
 		// Bottom left corner
-		glm::vec4 color(1,1,0,0);
+		glm::vec4 color(1,0,0,1);
 		int x,y,verticalOffset;
 		x				= 20;
 		y				= 20;
 		verticalOffset	= font.CharHeight('A') + 2;
 
 		#if ENABLE_GPU_PASSES_TIMING
-		DrawGPULine(_timings,section::PostProcess,	x,y,color); y+=verticalOffset;
-		DrawGPULine(_timings,section::DofProcess,	x,y,color); y+=verticalOffset;
-		DrawGPULine(_timings,section::SsaoRender,	x,y,color); y+=verticalOffset;
-		DrawGPULine(_timings,section::SsaoBlur,		x,y,color); y+=verticalOffset;
-		DrawGPULine(_timings,section::SsaoRender,	x,y,color); y+=verticalOffset;
-		DrawGPULine(_timings,section::SkyRender,	x,y,color); y+=verticalOffset;
-		DrawGPULine(_timings,section::CsmRender,	x,y,color); y+=verticalOffset;
-		DrawGPULine(_timings,section::CsmBuiler,	x,y,color); y+=verticalOffset;
-		DrawGPULine(_timings,section::Gbuffer,		x,y,color); y+=verticalOffset;
+		DrawGPULine(_timings,section::PostProcess,	x,y,color,buffer); y+=verticalOffset;
+		DrawGPULine(_timings,section::DofProcess,	x,y,color,buffer); y+=verticalOffset;
+		DrawGPULine(_timings,section::SsaoRender,	x,y,color,buffer); y+=verticalOffset;
+		DrawGPULine(_timings,section::SsaoBlur,		x,y,color,buffer); y+=verticalOffset;
+		DrawGPULine(_timings,section::SsaoRender,	x,y,color,buffer); y+=verticalOffset;
+		DrawGPULine(_timings,section::SkyRender,	x,y,color,buffer); y+=verticalOffset;
+		DrawGPULine(_timings,section::CsmRender,	x,y,color,buffer); y+=verticalOffset;
+		DrawGPULine(_timings,section::CsmBuiler,	x,y,color,buffer); y+=verticalOffset;
+		DrawGPULine(_timings,section::Gbuffer,		x,y,color,buffer); y+=verticalOffset;
 		#endif
 
 		#if ENABLE_INNER_DOF_TIMING
-		DrawGPULine(_timings,section::DofRendering,	x,y,color); y+=verticalOffset;
-		DrawGPULine(_timings,section::DofBlur,		x,y,color); y+=verticalOffset;
-		DrawGPULine(_timings,section::DofDetection,	x,y,color); y+=verticalOffset;
-		DrawGPULine(_timings,section::DofBlurDepth,	x,y,color); y+=verticalOffset;
-		DrawGPULine(_timings,section::DofReset,		x,y,color); y+=verticalOffset;
+		DrawGPULine(_timings,section::DofRendering,	x,y,color,buffer); y+=verticalOffset;
+		DrawGPULine(_timings,section::DofBlur,		x,y,color,buffer); y+=verticalOffset;
+		DrawGPULine(_timings,section::DofDetection,	x,y,color,buffer); y+=verticalOffset;
+		DrawGPULine(_timings,section::DofBlurDepth,	x,y,color,buffer); y+=verticalOffset;
+		DrawGPULine(_timings,section::DofReset,		x,y,color,buffer); y+=verticalOffset;
 		#endif
 
 		#if ENABLE_GPU_FRAME_TIMING
-		DrawGPULine(_timings,section::Frame,		x,y,color); y+=verticalOffset;
-		DrawCPULine(_timings,section::Frame,		x,y,color); y+=verticalOffset;
+		DrawGPULine(_timings,section::Frame,		x,y,color,buffer); y+=verticalOffset;
+		DrawCPULine(_timings,section::Frame,		x,y,color,buffer); y+=verticalOffset;
 		#else
-		DrawCPULine(_timings,section::Frame,		x,y,color); y+=verticalOffset;
+		DrawCPULine(_timings,section::Frame,		x,y,color,buffer); y+=verticalOffset;
 		#endif
+
+		// Draw FPS
+		sprintf(buffer,"%.2f FPS",1000.f/_timings.CPUTiming(section::Frame));
+		fontRenderer.Draw(x,y,font,buffer,color);
 	}
 }
 
