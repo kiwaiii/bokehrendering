@@ -23,18 +23,18 @@
 namespace glui
 {
 	//-------------------------------------------------------------------------
-  	GlutContext::GlutContext() :
-    UIContext(*(new GLPainter())),
-    m_ownPainter(true),
+	GlutContext::GlutContext() :
+	UIContext(*(new GLPainter())),
+	m_ownPainter(true),
 	m_modifiers(0)
-    {
+	{
 
-    }
+	}
 	//-------------------------------------------------------------------------
-    GlutContext::~GlutContext()
-    {
-        if (m_ownPainter) delete getPainter();
-    }
+	GlutContext::~GlutContext()
+	{
+		if (m_ownPainter) delete getPainter();
+	}
 	//-------------------------------------------------------------------------
 	void GlutContext::Initialize(int _w, int _h)
 	{

@@ -14,6 +14,7 @@ namespace glf
 	void	CreateCube(			glf::VertexBuffer3F& _cube);
 	void	CreateQuad(			glf::VertexBuffer3F& _quad);
 	void	CreateQuad(			glf::VertexBuffer4F& _quad);
+	void	CreateQuad(			glf::IndexBuffer& _quad);
 }
 #endif
 

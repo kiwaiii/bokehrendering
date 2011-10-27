@@ -16,8 +16,8 @@
 // Includes
 //------------------------------------------------------------------------------
 #include <glui/widgets.hpp>
-#include <glui/font.hpp>
 
+#include <glf/font.hpp>
 #include <glf/buffer.hpp>
 #include <glf/wrapper.hpp>
 
@@ -308,19 +308,19 @@ namespace glui
 		//---------------------------------------------------------------------
 		// Attributes
 		//---------------------------------------------------------------------
-		Font									font;
-		FontRender								fontRender;
+		glf::Font								font;
+		glf::FontRenderer						fontRenderer;
 		mutable Quad							quad;			// Quad
 		mutable Shape							shape4;			// Shape with 4 vertices
 		mutable Shape							shape7;			// Shape with 7 vertices
 		mutable Shape							shape8;			// Shape with 8 vertices
-        
+
 		glm::mat4 								view, projection;
 		mutable CommonWidget					commonWidget;
 
 		Overdraw								overdraw;		// Store all overdraw
 		unsigned int							nOverdraws;		// Store all
-    };
+	};
 }
 
 

@@ -9,15 +9,14 @@
 #include <glf/buffer.hpp>
 #include <glf/pass.hpp>
 #include <glf/csm.hpp>
+#include <glf/debug.hpp>
 #include <glf/sky.hpp>
 #include <glf/sh.hpp>
 #include <glf/ssao.hpp>
 #include <glf/camera.hpp>
 #include <glf/wrapper.hpp>
-#include <glf/helper.hpp>
 #include <glf/dofprocessor.hpp>
 #include <glf/postprocessor.hpp>
-#include <glf/timing.hpp>
 #include <glf/utils.hpp>
 #include <fstream>
 #include <cstring>
@@ -30,9 +29,6 @@
 //------------------------------------------------------------------------------
 #define MAJOR_VERSION	4
 #define MINOR_VERSION	1
-#define BBOX_SCENE		1
-#define DETAIL_TIMINGS	0
-#define GLOBAL_TIMINGS	1
 
 //-----------------------------------------------------------------------------
 namespace ctx
@@ -102,7 +98,7 @@ namespace
 		glf::ResourceManager				resources;
 		glf::SceneManager					scene;
 
-		glf::HelperManager					helpers;
+		glf::TimingRenderer					timingRenderer;
 		glf::HelperRenderer					helperRenderer;
 
 		glf::GBuffer						gbuffer;
@@ -135,19 +131,6 @@ namespace
 
 		int									activeBuffer;
 		int									activeMenu;
-
-		glf::DOFTimings						dofTimings;
-		glf::GPUSectionTimer				gbufferTimer;
-		glf::GPUSectionTimer				csmBuilerTimer;
-		glf::GPUSectionTimer				csmRenderTimer;
-		glf::GPUSectionTimer				skyRenderTimer;
-		glf::GPUSectionTimer				ssaoRenderTimer;
-		glf::GPUSectionTimer				ssaoBlurTimer;
-		glf::GPUSectionTimer				dofProcessTimer;
-		glf::GPUSectionTimer				postProcessTimer;
-		glf::GPUSectionTimer				frameTimer;			// GPU frame time
-		float								previousFrameTime;	// CPU frame time
-		float								elapsedFrameTime;	//
 	};
 	Application*							app;
 
@@ -157,6 +140,7 @@ namespace
 	struct									menuType		{ enum Type {MN_TONE,MN_SKY,MN_CSM,MN_SSAO,MN_DOF,MAX }; };
 
 	Application::Application(int _w, int _h):
+	timingRenderer(_w,_h),
 	gbuffer(_w,_h),
 	renderSurface(_w,_h),
 	renderTarget1(_w,_h),
@@ -212,9 +196,6 @@ namespace
 
 		activeBuffer				= 0;
 		activeMenu					= 2;
-		previousFrameTime			= 0;
-		elapsedFrameTime			= 0;
-
 		csmLight.direction			= glm::vec3(0,0,-1);
 	}
 }
@@ -256,30 +237,31 @@ bool begin()
 	glCullFace(GL_BACK);
 	glf::CheckError("begin");
 
-	app = new Application(ctx::window.Size.x,ctx::window.Size.y);
+	ctx::camera 			= glf::Camera::Ptr(new glf::HybridCamera());
+	glf::manager::timings	= glf::TimingManager::Create();
+	glf::manager::helpers	= glf::HelperManager::Create();
+	app 					= new Application(ctx::window.Size.x,ctx::window.Size.y);
 
 	glf::io::LoadScene(	"../resources/models/tank/",
 						"tank.obj",
 						glm::rotate(90.f,1.f,0.f,0.f),
 						app->resources,
 						app->scene,
-						app->helpers,
 						true);
 
 	float farPlane = 2.f * glm::length(app->scene.wBound.pMax - app->scene.wBound.pMin);
-
-	ctx::camera = glf::Camera::Ptr(new glf::HybridCamera());
 	ctx::camera->Perspective(45.f, ctx::window.Size.x, ctx::window.Size.y, 0.1f, farPlane);
 
 	app->renderTarget1.AttachDepthStencil(app->gbuffer.depthTex);
 	app->renderTarget2.AttachDepthStencil(app->gbuffer.depthTex);
 
-	app->helpers.CreateReferential(1.f);
-	#if BBOX_SCENE
+	glf::manager::helpers->CreateReferential(1.f);
+
+	#if ENABLE_OBJECT_BBOX_HELPERS
 	for(unsigned int i=0;i<app->scene.oBounds.size();++i)
 	{
-		app->helpers.CreateBound(	app->scene.oBounds[i],
-									app->scene.transformations[i]);
+		glf::manager::helpers->CreateBound(	app->scene.oBounds[i],
+											app->scene.transformations[i]);
 	}
 	#endif
 
@@ -306,7 +288,7 @@ void interface()
 	ctx::ui->Begin();
 
 		ctx::ui->BeginGroup(glui::Flags::Grow::DOWN_FROM_LEFT);
-/*			ctx::ui->BeginFrame();
+			ctx::ui->BeginFrame();
 			for(int i=0;i<bufferType::MAX;++i)
 			{
 				bool active = i==app->activeBuffer;
@@ -323,52 +305,9 @@ void interface()
 				app->activeMenu = active?i:app->activeMenu;
 			}
 			ctx::ui->EndFrame();
-*/
-			ctx::ui->BeginFrame();
-			#if 0
-			sprintf(labelBuffer,"GBuffer      : %.2fms",app->gbufferTimer.Current());
-			ctx::ui->Label(none,labelBuffer);
-			sprintf(labelBuffer,"CSM Builder  : %.2fms",app->csmBuilerTimer.Current());
-			ctx::ui->Label(none,labelBuffer);
-			sprintf(labelBuffer,"CSM Render   : %.2fms",app->csmRenderTimer.Current());
-			ctx::ui->Label(none,labelBuffer);
-			sprintf(labelBuffer,"SKY Render   : %.2fms",app->skyRenderTimer.Current());
-			ctx::ui->Label(none,labelBuffer);
-			sprintf(labelBuffer,"SSAO Render  : %.2fms",app->ssaoRenderTimer.Current());
-			ctx::ui->Label(none,labelBuffer);
-			sprintf(labelBuffer,"SSAO Blur    : %.2fms",app->ssaoBlurTimer.Current());
-			ctx::ui->Label(none,labelBuffer);
-			sprintf(labelBuffer,"DOF Process  : %.2fms",app->dofProcessTimer.Current());
-			ctx::ui->Label(none,labelBuffer);
-			sprintf(labelBuffer,"POST Process : %.2fms",app->postProcessTimer.Current());
-			ctx::ui->Label(none,labelBuffer);
-			#endif
-
-			#if 0
-			sprintf(labelBuffer,"DOF Reset time      : %.2fms",app->dofTimings.resetTimer.Current());
-			ctx::ui->Label(none,labelBuffer);
-			sprintf(labelBuffer,"DOF Blur/depth time : %.2fms",app->dofTimings.blurDepthTimer.Current());
-			ctx::ui->Label(none,labelBuffer);
-			sprintf(labelBuffer,"DOF Detection time  : %.2fms",app->dofTimings.detectionTimer.Current());
-			ctx::ui->Label(none,labelBuffer);
-			sprintf(labelBuffer,"DOF Blur time       : %.2fms",app->dofTimings.blurTimer.Current());
-			ctx::ui->Label(none,labelBuffer);
-			sprintf(labelBuffer,"DOF Rendering time  : %.2fms",app->dofTimings.renderingTimer.Current());
-			ctx::ui->Label(none,labelBuffer);
-			#endif
-
-			#if 1
-			sprintf(labelBuffer,"GPU frame time : %.2fms",app->frameTimer.Current());
-			ctx::ui->Label(none,labelBuffer);
-			sprintf(labelBuffer,"CPU frame time : %.2fms",app->elapsedFrameTime);
-			ctx::ui->Label(none,labelBuffer);
-			#endif
-			ctx::ui->EndFrame();
-
-
 			ctx::ui->CheckButton(none,"Helpers",&ctx::drawHelpers);
 		ctx::ui->EndGroup();
-/*
+
 		bool update = false;
 		ctx::ui->BeginGroup(glui::Flags::Grow::DOWN_FROM_RIGHT);
 			ctx::ui->BeginFrame();
@@ -522,7 +461,6 @@ void interface()
 			}
 			ctx::ui->EndFrame();
 		ctx::ui->EndGroup();
-*/
 	ctx::ui->End();
 
 	glf::CheckError("Interface");
@@ -531,10 +469,7 @@ void interface()
 void display()
 {
 	float currentFrameTime = glutGet(GLUT_ELAPSED_TIME);
-	app->elapsedFrameTime  = currentFrameTime - app->previousFrameTime;
-	#if GLOBAL_TIMINGS
-	app->frameTimer.StartSection();
-	#endif
+	glf::manager::timings->StartSection(glf::section::Frame);
 
 	// Optimize far plane
 	glm::mat4 projection		= ctx::camera->Projection();
@@ -548,33 +483,24 @@ void display()
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_STENCIL_TEST);
 
-	#if DETAILED_TIMINGS
-	app->csmBuilerTimer.StartSection();
-	#endif
+	glf::manager::timings->StartSection(glf::section::CsmBuiler);
 	app->csmBuilder.Draw(	app->csmLight,
 							*ctx::camera,
 							app->csmParams.cascadeAlpha,
 							app->csmParams.blendFactor,
-							app->scene,
-							app->helpers);
-	#if DETAILED_TIMINGS
-	app->csmBuilerTimer.EndSection();
-	#endif
+							app->scene);
+	glf::manager::timings->EndSection(glf::section::CsmBuiler);
 
 	// Enable writting into the stencil buffer
 	glEnable(GL_STENCIL_TEST);
 	glStencilFunc(GL_ALWAYS, 1, 1);
 	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
-	#if DETAILED_TIMINGS
-	app->gbufferTimer.StartSection();
-	#endif
+	glf::manager::timings->StartSection(glf::section::Gbuffer);
 	app->gbuffer.Draw(		projection,
 							view,
 							app->scene);
-	#if DETAILED_TIMINGS
-	app->gbufferTimer.EndSection();
-	#endif
+	glf::manager::timings->EndSection(glf::section::Gbuffer);
 
 	glDisable(GL_DEPTH_TEST);
 	glDepthMask(false);
@@ -590,6 +516,7 @@ void display()
 				glBindFramebuffer(GL_FRAMEBUFFER,app->renderTarget1.framebuffer);
 				glClear(GL_COLOR_BUFFER_BIT);
 
+				// Render cube map
 				glDisable(GL_STENCIL_TEST);
 				glCullFace(GL_FRONT);
 				app->cubeMap.Draw(	projection,
@@ -598,22 +525,18 @@ void display()
 				glCullFace(GL_BACK);
 				glEnable(GL_STENCIL_TEST);
 
-				#if DETAILED_TIMINGS
-				app->skyRenderTimer.StartSection();
-				#endif
+				// Render sky lighting
+				glf::manager::timings->StartSection(glf::section::SkyRender);
 				app->shRenderer.Draw(	app->shLight,
 										app->gbuffer,
 										app->renderTarget1);
-				#if DETAILED_TIMINGS
-				app->skyRenderTimer.EndSection();
-				#endif
+				glf::manager::timings->EndSection(glf::section::SkyRender);
 
 				glBindFramebuffer(GL_FRAMEBUFFER,app->renderTarget2.framebuffer);
 				glClear(GL_COLOR_BUFFER_BIT);
 
-				#if DETAILED_TIMINGS
-				app->ssaoRenderTimer.StartSection();
-				#endif
+				// Render ssao render pass
+				glf::manager::timings->StartSection(glf::section::SsaoRender);
 				app->ssaoPass.Draw(		app->gbuffer,
 										view,
 										near,
@@ -624,18 +547,15 @@ void display()
 										app->ssaoParams.radius,
 										app->ssaoParams.nSamples,
 										app->renderTarget2);
-				#if DETAILED_TIMINGS
-				app->ssaoRenderTimer.EndSection();
-				#endif
+				glf::manager::timings->EndSection(glf::section::SsaoRender);
 				glBindFramebuffer(GL_FRAMEBUFFER,app->renderTarget1.framebuffer);
 
 				glEnable(GL_BLEND);
 				glBlendEquation(GL_FUNC_ADD);
 				glBlendFunc( GL_ZERO, GL_SRC_ALPHA); // Do a multiplication between SSAO and sky lighting
 
-				#if DETAILED_TIMINGS
-				app->ssaoBlurTimer.StartSection();
-				#endif
+				// Render ssao blur pass
+				glf::manager::timings->StartSection(glf::section::SsaoBlur);
 				app->bilateralPass.Draw(app->renderTarget2.texture,
 										app->gbuffer.positionTex,
 										view,
@@ -643,33 +563,27 @@ void display()
 										app->ssaoParams.sigmaV,
 										app->ssaoParams.nTaps,
 										app->renderTarget1);
-				#if DETAILED_TIMINGS
-				app->ssaoBlurTimer.EndSection();
-				#endif
+				glf::manager::timings->EndSection(glf::section::SsaoBlur);
 
 				glBlendFunc( GL_ONE, GL_ONE);
 
-				#if DETAILED_TIMINGS
-				app->csmRenderTimer.StartSection();
-				#endif
+				// Render csm/sun light pass
+				glf::manager::timings->StartSection(glf::section::CsmRender);
 				app->csmRenderer.Draw(	app->csmLight,
 										app->gbuffer,
 										viewPos,
 										app->csmParams.blendFactor,
 										app->csmParams.bias,
 										app->renderTarget1);
-				#if DETAILED_TIMINGS
-				app->csmRenderTimer.EndSection();
-				#endif
+				glf::manager::timings->EndSection(glf::section::CsmRender);
 
 				glBindFramebuffer(GL_FRAMEBUFFER,0);
 
 				glDisable(GL_STENCIL_TEST);
 				glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
-				#if DETAILED_TIMINGS
-				app->dofProcessTimer.StartSection();
-				#endif
+				// Render dof processing pass
+				glf::manager::timings->StartSection(glf::section::DofProcess);
 				app->dofProcessor.Draw(	app->renderTarget1.texture,
 										app->gbuffer.positionTex,
 										view,
@@ -684,24 +598,18 @@ void display()
 										app->dofParams.cocThreshold,
 										app->dofParams.bokehDepthCutoff,
 										app->dofParams.poissonFiltering,
-										app->dofTimings,
 										app->renderTarget2);
-				#if DETAILED_TIMINGS
-				app->dofProcessTimer.EndSection();
-				#endif
+				glf::manager::timings->EndSection(glf::section::DofProcess);
 
 				glBindFramebuffer(GL_FRAMEBUFFER,0);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-				#if DETAILED_TIMINGS
-				app->postProcessTimer.StartSection();
-				#endif
+				// Render post processing pass
+				glf::manager::timings->StartSection(glf::section::PostProcess);
 				app->postProcessor.Draw(app->renderTarget2.texture,
 										app->toneParams.toneExposure,
 										app->renderTarget1);
-				#if DETAILED_TIMINGS
-				app->postProcessTimer.EndSection();
-				#endif
+				glf::manager::timings->EndSection(glf::section::PostProcess);
 
 				break;
 		case bufferType::GB_POSITION : 
@@ -723,18 +631,21 @@ void display()
 	}
 
 	if(ctx::drawHelpers)
-		app->helperRenderer.Draw(projection,view,app->helpers.helpers);
+		app->helperRenderer.Draw(projection,view,glf::manager::helpers->helpers);
 
 	if(ctx::drawUI)
 		interface();
 
 	glf::CheckError("display");
 
-	#if GLOBAL_TIMINGS
-	app->frameTimer.EndSection();
-	#endif
-	app->previousFrameTime = currentFrameTime;
+
+	glEnable(GL_BLEND);
+		app->timingRenderer.Draw(*glf::manager::timings);
+	glDisable(GL_BLEND);
+
 	glf::SwapBuffers();
+
+	glf::manager::timings->EndSection(glf::section::Frame);
 }
 //------------------------------------------------------------------------------
 int main(int argc, char* argv[])

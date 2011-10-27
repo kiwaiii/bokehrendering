@@ -4,6 +4,7 @@
 #include <glf/iomodel.hpp>
 #include <glf/ioimage.hpp>
 #include <glf/utils.hpp>
+#include <glf/debug.hpp>
 //------------------------------------------------------------------------------
 #include <cstring>
 #include <cstdio>
@@ -2203,7 +2204,6 @@ namespace glf
 							const glm::mat4& _transform,
 							ResourceManager& _resourceManager,
 							SceneManager& _scene,
-							HelperManager& _helpers,
 							bool _verbose)
 		{
 			// Load objects
@@ -2345,8 +2345,8 @@ namespace glf
 				BBox obound = ObjectBound(*vb,*ib,rmesh.startIndices,rmesh.countIndices);
 				_scene.oBounds.push_back(obound);
 
-				#if ADD_TBN_HELPERS
-					_helpers.CreateTangentSpace(*vb,*nb,*tb,*ib,rmesh.startIndices,rmesh.countIndices,0.1f);
+				#if ENABLE_OBJECT_TBN_HELPERS
+					glf::manager::helpers->CreateTangentSpace(*vb,*nb,*tb,*ib,rmesh.startIndices,rmesh.countIndices,0.1f);
 				#endif
 
 				if(_verbose)

@@ -136,7 +136,7 @@ namespace glui
 	GLPainter::GLPainter():
 	UIPainter(),
 	font(),
-	fontRender(),
+	fontRenderer(512,512),
 	shape4(),
 	shape7(),
 	shape8(),
@@ -152,13 +152,12 @@ namespace glui
 	//--------------------------------------------------------------------------
 	void GLPainter::Initialize()
 	{
-		fontRender.Initialize();
 		shape4.Initialize(4);
 		shape7.Initialize(7);
 		shape8.Initialize(8);
 		quad.Initialize();
-		
 		font.Load<Arial12>();
+		
 		commonWidget.Build(cWidgetVSSource,cWidgetFSSource);
 
 		commonWidget.quadVar.Add(quad.Vertices, commonWidget.program["Position"].location,4,GL_FLOAT);
@@ -215,7 +214,7 @@ namespace glui
 		int w = 0;
 		while(*_text != '\0' && *_text != '\n')
 		{
-		    w += font.Width(*_text);
+		    w += font.CharWidth(*_text);
 		    _text++;
 		}
 		w += 2;
@@ -231,7 +230,7 @@ namespace glui
 		{
 		    if (*_text != '\n')
 		    {
-		        wLine += font.Width(*_text);;
+		        wLine += font.CharWidth(*_text);;
 		    }
 		    else
 		    {
@@ -254,7 +253,7 @@ namespace glui
 		{
 		    if (*_text != '\0' && *_text != '\n')
 		    {
-		        w += font.Width(*_text);
+		        w += font.CharWidth(*_text);
 		    }
 		    else
 		    {
@@ -276,7 +275,7 @@ namespace glui
 
 		while(*_text != '\0' && *_text != '\n')
 		{
-		    w += font.Width(*_text);
+		    w += font.CharWidth(*_text);
 		    
 		    if ( _at.x < w ) return (_text - textstart); 
 
@@ -782,7 +781,7 @@ namespace glui
 		//Tools::Logger::Info("beginDraw");
 		glDisable(GL_DEPTH_TEST);
 		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);	
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 	//--------------------------------------------------------------------------
 	void GLPainter::end()
@@ -1414,7 +1413,7 @@ namespace glui
 		    drawRect(_r, cFontBack + (_isHover) + (_isOn << 1), cOutline);    
 		}
 
-		fontRender.DrawString(_r.x, _r.y,font,_text,s_colors[cFont]);
+		fontRenderer.Draw(_r.x, _r.y,font,_text,s_colors[cFont]);
 		//drawString(_r.x, _r.y, _text, _nbLines, s_colors[cFont]);
 		
 		if (_caretPos != -1)
@@ -1458,6 +1457,6 @@ namespace glui
 	//--------------------------------------------------------------------------
 	void GLPainter::reshape(unsigned int _w, unsigned int _h)
 	{
-		fontRender.Reshape(_w,_h);
+		fontRenderer.Reshape(_w,_h);
 	}
 }

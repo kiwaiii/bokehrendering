@@ -2,8 +2,9 @@
 // Include
 //-----------------------------------------------------------------------------
 #include <glf/dofprocessor.hpp>
-#include <glm/glm.hpp>
 #include <glf/ioimage.hpp>
+#include <glf/debug.hpp>
+#include <glm/glm.hpp>
 
 //-----------------------------------------------------------------------------
 // Constants
@@ -238,28 +239,21 @@ namespace glf
 								float			_cocThreshold,
 								float			_bokehDepthCutoff,
 								bool 			_poissonFiltering,
-								DOFTimings&		_timings,
 								const RenderTarget& _renderTarget)
 	{
 		glf::CheckError("DOFProcessor::DrawBegin");
 
 		// Reset bokeh counter (draw a fake point)
-		#if RUN_TIMINGS
-		_timings.resetTimer.StartSection();
-		#endif
+		glf::manager::timings->StartSection(section::DofReset);
 		glUseProgram(resetPass.program.id);
 			glBindFramebuffer(GL_FRAMEBUFFER,blurDepthFBO);
 			glActiveTexture(GL_TEXTURE0 + resetPass.bokehCountTexUnit);
 			glBindImageTextureEXT(resetPass.bokehCountTexUnit, bokehCountTexID,0,false,0,GL_WRITE_ONLY, GL_R32UI);
 			pointVAO.Draw(GL_POINTS,1,0);
-		#if RUN_TIMINGS
-		_timings.resetTimer.EndSection();
-		#endif
+		glf::manager::timings->EndSection(section::DofReset);
 
 		// Compute amount of blur and linear depth for each pixel
-		#if RUN_TIMINGS
-		_timings.blurDepthTimer.StartSection();
-		#endif
+		glf::manager::timings->StartSection(section::DofBlurDepth);
 		glUseProgram(cocPass.program.id);
 			glClear(GL_COLOR_BUFFER_BIT);
 			glProgramUniform1f(cocPass.program.id,			cocPass.farStartVar,	_farStart);
@@ -268,14 +262,10 @@ namespace glf
 			_positionTex.Bind(cocPass.positionTexUnit);
 			_renderTarget.Draw();
 			glf::CheckError("DOFProcessor::DrawBLURDEPTH");
-		#if RUN_TIMINGS
-		_timings.blurDepthTimer.EndSection();
-		#endif
+		glf::manager::timings->EndSection(section::DofBlurDepth);
 
 		// Detect pixel which are bokeh and output color of pixels which are not bokeh
-		#if RUN_TIMINGS
-		_timings.detectionTimer.StartSection();
-		#endif
+		glf::manager::timings->StartSection(section::DofDetection);
 		glUseProgram(detectionPass.program.id);
 			glBindFramebuffer(GL_FRAMEBUFFER,detectionFBO);
 			glClear(GL_COLOR_BUFFER_BIT);
@@ -294,9 +284,8 @@ namespace glf
 			_colorTex.Bind(detectionPass.colorTexUnit);
 			_renderTarget.Draw();
 			glf::CheckError("DOFProcessor::DrawDETECTION");
-		#if RUN_TIMINGS
-		_timings.detectionTimer.EndSection();
-		#endif
+		glf::manager::timings->EndSection(section::DofDetection);
+
 			// Print indirect buffer
 			#if 0
 			int count, primCount,first,reservedMustBeZero;
@@ -314,9 +303,7 @@ namespace glf
 			glf::Info("%s",out.str().c_str());
 			#endif
 
-		#if RUN_TIMINGS
-		_timings.blurTimer.StartSection();
-		#endif
+		glf::manager::timings->StartSection(section::DofBlur);
 		if(_poissonFiltering)
 		{
 		glUseProgram(blurPoissonPass.program.id);
@@ -352,14 +339,10 @@ namespace glf
 			_renderTarget.Draw();
 			glf::CheckError("DOFProcessor::DrawHBLUR");
 		}
-		#if RUN_TIMINGS
-		_timings.blurTimer.EndSection();
-		#endif
+		glf::manager::timings->EndSection(section::DofBlur);
 
 		// Render bokeh as textured quad (with additive blending)
-		#if RUN_TIMINGS
-		_timings.renderingTimer.StartSection();
-		#endif
+		glf::manager::timings->StartSection(section::DofRendering);
 		glUseProgram(renderingPass.program.id);
 			glMemoryBarrierEXT(GL_ALL_BARRIER_BITS_EXT);
 			glProgramUniform1f(renderingPass.program.id,renderingPass.maxBokehRadiusVar,_maxBokehRadius);
@@ -370,9 +353,7 @@ namespace glf
 			bokehPositionTex.Bind(renderingPass.bokehPositionTexUnit);
 			pointVAO.Draw(GL_POINTS,pointIndirectBuffer);
 			glf::CheckError("DOFProcessor::DrawRENDERING");
-		#if RUN_TIMINGS
-		_timings.renderingTimer.EndSection();
-		#endif
+		glf::manager::timings->EndSection(section::DofRendering);
 
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
 		glf::CheckError("DOFProcessor::DrawEnd");
