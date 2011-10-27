@@ -47,51 +47,51 @@ A recent approach proposed by White~\cite{White11} reproduces pentagonal \bokeh 
 
 %-------------------------------------------------------------------------------
 \section{Algorithm}
-We observe that only high contrasted points produce distinct \bokehs. We use this heuristic to detect \bokeh positions in screen space~\cite{Pettineo11} and render final \bokehs by splatting textured quad at those locations. Every other points are rendered with a blur based approach.
+We observe that only points with a high local contrast will produce distinct \bokeh shapes. We use this heuristic to detect \bokeh positions in screen space~\cite{Pettineo11} and then splat textured quads at those locations. The remaining pixels use a blur-based approach to simulate a circle of confusion.
 
 \subsection{Overview}
-Our approach is divide into four passes, see Figure~\ref{DeRousiers:pipeline}. The first pass computes the \coc size for each pixel based on its depth value and output a linear depth buffer\footnote{If you already have a linear depth buffer as input, you can merge together the first two passes.}. Then, the second pass computes the contrast of the current pixel. If this contrast is enough, its position, \coc size, and averaged color are append to a buffer. During the third pass, a blur-based depth of field is computed with one of the previous methods (Gaussian blur,...). Finally, the last pass splats textured quad at \bokeh positions.
+Our approach is divided into four passes, see Figure~\ref{DeRousiers:pipeline}. The first pass computes the \coc size for each pixel based on its depth value, and then outputs a linear depth value to a render target texture\footnote{If you already have a linear depth buffer as input, you can merge together the first two passes.}. Then, the second pass computes the contrast of the current pixel by comparing the pixel's brightness with the brightness of neighboring pixels. If this contrast is above a pre-defined threshold, its position, \coc size, and average color are appended to a buffer. During the third pass, a blur-based depth of field is computed with one of the previous methods (Gaussian blur, ...). Finally, a fourth pass splats textured quads at the \bokeh positions that were appended to the buffer in the second pass.
 
 	\begin{figure}[htb]\centering
 	\includegraphics[width=\textwidth]{pipeline}
-	\caption{Overview of the pipeline. It is composed of four passes and takes as input the color and depth buffers of the current frame. It outputs a final color image with depth of field and \bokeh effects.}
+	\caption{Overview of the pipeline. It is composed of four passes, and takes as input the color and depth buffers of the current frame. It outputs a final color image with depth of field and \bokeh effects.}
 	\label{DeRousiers:pipeline}
 	\end{figure}
 
-In order to ensure high performances, CPU/GPU synchronization has to be avoided. We use an indirect draw command which read how many \bokeh has to be drawn from a GPU buffer. This way, the number of detected \bokehs is never read back by the CPU.
+In order to maintain high performance, it is crucial to avoid CPU/GPU synchronization. We ensure this by making use of an indirect draw command, which renders a number of quads based on the count stored in the append buffer. This way, the number of \bokeh points detected by the CPU is never read back by the CPU.
 
 \subsection{Circles of confusion computation}
-Set up field of view with focal length is not easy. We define two areas where geometry is out-of-focus : a near/foreground area and a far/background area. Both areas are delimited with a near and far depth values, see Figure~\ref{DeRousiers:focus}. Blur amount is linearly interpolated between those bounds. It allows a easy and intuitive way to set up field of view.
+Setting up depth of field using physical camera parameters (such as focal length and aperture size) can be non-intuitive for those not familiar with optics or photography. Instead, we define two areas where geometry is out-of-focus : a near/foreground area and a far/background area. Both areas are delimited with a near and far depth values, see Figure~\ref{DeRousiers:focus}. In both regions, the blur amount is linearly interpolated between the two bounds. This allows a simple and intuitive means of describing the depth of field for a given scene.
 
 $$
 	CoC = \frac{Z_{pixel} - Z_{start} }{ Z_{end} - Z_{start} }
 $$
 
-This way the \coc size is normalized between [0,1]. An extra parameter \codecmd{MaxRadius} determines a posteriori what is final size of the blur. This lets artists to play with, in order to achieve the desired appearance and also balances performances (lesser the \codecmd{MaxRadius} is, greater the performances are).
+The resulting \coc size from this equation is normalized to [0,1]. An extra parameter \codecmd{MaxRadius} determines a posteriori what the final size of the blur will be in screen space. This setting can be tweaked by artists in order to achieve the desired appearance, and provides a mean of balancing performance (smaller values of \codecmd{MaxRadius} result in greater performance).
 
 
 \subsection{\Bokeh detection}
-This pass aims to detect pixels which will generate \bokehs. To detect them, we use the following heuristic : \emph{an highly contrasted pixel in a given neighborhood will generate a \bokeh}. We compare the current pixel luminance $L_{pixel}$ to its neighborhood luminance $L_{neigh}$. If the difference $L_{pixel}-L_{neigh}$ is greater than the threshold \codecmd{LumThreshold}, then the current pixel is registered as a \bokeh. Pixels detected as \bokeh are sparse. Storing them into a texture render target would be a waste of space and reading them back would be a waste of time due to their no-coherency in space. To address this problem, we use the \opengl \codecmd{ImageBuffers} in combination with an \codecmd{AtomicCounter}. This allows us to built a vector in which we append detected \bokehs parameters. \codecmd{ImageBuffers} have to be preallocated with a given size (\ie the maximum number of \bokehs which can be display on screen). The atomic counter \codecmd{BokehCounter} stores the number of appended \bokehs. Its current value indicates the next free cells in the \codecmd{ImageBuffers} vector. Two \codecmd{ImageBuffers} \codecmd{BokehPosition} and, \codecmd{BokehColor}, are used to store \coc size, position, and color of the registered \bokehs. 
+The detection pass aims to detect pixels from which we will generate \bokeh shapes. To detect such pixels, we use the following heuristic : \emph{a pixel with high contrast in a given neighborhood will generate a \bokeh shape}. We compare the current pixel luminance $L_{pixel}$ to its neighborhood luminance $L_{neigh}$. If the difference $L_{pixel}-L_{neigh}$ is greater than the threshold \codecmd{LumThreshold}, then the current pixel is registered as a \bokeh point. Pixels detected as requring \bokeh are sparse, which means writing them into a render target texture would be wasteful in terms of both memory usage and bandwidth. To address this problem, we use the \opengl \codecmd{ImageBuffers} in combination with an \codecmd{AtomicCounter}. This allows us to build a vector in which we append parameters for detected \bokeh points. \codecmd{ImageBuffers} have to be preallocated with a given size (\ie the maximum number of \bokeh sprites that can be displayed on screen). The atomic counter \codecmd{BokehCounter} stores the number of appended \bokeh points. Its current value indicates the next free cell in the \codecmd{ImageBuffers} vector. Two \codecmd{ImageBuffers}, \codecmd{BokehPosition} and \codecmd{BokehColor}, are used to store \coc size, position, and color of the detected \bokeh points. 
 
 	\begin{figure}[htb]\centering
 	\includegraphics[width=\textwidth]{extraction}
-	\caption{\Bokeh detection. The luminance the current pixel is compared to its neighborhood. If the difference is greater than \codecmd{LunThreshod}, \bokeh parameters (position, color, \coc) are appended into \codecmd{BokehPosition} and \codecmd{BokehColor} buffers and the atomic counter \codecmd{BokehCounter} is incremented.}
+	\caption{\Bokeh detection. The luminance of the current pixel is compared to its neighborhood. If the difference is greater than \codecmd{LunThreshod}, \bokeh parameters (position, color, \coc) are appended into \codecmd{BokehPosition} and \codecmd{BokehColor} buffers. The atomic counter \codecmd{BokehCounter} is also incremented.}
 	\label{DeRousiers:detection}
 	\end{figure}
 
 \subsection{Blur-based depth of field}
-Several approaches are possible for this pass. We refer readers to previous work for this step. Nevertheless, here a short sum up of main approaches :
+Several approaches are possible for this pass. We refer readers to previous work for this step. Nevertheless, here is a short summory of popular approaches :
 \begin{itemize}
-	\item Do a constant kernel Gaussian blur at various resolutions and apply a linear interpolation to blend them according to \coc size.
-	\item Do a Poisson disc sampling with a radius adapted to \coc size~\footnote{A random rotation can be applied to a Poisson sampling pattern for transforming aliasing into noise.}.
-	\item Do a large bilateral filtering and rejecting invalid pixel~\footnote{For implementation details, we refer the reader to the code sample. This approach offers a good compromise between quality and performances. However it need large radius. A \opencl implementation would allow better performances, since shared memory can be used to cache texture fetches.}.
+	\item Perform a Gaussian blur with fixed kernel width at various resolutions, and apply a linear interpolation to blend them according to \coc size.
+	\item Perform a Poisson disc sampling in screen space, with radius determined by pixel \coc size~\footnote{A random rotation can be applied to a Poisson sampling pattern for transforming aliasing into noise.}.
+	\item Apply a large-width bilateral filter where invalid pixels are rejected based on depth~\footnote{For implementation details, we refer the reader to the code sample. This approach offers a good compromise between quality and performances. However, larger filter kernels require a large sampling radius. An \opencl implementation would allow for better performance, since shared memory can be used to cache texture fetches.}.
 \end{itemize}
 
 
 \subsection{\Bokeh rendering}
-In order to avoid CPU/GPU synchronization, we use the indirect drawing command \codecmd{glDrawArraysIndirect}. This command draw instances of a given VBO/VAO. The number of instance is specified into a buffer located on the GPU memory. This buffer can be updated from the CPU or from the GPU. For performances concerns, we update this buffer from the GPU during the second pass. The atomic counter, used in pass 2, is bound to this indirect buffer. Thus, the number of drawn instance is equal to the number of detected \bokeh.
+In order to avoid CPU/GPU synchronization, we use the indirect drawing command \codecmd{glDrawArraysIndirect}. This command draws instances of a given VBO/VAO, where the number of instances is read from a buffer located in GPU memory. This buffer can be updated from the either the CPU or the GPU. In order to allow the GPU to operate independently of the CPU, we update this buffer from the GPU during the second pass. The atomic counter, used in pass 2, is bound to this indirect buffer. Thus, the number of instances drawn is equal to the number of detected \bokeh points.
 
-We use this command in combination point VAO. The instanced points are translated into the vertex shader to be located at \bokeh position. The position is read from the \codecmd{BokehPosition} buffer by using the built-in \codecmd{gl\_InstanceID} index. Each point is expanded in a quad into the geometry shader. The size of the quad is adapted to \bokeh size (also store into the \codecmd{BokehPosition} buffer ). Finally, the fragment shader applies the \bokeh alpha-texture onto the quad and multiplies it by the \bokeh color (stored into the \codecmd{BokehColor} buffer).
+We use this command in combination with a point VAO. The instanced points are translated by the vertex shader such that they are located at the screen space \bokeh position. This position is read from the \codecmd{BokehPosition} buffer, which is indexed using the built-in \codecmd{gl\_InstanceID} input variable. After being transformed in the vertex shader, each point is expanded in a quad in the geometry shader. The size of the quad that is formed is determined by the \bokeh size (which is also read from the \codecmd{BokehPosition} buffer ). Finally, the fragment shader applies the \bokeh alpha-texture onto the quad and multiplies it by the \bokeh color (read from the \codecmd{BokehColor} buffer).
 
 %-------------------------------------------------------------------------------
 \section{Results}
@@ -112,22 +112,22 @@ We use this command in combination point VAO. The instanced points are translate
 \subsection{Performances}
 	\begin{figure}[htb]\centering
 	\includegraphics[width=\textwidth]{todo}
-	\caption{Performances.}
+	\caption{Performance.}
 	\label{YourName:fig1}
 	\end{figure}
 
 %-------------------------------------------------------------------------------
 \section{Discussion}
-One may concerns about temporal coherency for this approach. Just as all others methods, we base our approach on the final color buffer. If sub-pixel aliasing is handled properly by previous rendering steps, our approach is stable and \bokehs are coherent frame-to-frame. In case of sub-pixel aliasing, our method exhibits same limitations as all previous methods, and \bokehs may flicked.
+Temporal coherence is a natural concern for this approach. Like other methods, we base our approach on the final color buffer. If sub-pixel aliasing is addressed by previous rendering steps, our approach is stable and \bokeh shapes are coherent from frame-to-frame. In the case of sub-pixel aliasing our method exhibits the same limitations as all previous methods, and the resulting \bokeh shapes may flicker.
 
-Also, Our methods need preallocated buffers for storing \bokehs' position and color. Hence, a maximum number of \bokehs has to be specified. If this number is too low, artifacts may arise like \bokeh popping. If this number is too large, GPU memory usage is wasted. Thus, the right maximal number as to be set up according the type of scenes displayed.
+Also, our method requires preallocated buffers for storing the \bokeh position and color. Consequently, a maximum number of \bokeh points has to be specified. If this number is too low, bokeh points may pop and flicker from frame-to-frame with little coherency. If this number is too large, then GPU memory is potentially wasted. Thus, the maximum number of sprites must be carefully chosen to suit the type of scene being displayed.
 
 %-------------------------------------------------------------------------------
 \section{Conclusion}
-We have presented an efficient implementation for rendering depth of field effect with \bokehs. This method allows to combine efficient blur-approach with \bokeh reproduction. We use an heuristic to identify pixels that produce distinct \bokeh and render them with textured quads. This implementation avoids CPU/GPU synchronization by calling indirect draw commands. These command read directly the number of instances to draw on GPU, without back reading from the CPU.
+We have presented an efficient implementation for rendering a depth of field effect with \bokeh. This method allows us to combine an efficient blur-based approach with plausible \bokeh reproduction. We use a heuristic to identify pixels that produce distinct \bokeh shapes, and then render those shapes as textured quads. This implementation avoids costly CPU/GPU synchronization through the use of indirect draw commands. These commands allow the GPU to directly read the number of instances, without the need for CPU readback.
 
 
-While this approach provides good results, several improvements could be done for improving performances. Especially, \codecmd{AtomicCounters} are not super fast. By dividing screen into four parts for example, each part having an atomic counter, would allow better scheduling. Large \coc size requires to rasterize quad on a large portion of the screen. Using the hierarchical rasterization, as proposed in~\cite{Futurmark11}, would also improve performances.
+While this approach provides good visual results, several optimizations can be made in order to improve performance. In particular, \codecmd{AtomicCounters} can be costly if overused. Dividing the screen into multiple parts and dedicating an atomic counter can allow for better scheduling, which results in less serialization by the GPU. Large \coc sizes also requires rasterization of quads that cover a significant portion of the screen. Using hierarchical rasterization, as proposed in~\cite{Futurmark11}, could improve performance by reducing the number of pixels that need to be shaded and blended.
 
 
 
