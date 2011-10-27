@@ -27,7 +27,7 @@ void main()
 	// Extract normal and project it in world space
 	vec3 normal  	= texture(NormalTex,vTexCoord).xyz*2.f - 1.f;
 	FragPosition 	= vec4(vPosition,1);
-	FragNormal   	= vec4(normalize(normal.x*vNTangent + normal.y*vNBitangent + normal.z*vNNormal),Specularity);
-	FragDiffuse  	= vec4(texture(DiffuseTex,vTexCoord).xyz,Roughness);
+	FragNormal   	= vec4(normalize(normal.x*vNTangent + normal.y*vNBitangent + normal.z*vNNormal),Roughness);
+	FragDiffuse  	= vec4(texture(DiffuseTex,vTexCoord).xyz,Specularity);
 }
 

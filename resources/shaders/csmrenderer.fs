@@ -66,8 +66,8 @@ void main()
 	vec4 pos			= textureLod(PositionTex,pix,0);
 	vec4 normal			= textureLod(NormalTex,pix,0);
 	vec4 diffuse		= textureLod(DiffuseTex,pix,0);
-	float roughness		= diffuse.w;
-	float specularity	= normal.w;
+	float roughness		= normal.w;
+	float specularity	= diffuse.w;
 	vec3 viewDir		= normalize(ViewPos-pos.xyz);
 
 	// Select cascade
