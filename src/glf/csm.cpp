@@ -9,7 +9,6 @@
 // Constants
 //-----------------------------------------------------------------------------
 #define ALIGN_CSM_WITH_CAMERA	1
-#define ENABLE_HELPERS			0
 
 namespace glf
 {
@@ -117,8 +116,7 @@ namespace glf
 							const Camera&		_camera,
 							float 				_cascadeAlpha,
 							float 				_blendFactor,
-							const SceneManager& _scene,
-							HelperManager& 		_helpers)
+							const SceneManager& _scene)
 	{
 
 		// Extract camera near/far
@@ -134,9 +132,9 @@ namespace glf
 		float camFov		= _camera.Fov();
 		float camRatio		= _camera.Ratio();
 
-		#if ENABLE_HELPERS
-		_helpers.Clear();
-		_helpers.CreateReferential(camRight,camUp,-camDir,0.3f,glm::translate(camPos.x,camPos.y,camPos.z));
+		#if ENABLE_CSM_HELPERS
+		glf::manager::helpers->Clear();
+		glf::manager::helpers->CreateReferential(camRight,camUp,-camDir,0.3f,glm::translate(camPos.x,camPos.y,camPos.z));
 		#endif
 
 		// Compute scene AABB in view space
@@ -156,8 +154,8 @@ namespace glf
 		_light.view			= glm::lookAt(lightTar,lightTar+lightDir,lightUp);
 		_light.camView		= camView;
 
-		#if ENABLE_HELPERS
-		_helpers.CreateReferential(lightRight,lightUp,-lightDir,1.f,glm::translate(camPos.x,camPos.y,camPos.z));
+		#if ENABLE_CSM_HELPERS
+		glf::manager::helpers->CreateReferential(lightRight,lightUp,-lightDir,1.f,glm::translate(camPos.x,camPos.y,camPos.z));
 		#endif
 
 		// Compute scene AABB in light space
@@ -172,8 +170,8 @@ namespace glf
 		glm::vec4 c02_v 	= _light.view * glm::vec4(c2,1.f);
 		glm::vec4 c03_v 	= _light.view * glm::vec4(c3,1.f);
 
-		#if ENABLE_HELPERS
-		_helpers.CreateBound(c0,c1,c2,c3);
+		#if ENABLE_CSM_HELPERS
+		glf::manager::helpers->CreateBound(c0,c1,c2,c3);
 		#endif
 
 		// For each cascade
@@ -192,20 +190,20 @@ namespace glf
 			glm::vec4 c12_v = _light.view * glm::vec4(c2,1.f);
 			glm::vec4 c13_v = _light.view * glm::vec4(c3,1.f);
 
-			#if ENABLE_HELPERS
+			#if ENABLE_CSM_HELPERS
 			glm::mat4 viewInverse = glm::inverse(_light.view);
-			_helpers.CreateBound(	glm::vec3(viewInverse * c00_v),
-									glm::vec3(viewInverse * c01_v),
-									glm::vec3(viewInverse * c02_v),
-									glm::vec3(viewInverse * c03_v),
+			glf::manager::helpers->CreateBound(	glm::vec3(viewInverse * c00_v),
+												glm::vec3(viewInverse * c01_v),
+												glm::vec3(viewInverse * c02_v),
+												glm::vec3(viewInverse * c03_v),
 
-									glm::vec3(viewInverse * c10_v),
-									glm::vec3(viewInverse * c11_v),
-									glm::vec3(viewInverse * c12_v),
-									glm::vec3(viewInverse * c13_v),
+												glm::vec3(viewInverse * c10_v),
+												glm::vec3(viewInverse * c11_v),
+												glm::vec3(viewInverse * c12_v),
+												glm::vec3(viewInverse * c13_v),
 
-									glm::mat4(1.f),
-									glm::vec3(1,0,1));
+												glm::mat4(1.f),
+												glm::vec3(1,0,1));
 			#endif
 
 			// Compute AABB in light space
@@ -246,17 +244,17 @@ namespace glf
 											-boundSplit.pMax.z, -boundSplit.pMin.z);
 			_light.viewprojs[i]	= _light.projs[i] * _light.view;
 
-			#if ENABLE_HELPERS
+			#if ENABLE_CSM_HELPERS
 			glm::mat4 invViewProj = glm::inverse(_light.viewprojs[i]);
-			_helpers.CreateBound(	glm::vec3(invViewProj * glm::vec4(-1,-1,-1, 1)),
-									glm::vec3(invViewProj * glm::vec4( 1,-1,-1, 1)),
-									glm::vec3(invViewProj * glm::vec4( 1, 1,-1, 1)),
-									glm::vec3(invViewProj * glm::vec4(-1, 1,-1, 1)),
+			glf::manager::helpers->CreateBound(	glm::vec3(invViewProj * glm::vec4(-1,-1,-1, 1)),
+												glm::vec3(invViewProj * glm::vec4( 1,-1,-1, 1)),
+												glm::vec3(invViewProj * glm::vec4( 1, 1,-1, 1)),
+												glm::vec3(invViewProj * glm::vec4(-1, 1,-1, 1)),
 
-									glm::vec3(invViewProj * glm::vec4(-1,-1, 1, 1)),
-									glm::vec3(invViewProj * glm::vec4( 1,-1, 1, 1)),
-									glm::vec3(invViewProj * glm::vec4( 1, 1, 1, 1)),
-									glm::vec3(invViewProj * glm::vec4(-1, 1, 1, 1)));
+												glm::vec3(invViewProj * glm::vec4(-1,-1, 1, 1)),
+												glm::vec3(invViewProj * glm::vec4( 1,-1, 1, 1)),
+												glm::vec3(invViewProj * glm::vec4( 1, 1, 1, 1)),
+												glm::vec3(invViewProj * glm::vec4(-1, 1, 1, 1)));
 			#endif
 		}
 

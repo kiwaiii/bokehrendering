@@ -47,6 +47,30 @@ namespace glui
 	m_focusCaretPos(-1),
 	m_twoStepFocus(false)
 	{
+		m_groupIndex		= 0;
+		m_componentIndex	= 0;
+		m_stringIndex		= 0;
+		m_overdrawIndex		= 0;
+
+		m_window.x			= 0;
+		m_window.y			= 0;
+		m_window.w			= 512;
+		m_window.h			= 512;
+		m_currentCursor.x	= 0;
+		m_currentCursor.y	= 0;
+		m_nbKeys			= 0;
+		m_focusCaretPos		= 0;
+		m_focusPoint		= m_currentCursor;
+		m_twoStepFocus		= false;
+		m_uiOnFocus			= false;
+
+		m_mouseButton[0].state 	= Mouse::RELEASE;
+		m_mouseButton[0].cursor	= m_currentCursor;
+		m_mouseButton[1].state 	= Mouse::RELEASE;
+		m_mouseButton[1].cursor	= m_currentCursor;
+		m_mouseButton[2].state 	= Mouse::RELEASE;
+		m_mouseButton[2].cursor	= m_currentCursor;
+
 		// Create group stack
 		m_groupStack = new Group[maxGroup];
 

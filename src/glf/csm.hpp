@@ -47,8 +47,7 @@ namespace glf
 									const Camera&					_camera,
 									float 							_cascadeAlpha,
 									float 							_blendFactor,
-									const SceneManager& 			_scene,
-									HelperManager& 					_helpers);
+									const SceneManager& 			_scene);
 	private:
  					CSMBuilder(		const CSMBuilder&);
  		CSMBuilder	operator=(		const CSMBuilder&);

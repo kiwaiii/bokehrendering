@@ -67,6 +67,11 @@ namespace glf
 
 	}
 	//--------------------------------------------------------------------------
+	HelperManager::Ptr HelperManager::Create()
+	{
+		return Ptr(new HelperManager());
+	}
+	//--------------------------------------------------------------------------
 	HelperManager::HelperManager()
 	{
 

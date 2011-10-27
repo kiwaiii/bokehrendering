@@ -7,18 +7,9 @@
 #include <glf/wrapper.hpp>
 #include <glf/texture.hpp>
 #include <glf/pass.hpp>
-#include <glf/timing.hpp>
 
 namespace glf
 {
-	struct DOFTimings
-	{
-		GPUSectionTimer resetTimer;
-		GPUSectionTimer blurDepthTimer;
-		GPUSectionTimer detectionTimer;
-		GPUSectionTimer blurTimer;
-		GPUSectionTimer renderingTimer;
-	};
 	//--------------------------------------------------------------------------
 	class DOFProcessor
 	{
@@ -47,7 +38,6 @@ namespace glf
 										float 			_cocThreshold,
 										float			_bokehDepthCutoff,
 										bool			_poissonFiltering,
-										DOFTimings& 	_timings,
 										const RenderTarget& _target);
 	public:
 		//----------------------------------------------------------------------

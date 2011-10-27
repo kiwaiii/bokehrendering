@@ -33,8 +33,10 @@ namespace glf
 	class HelperManager
 	{
 	public:
-						HelperManager();
-						~HelperManager();
+		typedef SmartPointer<HelperManager> Ptr;
+		static Ptr		Create(				);
+						HelperManager(		);
+						~HelperManager(		);
 		Helper::Ptr 	CreatePointSet(		const std::vector<glm::vec3>& _points,
 											const glm::mat4& _t=glm::mat4(1.f));
 		Helper::Ptr 	CreateReferential(	float _s=1.f, 

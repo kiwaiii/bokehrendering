@@ -17,7 +17,6 @@ namespace glf
 							const glm::mat4& _transform,
 							ResourceManager& _resourceManager,
 							SceneManager& _scene,
-							HelperManager& _helpers,
 							bool _verbose=false);
 	}
 }
