@@ -2,6 +2,7 @@
 // Includes
 //------------------------------------------------------------------------------
 #include <glf/utils.hpp>
+#include <glf/debug.hpp>
 #include <glm/gtx/transform.hpp>
 #include <cstdarg>
 #include <cstdio>
@@ -215,7 +216,7 @@ namespace glf
 	//--------------------------------------------------------------------------
 	bool CheckError(const char* Title)
 	{
-		#if 0
+		#if ENABLE_CHECK_ERROR
 		int Error;
 		if((Error = glGetError()) != GL_NO_ERROR)
 		{

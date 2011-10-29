@@ -134,8 +134,8 @@ namespace
 	};
 	Application*							app;
 
-	const char*								bufferNames[]	= {"Composition","Position","Normal","Diffuse","Specular" };
-	struct									bufferType		{ enum Type {GB_COMPOSITION,GB_POSITION,GB_NORMAL,GB_DIFFUSE,GB_SPECULAR,MAX }; };
+	const char*								bufferNames[]	= {"Composition","Position","Normal","Diffuse"};
+	struct									bufferType		{ enum Type {GB_COMPOSITION,GB_POSITION,GB_NORMAL,GB_DIFFUSE,MAX }; };
 	const char*								menuNames[]		= {"Tone","Sky","CSM","SSAO", "DoF" };
 	struct									menuType		{ enum Type {MN_TONE,MN_SKY,MN_CSM,MN_SSAO,MN_DOF,MAX }; };
 
@@ -602,6 +602,9 @@ void display()
 
 				glBindFramebuffer(GL_FRAMEBUFFER,0);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				glDisable(GL_STENCIL_TEST);
+				glDisable(GL_DEPTH_TEST);
+				glDisable(GL_BLEND);
 
 				// Render post processing pass
 				glf::manager::timings->StartSection(glf::section::PostProcess);
@@ -611,20 +614,27 @@ void display()
 				glf::manager::timings->EndSection(glf::section::PostProcess);
 
 				break;
-		case bufferType::GB_POSITION : 
+		case bufferType::GB_POSITION :
+				glDisable(GL_STENCIL_TEST);
+				glDisable(GL_DEPTH_TEST);
+				glDisable(GL_BLEND);
+				glBindFramebuffer(GL_FRAMEBUFFER,0);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 				app->renderSurface.Draw(app->gbuffer.positionTex);
 				break;
 		case bufferType::GB_NORMAL : 
+				glDisable(GL_STENCIL_TEST);
+				glDisable(GL_DEPTH_TEST);
+				glDisable(GL_BLEND);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 				app->renderSurface.Draw(app->gbuffer.normalTex);
 				break;
 		case bufferType::GB_DIFFUSE : 
+				glDisable(GL_STENCIL_TEST);
+				glDisable(GL_DEPTH_TEST);
+				glDisable(GL_BLEND);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 				app->renderSurface.Draw(app->gbuffer.diffuseTex);
-				break;
-		case bufferType::GB_SPECULAR : 
-				assert(false);
 				break;
 		default: assert(false);
 	}
@@ -632,17 +642,13 @@ void display()
 	if(ctx::drawHelpers)
 		app->helperRenderer.Draw(projection,view,glf::manager::helpers->helpers);
 
-	//if(ctx::drawUI)
-	//	gui();
-
-	glf::CheckError("display");
-
-
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	if(ctx::drawUI) gui();
 	app->timingRenderer.Draw(*glf::manager::timings);
 	glDisable(GL_BLEND);
 
+	glf::CheckError("display");
 	glf::SwapBuffers();
 
 	glf::manager::timings->EndSection(glf::section::Frame);
