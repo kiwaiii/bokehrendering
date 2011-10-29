@@ -6,18 +6,17 @@
 //------------------------------------------------------------------------------
 // OpenGL
 #ifdef WIN32
+#	include <windows.h>
 #	include <GL/glew.h>
 #	include <GL/wglew.h>
 //#	include <GL/glext.h>
-#	define glfGetProcAddress wglGetProcAddress
-#	define GLEW_EXT_direct_state_access_memory 0
+//#	define glfGetProcAddress wglGetProcAddress
+//#	define GLEW_EXT_direct_state_access_memory 0
 #elif defined(linux) || defined(__linux)
 #	include <GL/glew.h>
 #	define GL_GLEXT_PROTOTYPES 1
 #	include <GL/gl.h>
 #	include <GL/glext.h>
-#elif defined(__APPLE__)
-#	include <OpenGL/gl.h>
 #else
 #	error "Unsupported platform"
 #endif
@@ -28,6 +27,12 @@
 #ifdef WIN32
 //------------------------------------------------------------------------------
 // Helpers function for WIN32
+//------------------------------------------------------------------------------
+inline double log2( double n )  
+{  
+	// log(n)/log(2) is log2.  
+	return log( n ) / log( 2.0 );  
+}
 //------------------------------------------------------------------------------
 inline bool isnan(float x) 
 {
@@ -78,6 +83,12 @@ inline std::wstring c2ws(char*& s)
 
 namespace glf
 {
+	//-------------------------------------------------------------------------
+	namespace directory
+	{
+		extern std::string ShaderDirectory;
+		extern std::string TextureDirectory;
+	}
 	//-------------------------------------------------------------------------
 	std::string ToString(					const glm::mat4& _mat);
 	std::string ToString(					const glm::vec2& _vec);

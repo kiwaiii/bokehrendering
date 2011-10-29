@@ -21,15 +21,17 @@ namespace glf
 		// Resources initialization
 		{
 			// Load bokeh texture
-			BokehTexture("../resources/textures/HexaBokeh.png");
+			BokehTexture(directory::TextureDirectory + "HexaBokeh.png");
 
-			// TODO : 16F
 			blurDepthTex.Allocate(GL_RGBA32F,_w,_h);
 			blurDepthTex.SetFiltering(GL_LINEAR,GL_LINEAR);
+			blurDepthTex.SetWrapping(GL_CLAMP_TO_EDGE,GL_CLAMP_TO_EDGE);
 			detectionTex.Allocate(GL_RGBA32F,_w,_h);
 			detectionTex.SetFiltering(GL_LINEAR,GL_LINEAR);
+			detectionTex.SetWrapping(GL_CLAMP_TO_EDGE,GL_CLAMP_TO_EDGE);
 			blurTex.Allocate(GL_RGBA32F,_w,_h);
 			blurTex.SetFiltering(GL_LINEAR,GL_LINEAR);
+			blurTex.SetWrapping(GL_CLAMP_TO_EDGE,GL_CLAMP_TO_EDGE);
 
 			glGenFramebuffers(1, &blurDepthFBO);
 			glBindFramebuffer(GL_FRAMEBUFFER,blurDepthFBO);
@@ -84,8 +86,8 @@ namespace glf
 
 		// Reset Pass
 		{
-			resetPass.program.Compile(	LoadFile("../resources/shaders/bokehreset.vs"),
-										LoadFile("../resources/shaders/bokehreset.fs"));
+			resetPass.program.Compile(	LoadFile(directory::ShaderDirectory + "bokehreset.vs"),
+										LoadFile(directory::ShaderDirectory + "bokehreset.fs"));
 
 			resetPass.bokehCountTexUnit = resetPass.program["BokehCountTex"].unit;
 			glProgramUniform1i(resetPass.program.id,resetPass.program["BokehCountTex"].location,resetPass.bokehCountTexUnit);
@@ -93,8 +95,8 @@ namespace glf
 
 		// CoC Pass
 		{
-			cocPass.program.Compile(LoadFile("../resources/shaders/bokehcoc.vs"),
-									LoadFile("../resources/shaders/bokehcoc.fs"));
+			cocPass.program.Compile(LoadFile(directory::ShaderDirectory + "bokehcoc.vs"),
+									LoadFile(directory::ShaderDirectory + "bokehcoc.fs"));
 
 			cocPass.farStartVar			= cocPass.program["FarStart"].location;
 			cocPass.farEndVar			= cocPass.program["FarEnd"].location;
@@ -107,8 +109,8 @@ namespace glf
 
 		// Detection Pass
 		{
-			detectionPass.program.Compile(	LoadFile("../resources/shaders/bokehdetection.vs"),
-											LoadFile("../resources/shaders/bokehdetection.fs"));
+			detectionPass.program.Compile(	LoadFile(directory::ShaderDirectory + "bokehdetection.vs"),
+											LoadFile(directory::ShaderDirectory + "bokehdetection.fs"));
 
 			detectionPass.colorTexUnit		= detectionPass.program["ColorTex"].unit;
 			detectionPass.blurDepthTexUnit	= detectionPass.program["BlurDepthTex"].unit;
@@ -129,8 +131,8 @@ namespace glf
 
 		// Blur separable pass
 		{
-			blurSeparablePass.program.Compile(	LoadFile("../resources/shaders/bokehblur.vs"),
-												LoadFile("../resources/shaders/bokehblur.fs"));
+			blurSeparablePass.program.Compile(	LoadFile(directory::ShaderDirectory + "bokehblur.vs"),
+												LoadFile(directory::ShaderDirectory + "bokehblur.fs"));
 
 			blurSeparablePass.blurDepthTexUnit	= blurSeparablePass.program["BlurDepthTex"].unit;
 			blurSeparablePass.colorTexUnit		= blurSeparablePass.program["ColorTex"].unit;
@@ -179,8 +181,8 @@ namespace glf
 			Halton[30]      = glm::vec2(-0.948199, 0.263949);
 			Halton[31]      = glm::vec2(0.0311802, -0.121049);
 
-			blurPoissonPass.program.Compile(	LoadFile("../resources/shaders/bokehblurpoisson.vs"),
-												LoadFile("../resources/shaders/bokehblurpoisson.fs"));
+			blurPoissonPass.program.Compile(	LoadFile(directory::ShaderDirectory + "bokehblurpoisson.vs"),
+												LoadFile(directory::ShaderDirectory + "bokehblurpoisson.fs"));
 
 			blurPoissonPass.blurDepthTexUnit	= blurPoissonPass.program["BlurDepthTex"].unit;
 			blurPoissonPass.colorTexUnit		= blurPoissonPass.program["ColorTex"].unit;
@@ -190,14 +192,14 @@ namespace glf
 			glProgramUniformMatrix4fv(blurPoissonPass.program.id, blurPoissonPass.program["Transformation"].location,1,GL_FALSE, &transform[0][0]);
 			glProgramUniform1i(blurPoissonPass.program.id,		  blurPoissonPass.program["BlurDepthTex"].location,blurPoissonPass.blurDepthTexUnit);
 			glProgramUniform1i(blurPoissonPass.program.id,		  blurPoissonPass.program["ColorTex"].location,blurPoissonPass.colorTexUnit);
-			glProgramUniform2fv(blurPoissonPass.program.id,		  blurPoissonPass.program["Samples"].location,32,&Halton[0][0]);
+			glProgramUniform2fv(blurPoissonPass.program.id,		  blurPoissonPass.program["Samples[0]"].location,32,&Halton[0][0]);
 		}
 
 		// Rendering pass
 		{
-			renderingPass.program.Compile(	LoadFile("../resources/shaders/bokehrendering.vs"),
-											LoadFile("../resources/shaders/bokehrendering.gs"),
-											LoadFile("../resources/shaders/bokehrendering.fs"));
+			renderingPass.program.Compile(	LoadFile(directory::ShaderDirectory + "bokehrendering.vs"),
+											LoadFile(directory::ShaderDirectory + "bokehrendering.gs"),
+											LoadFile(directory::ShaderDirectory + "bokehrendering.fs"));
 
 			renderingPass.blurDepthTexUnit		= renderingPass.program["BlurDepthTex"].unit;
 			renderingPass.bokehPositionTexUnit	= renderingPass.program["BokehPositionTex"].unit;

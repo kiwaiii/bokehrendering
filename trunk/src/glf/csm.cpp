@@ -102,11 +102,11 @@ namespace glf
 	CSMBuilder::CSMBuilder():
 	program("CSMBuilder")
 	{
-		program.Compile(LoadFile("../resources/shaders/csmbuilder.vs"),
-						LoadFile("../resources/shaders/csmbuilder.gs"),
-						LoadFile("../resources/shaders/csmbuilder.fs"));
+		program.Compile(LoadFile(directory::ShaderDirectory + "csmbuilder.vs"),
+						LoadFile(directory::ShaderDirectory + "csmbuilder.gs"),
+						LoadFile(directory::ShaderDirectory + "csmbuilder.fs"));
 
-		projVar 		= program["Projections"].location;
+		projVar 		= program["Projections[0]"].location;
 		viewVar 		= program["View"].location;
 		modelVar 		= program["Model"].location;
 		nCascadesVar	= program["nCascades"].location;
@@ -281,12 +281,12 @@ namespace glf
 	CSMRenderer::CSMRenderer(int _w, int _h):
 	program("CSMRenderer")
 	{
-		program.Compile(LoadFile("../resources/shaders/csmrenderer.vs"),
-						LoadFile("../resources/shaders/csmrenderer.fs"));
+		program.Compile(LoadFile(directory::ShaderDirectory + "csmrenderer.vs"),
+						LoadFile(directory::ShaderDirectory + "csmrenderer.fs"));
 
 		viewPosVar 			= program["ViewPos"].location;
 		lightDirVar 		= program["LightDir"].location;
-		lightViewProjsVar	= program["LightViewProjs"].location;
+		lightViewProjsVar	= program["LightViewProjs[0]"].location;
 		lightIntensityVar	= program["LightIntensity"].location;
 		biasVar				= program["Bias"].location;
 		nCascadesVar		= program["nCascades"].location;

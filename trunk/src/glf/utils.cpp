@@ -15,7 +15,11 @@
 // Constants
 //------------------------------------------------------------------------------
 #define VERBOSE_COMPILATION 1
+#define NOMINMAX
 
+//------------------------------------------------------------------------------
+// Helpers function for WIN32
+//------------------------------------------------------------------------------
 #ifdef WIN32
 #pragma warning( disable : 4996 )
 #endif
@@ -23,6 +27,12 @@
 
 namespace glf
 {
+	//-------------------------------------------------------------------------
+	namespace directory
+	{
+		std::string ShaderDirectory  = "../resources/shaders/";
+		std::string TextureDirectory = "../resources/textures/";
+	}
 	//-------------------------------------------------------------------------
 	glm::mat4	ScreenQuadTransform()
 	{
@@ -45,7 +55,7 @@ namespace glf
 	int	MipmapLevels( int _n )
 	{	
 		//return int(ceil( log( float(_n) ) / log( 2.f ) )) + 1;
-		return 1.0 + floor(log2(_n));
+		return int(1.0 + floor(log2(_n)));
 	}
 	//-------------------------------------------------------------------------
 	int	NearestSuperiorPowerOf2( int _n )
@@ -55,7 +65,7 @@ namespace glf
 	//-------------------------------------------------------------------------
 	int NextMipmapDimension(int _dim, int _level)
 	{
-		return std::max(1.0, floor(_dim / (1<<_level) ) );
+		return int(std::max(1.f, floor(float(_dim / (1<<_level) )) ));
 	}
 	//-------------------------------------------------------------------------
 	std::string ToString(const glm::mat4& _mat)

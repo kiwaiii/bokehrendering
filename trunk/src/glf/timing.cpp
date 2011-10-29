@@ -148,6 +148,7 @@ namespace glf
 		strTimers.resize(64,"");
 
 		#if ENABLE_DOF_PASS_TIMING
+		AddSection(section::DofReset,		"DOF Reset",	true,false);
 		AddSection(section::DofBlurDepth,	"DOF BlurDepth",true,false);
 		AddSection(section::DofDetection,	"DOF Detection",true,false);
 		AddSection(section::DofBlur,		"DOF Blur",		true,false);
@@ -289,7 +290,6 @@ namespace glf
 		#if ENABLE_GPU_PASSES_TIMING
 		DrawGPULine(_timings,section::PostProcess,	x,y,color,buffer); y+=verticalOffset;
 		DrawGPULine(_timings,section::DofProcess,	x,y,color,buffer); y+=verticalOffset;
-		DrawGPULine(_timings,section::SsaoRender,	x,y,color,buffer); y+=verticalOffset;
 		DrawGPULine(_timings,section::SsaoBlur,		x,y,color,buffer); y+=verticalOffset;
 		DrawGPULine(_timings,section::SsaoRender,	x,y,color,buffer); y+=verticalOffset;
 		DrawGPULine(_timings,section::SkyRender,	x,y,color,buffer); y+=verticalOffset;
@@ -298,7 +298,7 @@ namespace glf
 		DrawGPULine(_timings,section::Gbuffer,		x,y,color,buffer); y+=verticalOffset;
 		#endif
 
-		#if ENABLE_INNER_DOF_TIMING
+		#if ENABLE_DOF_PASS_TIMING
 		DrawGPULine(_timings,section::DofRendering,	x,y,color,buffer); y+=verticalOffset;
 		DrawGPULine(_timings,section::DofBlur,		x,y,color,buffer); y+=verticalOffset;
 		DrawGPULine(_timings,section::DofDetection,	x,y,color,buffer); y+=verticalOffset;
