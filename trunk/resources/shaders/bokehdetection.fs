@@ -4,9 +4,9 @@
 //#extension GL_EXT_shader_image_load_store : enable
 
 //-----------------------------------------------------------------------------
-layout(size1x32) coherent uniform uimage1D 	BokehCountTex;
-layout(size4x32) coherent uniform  image2D 	BokehPositionTex;
-layout(size4x32) coherent uniform  image2D 	BokehColorTex;
+layout(size1x32) coherent  uniform uimage1D 	BokehCountTex;
+layout(size4x32) writeonly uniform  image2D 	BokehPositionTex;
+layout(size4x32) writeonly uniform  image2D 	BokehColorTex;
 //-----------------------------------------------------------------------------
 uniform sampler2D		BlurDepthTex;
 uniform sampler2D		ColorTex;

@@ -3,6 +3,7 @@
 
 uniform sampler2D		BlurDepthTex;
 uniform sampler2D		ColorTex;
+uniform sampler2D		RotationTex;
 uniform int				NSamples;
 uniform float			MaxCoCRadius;
 uniform vec2			Samples[32];
@@ -10,13 +11,15 @@ out vec4 				FragColor;
 
 void main()
 {
-	vec3 color				= texelFetch(ColorTex,ivec2(floor(gl_FragCoord.xy)),0).xyz;
-	vec2 bd					= texelFetch(BlurDepthTex,ivec2(floor(gl_FragCoord.xy)),0).xy;
+    ivec2 pix               = ivec2(floor(gl_FragCoord.xy));
+	vec3 color				= texelFetch(ColorTex,pix,0).xyz;
+	vec2 bd					= texelFetch(BlurDepthTex,pix,0).xy;
 	float blur				= bd.x;
 	float depth				= bd.y;
 	float cocSize			= blur * MaxCoCRadius;
 	vec3 outputColor		= vec3(0);
-
+    vec2 theta	            = texelFetch(RotationTex,pix,0).xy;
+    mat2 rot 	            = mat2(theta.x,theta.y,-theta.y,theta.x);
 	if(cocSize>0)
 	{
 		int count			= 0;
@@ -24,7 +27,7 @@ void main()
 		for(int i=0;i<NSamples;++i)
 		{
 			float neighDist = length(Samples[i])*cocSize;
-			vec2 coord		= floor(gl_FragCoord.xy) + Samples[i]*cocSize;
+			vec2 coord		= floor(gl_FragCoord.xy) + (rot * Samples[i])*cocSize;
 			vec2 blurDepth	= texelFetch(BlurDepthTex,ivec2(coord),0).xy;
 			float cocWeight = clamp(cocSize + 1.0f - neighDist,0,1);
 

@@ -4,6 +4,7 @@
 #include <glf/dofprocessor.hpp>
 #include <glf/ioimage.hpp>
 #include <glf/debug.hpp>
+#include <glf/rng.hpp>
 #include <glm/glm.hpp>
 
 //-----------------------------------------------------------------------------
@@ -32,6 +33,9 @@ namespace glf
 			blurTex.Allocate(GL_RGBA32F,_w,_h);
 			blurTex.SetFiltering(GL_LINEAR,GL_LINEAR);
 			blurTex.SetWrapping(GL_CLAMP_TO_EDGE,GL_CLAMP_TO_EDGE);
+			rotationTex.Allocate(GL_RG16F,_w,_h);
+			rotationTex.SetFiltering(GL_LINEAR,GL_LINEAR);
+			rotationTex.SetWrapping(GL_CLAMP_TO_EDGE,GL_CLAMP_TO_EDGE);
 
 			glGenFramebuffers(1, &blurDepthFBO);
 			glBindFramebuffer(GL_FRAMEBUFFER,blurDepthFBO);
@@ -181,17 +185,31 @@ namespace glf
 			Halton[30]      = glm::vec2(-0.948199, 0.263949);
 			Halton[31]      = glm::vec2(0.0311802, -0.121049);
 
+			// Create and fill rotation texture
+			RNG rng;
+			glm::vec2* rotations = new glm::vec2[_w * _h];
+			for(int y=0;y<_h;++y)
+			for(int x=0;x<_w;++x)
+			{	
+				float theta 		= 2.f * M_PI * rng.RandomFloat();
+				rotations[x+y*_w] 	= glm::vec2(cos(theta),sin(theta));
+			}
+			rotationTex.Fill(GL_RG,GL_FLOAT,(unsigned char*)&rotations[0][0]);
+			delete[] rotations;
+
 			blurPoissonPass.program.Compile(	LoadFile(directory::ShaderDirectory + "bokehblurpoisson.vs"),
 												LoadFile(directory::ShaderDirectory + "bokehblurpoisson.fs"));
 
 			blurPoissonPass.blurDepthTexUnit	= blurPoissonPass.program["BlurDepthTex"].unit;
 			blurPoissonPass.colorTexUnit		= blurPoissonPass.program["ColorTex"].unit;
+			blurPoissonPass.rotationTexUnit		= blurPoissonPass.program["RotationTex"].unit;
 			blurPoissonPass.maxCoCRadiusVar		= blurPoissonPass.program["MaxCoCRadius"].location;
 			blurPoissonPass.nSamplesVar			= blurPoissonPass.program["NSamples"].location;
 
 			glProgramUniformMatrix4fv(blurPoissonPass.program.id, blurPoissonPass.program["Transformation"].location,1,GL_FALSE, &transform[0][0]);
 			glProgramUniform1i(blurPoissonPass.program.id,		  blurPoissonPass.program["BlurDepthTex"].location,blurPoissonPass.blurDepthTexUnit);
 			glProgramUniform1i(blurPoissonPass.program.id,		  blurPoissonPass.program["ColorTex"].location,blurPoissonPass.colorTexUnit);
+			glProgramUniform1i(blurPoissonPass.program.id,		  blurPoissonPass.program["RotationTex"].location,blurPoissonPass.rotationTexUnit);
 			glProgramUniform2fv(blurPoissonPass.program.id,		  blurPoissonPass.program["Samples[0]"].location,32,&Halton[0][0]);
 		}
 
@@ -315,6 +333,7 @@ namespace glf
 			glProgramUniform1i(blurPoissonPass.program.id,		blurPoissonPass.nSamplesVar,		_nSamples);
 			blurDepthTex.Bind(blurPoissonPass.blurDepthTexUnit);
 			detectionTex.Bind(blurPoissonPass.colorTexUnit);
+			rotationTex.Bind(blurPoissonPass.rotationTexUnit);
 			_renderTarget.Draw();
 			glf::CheckError("DOFProcessor::DrawPOISSONBLUR");
 		}

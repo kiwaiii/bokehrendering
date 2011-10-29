@@ -35,6 +35,10 @@ namespace glf
 		normalTex.Allocate(GL_RGBA16F,_width,_height);
 		diffuseTex.Allocate(GL_RGBA16F,_width,_height);
 		depthTex.Allocate(GL_DEPTH32F_STENCIL8,_width,_height);
+		positionTex.SetWrapping(GL_CLAMP_TO_EDGE,GL_CLAMP_TO_EDGE);
+		normalTex.SetWrapping(GL_CLAMP_TO_EDGE,GL_CLAMP_TO_EDGE);
+		diffuseTex.SetWrapping(GL_CLAMP_TO_EDGE,GL_CLAMP_TO_EDGE);
+		depthTex.SetWrapping(GL_CLAMP_TO_EDGE,GL_CLAMP_TO_EDGE);
 
 		// Initialize framebuffer
 		glGenFramebuffers(1, &framebuffer);
@@ -151,6 +155,7 @@ namespace glf
 		transformation	= ScreenQuadTransform();
 		texture.Allocate(GL_RGBA32F,_width,_height,true);
 		texture.SetFiltering(GL_LINEAR_MIPMAP_LINEAR,GL_LINEAR);
+		texture.SetWrapping(GL_CLAMP_TO_EDGE,GL_CLAMP_TO_EDGE);
 
 		glGenFramebuffers(1, &framebuffer);
 		glBindFramebuffer(GL_FRAMEBUFFER,framebuffer);

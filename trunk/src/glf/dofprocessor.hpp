@@ -89,6 +89,7 @@ namespace glf
 		{
 										BlurPoissonPass():program("DOF::BlurPoissonPass"){}
 			GLint 						colorTexUnit;
+			GLint 						rotationTexUnit;
 			GLint						blurDepthTexUnit;
 			GLint						nSamplesVar;
 			GLint						maxCoCRadiusVar;
@@ -114,6 +115,7 @@ namespace glf
 		Texture2D						detectionTex;		// Store color of pixels which are not bokeh
 		Texture2D						blurTex;			// Store result of vertical blur
 		Texture2D						bokehShapeTex;		// Store aperture/bokeh shape
+		Texture2D						rotationTex;		// Store rotation for Poisson sampling
 
 		Texture2D						bokehPositionTex;	// Store bokeh position
 		Texture2D						bokehColorTex;		// Store bokeh color
