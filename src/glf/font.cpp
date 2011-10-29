@@ -72,8 +72,8 @@ namespace glf
 		glm::mat4 projection = glm::ortho(0.f,float(_w),0.f,float(_h));
 
 		program.Compile(vsSource,fsSource);
-		textGeometryVar = program["TextGeometry"].location;
-		textTextureVar  = program["TextTexture"].location;
+		textGeometryVar = program["TextGeometry[0]"].location;
+		textTextureVar  = program["TextTexture[0]"].location;
 		colorVar 		= program["Color"].location;
 		fontTexUnit		= program["FontTex"].unit;
 
@@ -99,7 +99,7 @@ namespace glf
 	//-------------------------------------------------------------------------
 	void FontRenderer::Draw(int _x, int _y, const Font& _font, const std::string _text, const glm::vec4& _color)
 	{
-		int nCharacters = _text.size();
+		int nCharacters = int(_text.size());
 		assert(nCharacters<maxCharacters);
 
 		int stride = 0;
@@ -125,7 +125,7 @@ namespace glf
 	unsigned int FontRenderer::ComputeWidth(const Font& _font, const std::string _message) const
 	{
 		unsigned int width 		= 0;
-		const unsigned int size = _message.length();
+		const unsigned int size = int(_message.length());
 		for(unsigned int i=0;i<size;++i)
 			width += _font.CharWidth(_message[i]);
 		return width;

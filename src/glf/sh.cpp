@@ -22,11 +22,11 @@ namespace glf
 	}
 	//--------------------------------------------------------------------------
 	SHBuilder::SHBuilder(int _resolution):
-	programProjection("SHProjection"),
+	programProjection("SHBuiler"),
 	resolution(_resolution)
 	{
-		programProjection.Compile(	LoadFile("../resources/shaders/shbuilder.vs"),
-									LoadFile("../resources/shaders/shbuilder.fs"));
+		programProjection.Compile(	LoadFile(directory::ShaderDirectory + "shbuilder.vs"),
+									LoadFile(directory::ShaderDirectory + "shbuilder.fs"));
 		glm::mat4 transformation = ScreenQuadTransform();
 		glProgramUniformMatrix4fv(programProjection.id, programProjection["Transformation"].location, 1, GL_FALSE, &transformation[0][0]);
 
@@ -40,7 +40,7 @@ namespace glf
 		transformations[3] = glm::rotate(180.f,0.f,0.f,1.f) * glm::rotate(90.f,1.f,0.f,0.f); 				// Negative Y
 		transformations[4] = glm::rotate(180.f,1.f,0.f,0.f);  												// Positive Z
 		transformations[5] = glm::mat4(1);																	// Negative Z
-		glProgramUniformMatrix4fv(programProjection.id, programProjection["Transformations"].location, 6, GL_FALSE, &transformations[0][0][0]);
+		glProgramUniformMatrix4fv(programProjection.id, programProjection["Transformations[0]"].location, 6, GL_FALSE, &transformations[0][0][0]);
 
 		texProjectionUnit  = programProjection["CubeMap"].unit;
 		glProgramUniform1i(programProjection.id, programProjection["CubeMap"].location, texProjectionUnit);
@@ -101,7 +101,7 @@ namespace glf
 		//
 		// The last two SH coeffs are stored into the first 6 w components
 		int nMipmaps = glf::MipmapLevels(resolution);
-		float factor = resolution*resolution;
+		float factor = float(resolution*resolution);
 		float coeffs[28];
 		glGetTexImage(GL_TEXTURE_2D_ARRAY, nMipmaps-1, GL_RGBA, GL_FLOAT, coeffs);
 		_light.coeffs[0] = glm::vec3(coeffs[0], coeffs[1], coeffs[2])  * factor;
@@ -127,10 +127,10 @@ namespace glf
 	SHRenderer::SHRenderer(int _w, int _h):
 	program("SHRenderer")
 	{
-		program.Compile(LoadFile("../resources/shaders/shrenderer.vs"),
-						LoadFile("../resources/shaders/shrenderer.fs"));
+		program.Compile(LoadFile(directory::ShaderDirectory + "shrenderer.vs"),
+						LoadFile(directory::ShaderDirectory + "shrenderer.fs"));
 
-		shLightVar			= program["SHLight"].location;
+		shLightVar			= program["SHLight[0]"].location;
 		diffuseTexUnit		= program["DiffuseTex"].unit;
 		normalTexUnit		= program["NormalTex"].unit;
 		glm::mat4 trans		= ScreenQuadTransform();

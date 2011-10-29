@@ -30,8 +30,8 @@ namespace glf
 	HelperRenderer::HelperRenderer():
 	program("HelperRenderer")
 	{
-		program.Compile(LoadFile("../resources/shaders/helper.vs"),
-						LoadFile("../resources/shaders/helper.fs"));
+		program.Compile(LoadFile(directory::ShaderDirectory + "helper.vs"),
+						LoadFile(directory::ShaderDirectory + "helper.fs"));
 
 		transformVar	= program["Transform"].location;
 		modelVar		= program["Model"].location;

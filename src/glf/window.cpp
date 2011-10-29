@@ -5,16 +5,6 @@
 #include <glf/utils.hpp>
 #include <glm/glm.hpp>
 #include <GL/freeglut.h>
-//------------------------------------------------------------------------------
-#ifdef WIN32
-#	undef APIENTRY
-//#	ifndef APIENTRY
-#		define APIENTRY
-//#	endif
-#	ifndef APIENTRYP
-#		define APIENTRYP APIENTRY *
-#	endif
-#endif//WIN32
 
 //------------------------------------------------------------------------------
 // Declarations
@@ -38,7 +28,7 @@ namespace glf
 		#ifdef WIN32
 		glewInit();
 		glGetError();
-
+		/*
 		// Load OpenGL 3.0 functions
 		glBindBufferBase = (PFNGLBINDBUFFERBASEPROC)glfGetProcAddress("glBindBufferBase");
 		glBindFragDataLocation = (PFNGLBINDFRAGDATALOCATIONPROC)glfGetProcAddress("glBindFragDataLocation");
@@ -272,9 +262,10 @@ namespace glf
 		glProgramUniformMatrix4x3dvEXT = (PFNGLPROGRAMUNIFORMMATRIX4X3DVEXTPROC)glfGetProcAddress("glProgramUniformMatrix4x3dvEXT");
 		glVertexArrayVertexAttribLOffsetEXT = (PFNGLVERTEXARRAYVERTEXATTRIBLOFFSETEXTPROC)glfGetProcAddress("glVertexArrayVertexAttribLOffsetEXT");
 		glEnableVertexArrayAttribEXT = (PFNGLENABLEVERTEXARRAYATTRIBEXTPROC)glfGetProcAddress("glEnableVertexArrayAttribEXT");
-
+		
 		// Load GL_EXT_shader_image_load_store extension
 		glBindImageTextureEXT = (PFNGLBINDIMAGETEXTUREEXTPROC)glfGetProcAddress("glBindImageTextureEXT");
+		*/
 		#endif//WIN32
 	}
 	//--------------------------------------------------------------------------

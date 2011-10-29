@@ -21,8 +21,8 @@ namespace glf
 		vao.Add(vbuffer,semantic::Position,3,GL_FLOAT);
 		vao.Add(tbuffer,semantic::TexCoord,3,GL_FLOAT);
 
-		program.Compile(LoadFile("../resources/shaders/cubemap.vs"),
-						LoadFile("../resources/shaders/cubemap.fs"));
+		program.Compile(LoadFile(directory::ShaderDirectory + "cubemap.vs"),
+						LoadFile(directory::ShaderDirectory + "cubemap.fs"));
 		envTexUnit			= program["EnvTex"].unit;
 		transformVar		= program["Transformation"].location;
 
@@ -62,9 +62,9 @@ namespace glf
 		CreateCubePos(vbo);
 		vao.Add(vbo,semantic::Position,3,GL_FLOAT);
 
-		program.Compile(LoadFile("../resources/shaders/skybuilder.vs"),
-						LoadFile("../resources/shaders/skybuilder.gs"),
-						LoadFile("../resources/shaders/skybuilder.fs"));
+		program.Compile(LoadFile(directory::ShaderDirectory + "skybuilder.vs"),
+						LoadFile(directory::ShaderDirectory + "skybuilder.gs"),
+						LoadFile(directory::ShaderDirectory + "skybuilder.fs"));
 
 		drawSunVar	 		= program["DrawSun"].location;
 		sunFactorVar 		= program["SunFactor"].location;
@@ -82,7 +82,7 @@ namespace glf
 		transformations[3] = proj * glm::lookAt(glm::vec3(0,0,0),glm::vec3( 0,-1, 0),glm::vec3(0, 0, 1)); // Negative Y
 		transformations[4] = proj * glm::lookAt(glm::vec3(0,0,0),glm::vec3( 0, 0, 1),glm::vec3(0,-1, 0)); // Positive Z
 		transformations[5] = proj * glm::lookAt(glm::vec3(0,0,0),glm::vec3( 0, 0,-1),glm::vec3(0, 1, 0)); // Negative Z
-		glProgramUniformMatrix4fv(program.id, program["Transformations"].location, 6, GL_FALSE, &transformations[0][0][0]);
+		glProgramUniformMatrix4fv(program.id, program["Transformations[0]"].location, 6, GL_FALSE, &transformations[0][0][0]);
 
 		// Init sky map & sky framebuffer
 		// 32FP is needed, otherwise we lack of contrast
@@ -178,8 +178,8 @@ namespace glf
 									float thetaS, 
 									float lvz )
 	{  
-		float den = (1.0 + A * exp(B)) * (1.0 + C * exp(D * thetaS) + E * cos(thetaS)*cos(thetaS));  
-		float num = (1.0 + A * exp(B / cosTheta)) * (1.0 + C * exp(D * gamma) + E * cos(gamma)*cos(gamma));  
+		float den = (1.f + A * exp(B)) * (1.f + C * exp(D * thetaS) + E * cos(thetaS)*cos(thetaS));  
+		float num = (1.f + A * exp(B / cosTheta)) * (1.f + C * exp(D * gamma) + E * cos(gamma)*cos(gamma));  
 		return (lvz * num / den);
 	}
 	//-------------------------------------------------------------------------
@@ -237,8 +237,8 @@ namespace glf
 		vec4  thetas    = vec4(thetaS3,thetaS2,thetaS,1);
 
 		// Compute zenith luminance and convert it from kcd/m^2 to cd/m^2  
-		float chi		= (4.0 / 9.0 - _turbidity / 120.0) * (M_PI - 2.0 * thetaS);  
-		float zenith_Y  = (4.0453*_turbidity - 4.9710) * tan( chi ) - 0.2155*_turbidity + 2.4192;
+		float chi		= (4.f / 9.0f - _turbidity / 120.f) * (M_PI - 2.f * thetaS);  
+		float zenith_Y  = (4.0453f*_turbidity - 4.9710f) * tan( chi ) - 0.2155f*_turbidity + 2.4192f;
 		zenith_Y	   *= 1000.f;  
 
 		// Compute chromacity
@@ -254,7 +254,7 @@ namespace glf
 		vec3 XYZ;
 		XYZ.y 			= abs(PerezFunction(dot(t,A_Y),dot(t,B_Y),dot(t,C_Y),dot(t,D_Y),dot(t,E_Y),cosTheta,gamma,thetaS,zenith_Y))*factor;
 		XYZ.x 			= (x / y) * XYZ.y;  
-		XYZ.z			= ((1.0 - x - y) / y) * XYZ.y;
+		XYZ.z			= ((1.f - x - y) / y) * XYZ.y;
 
 		// Conversion from XYZ to RGB
 	//	FragColor = vec4( vec3(1.0) - exp(-(1.0/15000.0) * (XYZ2RGB * XYZ)), 1);

@@ -19,8 +19,8 @@ namespace glf
 	modelVar(INVALID_ID),
 	framebuffer(INVALID_ID)
 	{
-		program.Compile(LoadFile("../resources/shaders/gbuffer.vs"),
-						LoadFile("../resources/shaders/gbuffer.fs"));
+		program.Compile(LoadFile(directory::ShaderDirectory + "gbuffer.vs"),
+						LoadFile(directory::ShaderDirectory + "gbuffer.fs"));
 
 		transformVar	= program["Transform"].location;
 		modelVar		= program["Model"].location;
@@ -90,7 +90,7 @@ namespace glf
 
 		// Render at the same resolution than the original window
 		// Draw all objects
-		int nMeshes = _scene.regularMeshes.size();
+		int nMeshes = int(_scene.regularMeshes.size());
 		for(int i=0;i<nMeshes;++i)
 		{
 			glProgramUniformMatrix4fv(program.id, 	modelVar,  1, 	GL_FALSE, &_scene.transformations[i][0][0]);
@@ -109,8 +109,8 @@ namespace glf
 									unsigned int _height):
 	program("Surface")
 	{
-		program.Compile(LoadFile("../resources/shaders/surface.vs"),
-						LoadFile("../resources/shaders/surface.fs"));
+		program.Compile(LoadFile(directory::ShaderDirectory + "surface.vs"),
+						LoadFile(directory::ShaderDirectory + "surface.fs"));
 
 		textureUnit		= program["Texture"].unit;
 		levelVar		= program["Level"].location;

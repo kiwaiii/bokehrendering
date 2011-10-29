@@ -28,7 +28,7 @@
 #endif
 //------------------------------------------------------------------------------
 #define MAJOR_VERSION	4
-#define MINOR_VERSION	1
+#define MINOR_VERSION	2
 
 //-----------------------------------------------------------------------------
 namespace ctx
@@ -158,8 +158,8 @@ namespace
 	dofProcessor(_w,_h),
 	postProcessor(_w,_h)
 	{
-		ssaoParams.beta				= 10e-04;
-		ssaoParams.epsilon			= 0.0722;
+		ssaoParams.beta				= 10e-04f;
+		ssaoParams.epsilon			= 0.0722f;
 		ssaoParams.sigma			= 1.f;
 		ssaoParams.kappa			= 1.f;
 		ssaoParams.radius			= 1.0f;
@@ -177,13 +177,13 @@ namespace
 		csmParams.blendFactor		= 1.f;
 		csmParams.cascadeAlpha		= 0.5f;
 
-		skyParams.sunTheta			= 0.63;
-		skyParams.sunPhi			= 5.31;
+		skyParams.sunTheta			= 0.63f;
+		skyParams.sunPhi			= 5.31f;
 		skyParams.turbidity			= 2;
 		skyParams.sunFactor			= 3.5f;
 
-		dofParams.nearStart			= 0.01;
-		dofParams.nearEnd			= 3.00;
+		dofParams.nearStart			= 0.01f;
+		dofParams.nearEnd			= 3.00f;
 		dofParams.farStart			= 10.f;
 		dofParams.farEnd			= 20.f;
 		dofParams.maxCoCRadius		= 10.f;
@@ -208,7 +208,7 @@ void UpdateLight()
 
 	app->skyBuilder.SetSunFactor(app->skyParams.sunFactor);
 	app->skyBuilder.SetPosition(app->skyParams.sunTheta,app->skyParams.sunPhi);
-	app->skyBuilder.SetTurbidity(app->skyParams.turbidity);
+	app->skyBuilder.SetTurbidity(float(app->skyParams.turbidity));
 	app->skyBuilder.Update();
 	app->shBuilder.Project(app->skyBuilder.skyTexture,app->shLight);
 	float sunLuminosity = glm::max(glm::dot(app->skyBuilder.sunIntensity, glm::vec3(0.299f, 0.587f, 0.114f)), 0.0001f);
@@ -277,7 +277,7 @@ bool end()
 	return glf::CheckError("end");
 }
 //------------------------------------------------------------------------------
-void interface()
+void gui()
 {
 	static char labelBuffer[512];
 	static glui::Rect none(0,0,200,20);
@@ -323,7 +323,7 @@ void interface()
 				sprintf(labelBuffer,"Turbidity : %d",app->skyParams.turbidity);
 				ctx::ui->Label(none,labelBuffer);
 				update |= ctx::ui->HorizontalSlider(sliderRect,2.f,10.f,&fturbidity);
-				app->skyParams.turbidity = fturbidity;
+				app->skyParams.turbidity = int(fturbidity);
 
 				sprintf(labelBuffer,"Factor : %f",app->skyParams.sunFactor);
 				ctx::ui->Label(none,labelBuffer);
@@ -353,11 +353,11 @@ void interface()
 				ctx::ui->Label(none,labelBuffer);
 				update |= ctx::ui->HorizontalSlider(sliderRect,0.f,6.f,&app->csmParams.aperture);
 
-				float fnSamples = app->csmParams.nSamples;
+				float fnSamples = float(app->csmParams.nSamples);
 				sprintf(labelBuffer,"nSamples: %d",app->csmParams.nSamples);
 				ctx::ui->Label(none,labelBuffer);
 				update |= ctx::ui->HorizontalSlider(sliderRect,1.f,32.f,&fnSamples);
-				app->csmParams.nSamples = fnSamples;
+				app->csmParams.nSamples = int(fnSamples);
 			}
 
 
@@ -383,11 +383,11 @@ void interface()
 				ctx::ui->Label(none,labelBuffer);
 				ctx::ui->HorizontalSlider(sliderRect,0.f,3.f,&app->ssaoParams.radius);
 
-				float fnSamples = app->ssaoParams.nSamples;
+				float fnSamples = float(app->ssaoParams.nSamples);
 				sprintf(labelBuffer,"nSamples : %d",app->ssaoParams.nSamples);
 				ctx::ui->Label(none,labelBuffer);
 				update |= ctx::ui->HorizontalSlider(sliderRect,1.f,32.f,&fnSamples);
-				app->ssaoParams.nSamples = fnSamples;
+				app->ssaoParams.nSamples = int(fnSamples);
 
 				sprintf(labelBuffer,"SigmaH : %.4f",app->ssaoParams.sigmaH);
 				ctx::ui->Label(none,labelBuffer);
@@ -397,11 +397,11 @@ void interface()
 				ctx::ui->Label(none,labelBuffer);
 				ctx::ui->HorizontalSlider(sliderRect,0.f,5.f,&app->ssaoParams.sigmaV);
 
-				float fnTaps = app->ssaoParams.nTaps;
+				float fnTaps = float(app->ssaoParams.nTaps);
 				sprintf(labelBuffer,"nTaps : %d",app->ssaoParams.nTaps);
 				ctx::ui->Label(none,labelBuffer);
 				update |= ctx::ui->HorizontalSlider(sliderRect,1.f,8.f,&fnTaps);
-				app->ssaoParams.nTaps = fnTaps;
+				app->ssaoParams.nTaps = int(fnTaps);
 			}
 
 			if(app->activeMenu == menuType::MN_TONE)
@@ -439,11 +439,11 @@ void interface()
 				ctx::ui->Label(none,labelBuffer);
 				ctx::ui->HorizontalSlider(sliderRect,1.f,30.f,&app->dofParams.maxBokehRadius);
 
-				float fnSamples = app->dofParams.nSamples;
+				float fnSamples = float(app->dofParams.nSamples);
 				sprintf(labelBuffer,"nSamples : %d",app->dofParams.nSamples);
 				ctx::ui->Label(none,labelBuffer);
 				update |= ctx::ui->HorizontalSlider(sliderRect,1.f,32.f,&fnSamples);
-				app->dofParams.nSamples = fnSamples;
+				app->dofParams.nSamples = int(fnSamples);
 
 				sprintf(labelBuffer,"Lum. Threshold : %.0f",app->dofParams.lumThreshold);
 				ctx::ui->Label(none,labelBuffer);
@@ -468,13 +468,12 @@ void interface()
 //------------------------------------------------------------------------------
 void display()
 {
-	float currentFrameTime = glutGet(GLUT_ELAPSED_TIME);
 	glf::manager::timings->StartSection(glf::section::Frame);
 
 	// Optimize far plane
 	glm::mat4 projection		= ctx::camera->Projection();
 	glm::mat4 view				= ctx::camera->View();
-	float near					= ctx::camera->Near();
+	float nearValue				= ctx::camera->Near();
 	glm::vec3 viewPos			= ctx::camera->Eye();
 
 	// Enable writting into the depth buffer
@@ -539,7 +538,7 @@ void display()
 				glf::manager::timings->StartSection(glf::section::SsaoRender);
 				app->ssaoPass.Draw(		app->gbuffer,
 										view,
-										near,
+										nearValue,
 										app->ssaoParams.beta,
 										app->ssaoParams.epsilon,
 										app->ssaoParams.kappa,
@@ -634,7 +633,7 @@ void display()
 		app->helperRenderer.Draw(projection,view,glf::manager::helpers->helpers);
 
 	//if(ctx::drawUI)
-	//	interface();
+	//	gui();
 
 	glf::CheckError("display");
 
@@ -660,4 +659,3 @@ int main(int argc, char* argv[])
 				return 0;
 	return 1;
 }
-

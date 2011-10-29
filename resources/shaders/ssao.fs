@@ -16,7 +16,7 @@ uniform float			Kappa;
 uniform float			Sigma;
 uniform float			Radius;
 uniform int				nSamples;
-uniform vec2			Halton[32];
+uniform vec2			Samples[32];
 
 out vec4 				FragColor;
 
@@ -40,7 +40,7 @@ void main()
 
 	for(int i=0;i<nSamples;++i)
 	{
-		vec2 samp	= pix + (rot*Halton[i])*r;
+		vec2 samp	= pix + (rot*Samples[i])*r;
 		vec4 p		= texture(PositionTex,samp);
 		vec3 v		= (View * p).xyz - vc;
 		A 			+= max(0.f,dot(v,vn) + v.z*Beta)  / (dot(v,v) + Epsilon);

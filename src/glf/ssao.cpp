@@ -14,8 +14,8 @@ namespace glf
 	SSAOPass::SSAOPass(int _w, int _h):
 	program("SSAOPass")
 	{
-		program.Compile(LoadFile("../resources/shaders/ssao.vs"),
-						LoadFile("../resources/shaders/ssao.fs"));
+		program.Compile(LoadFile(directory::ShaderDirectory + "ssao.vs"),
+						LoadFile(directory::ShaderDirectory + "ssao.fs"));
 
 		betaVar				= program["Beta"].location;
 		epsilonVar			= program["Epsilon"].location;
@@ -85,7 +85,7 @@ namespace glf
 		Halton[29]	= glm::vec2(0.488794, 0.479406);
 		Halton[30]	= glm::vec2(-0.948199, 0.263949);
 		Halton[31]	= glm::vec2(0.0311802, -0.121049);
-		glProgramUniform2fv(program.id, program["Halton"].location,	32, &Halton[0][0]);
+		glProgramUniform2fv(program.id, program["Samples[0]"].location,	32, &Halton[0][0]);
 
 		glf::CheckError("SSAOPass::Create");
 	}
@@ -122,8 +122,8 @@ namespace glf
 	BilateralPass::BilateralPass(int _w, int _h):
 	program("BilateralPass")
 	{
-		program.Compile(LoadFile("../resources/shaders/bilateral.vs"),
-						LoadFile("../resources/shaders/bilateral.fs"));
+		program.Compile(LoadFile(directory::ShaderDirectory + "bilateral.vs"),
+						LoadFile(directory::ShaderDirectory + "bilateral.fs"));
 
 		sigmaHVar			= program["SigmaH"].location;
 		sigmaVVar			= program["SigmaV"].location;
