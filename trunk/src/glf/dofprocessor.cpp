@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 // Include
 //-----------------------------------------------------------------------------
-#include <glf/dofprocessor2.hpp>
+#include <glf/dofprocessor.hpp>
 #include <glf/ioimage.hpp>
 #include <glf/debug.hpp>
 #include <glf/rng.hpp>
@@ -23,7 +23,7 @@ namespace glf
 		// Resources initialization
 		{
 			// Load bokeh texture
-			BokehTexture(directory::TextureDirectory + "HexaBokeh.png");
+			BokehTexture(directory::TextureDirectory + "HexagonalBokeh.png");
 
 			blurDepthTex.Allocate(GL_RGBA32F,_w,_h);
 			blurDepthTex.SetFiltering(GL_LINEAR,GL_LINEAR);
@@ -259,6 +259,23 @@ namespace glf
 						bokehShapeTex,
 						true,
 						true);
+
+		bokehShapeTex.SetFiltering(GL_LINEAR_MIPMAP_LINEAR,GL_LINEAR);
+		bokehShapeTex.SetWrapping(GL_CLAMP_TO_EDGE,GL_CLAMP_TO_EDGE);
+		glBindTexture(bokehShapeTex.target,bokehShapeTex.id);
+		glGenerateMipmap(bokehShapeTex.target);
+		glBindTexture(bokehShapeTex.target,0);
+	}
+	//-------------------------------------------------------------------------
+	int	DOFProcessor::GetDetectedBokehs()
+	{
+		// Print number of bokeh drawn during the last frame 
+		int nBokehs;
+		DrawArraysIndirectCommand* indirectCmd = pointIndirectBuffer.Lock();
+		nBokehs = indirectCmd[0].primCount;
+		pointIndirectBuffer.Unlock();
+		glf::CheckError("DOFProcessor::GetDetectedBokehs");
+		return nBokehs;
 	}
 	//-------------------------------------------------------------------------
 	void DOFProcessor::Draw(	const Texture2D& _colorTex, 
@@ -373,21 +390,19 @@ namespace glf
 		glUseProgram(renderingPass.program.id);
 			glMemoryBarrier(GL_ALL_BARRIER_BITS);
 			#if 0
-			{
-				int count, primCount,first,reservedMustBeZero;
-				DrawArraysIndirectCommand* indirectCmd = pointIndirectBuffer.Lock();
-					count              = indirectCmd[0].count;
-					primCount          = indirectCmd[0].primCount;
-					first              = indirectCmd[0].first;
-					reservedMustBeZero = indirectCmd[0].reservedMustBeZero;
-				pointIndirectBuffer.Unlock();
-				std::stringstream out;
-				out << "count : " << count << "  ";
-				out << "primCount : " << primCount << "  ";
-				out << "first : " << first << "  ";
-				out << "reservedMustBeZero  : " << reservedMustBeZero;
-				glf::Info("%s",out.str().c_str());
-			}
+			int count, primCount,first,reservedMustBeZero;
+			DrawArraysIndirectCommand* indirectCmd = pointIndirectBuffer.Lock();
+				count              = indirectCmd[0].count;
+				primCount          = indirectCmd[0].primCount;
+				first              = indirectCmd[0].first;
+				reservedMustBeZero = indirectCmd[0].reservedMustBeZero;
+			pointIndirectBuffer.Unlock();
+			std::stringstream out;
+			out << "count : " << count << "  ";
+			out << "primCount : " << primCount << "  ";
+			out << "first : " << first << "  ";
+			out << "reservedMustBeZero  : " << reservedMustBeZero;
+			glf::Info("%s",out.str().c_str());
 			#endif
 			glProgramUniform1f(renderingPass.program.id,renderingPass.maxBokehRadiusVar,_maxBokehRadius);
 			glProgramUniform1f(renderingPass.program.id,renderingPass.bokehDepthCutoffVar,_bokehDepthCutoff);

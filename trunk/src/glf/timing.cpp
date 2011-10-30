@@ -12,17 +12,14 @@ namespace glf
 	//-------------------------------------------------------------------------
 	namespace
 	{
-		double timerToFloat(GLuint64EXT timer) 
+		double timerToFloat(GLuint64 timer) 
 		{
 			GLuint64EXT tmp = timer;
-	
 			//unsigned long nsec = tmp % 1000;
 			tmp /= 1000;
 			unsigned long mcsec = tmp % 1000;
-
 			tmp /= 1000;
 			unsigned long misec = tmp % 1000;
-
 			tmp /= 1000;
 			unsigned long sec = tmp;
 	
@@ -46,7 +43,7 @@ namespace glf
 	{
 		if(!waiting) 
 		{
-			glBeginQuery(GL_TIME_ELAPSED_EXT, id);
+			glBeginQuery(GL_TIME_ELAPSED, id);
 		}
 	}
 	//-------------------------------------------------------------------------

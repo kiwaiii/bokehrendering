@@ -44,8 +44,6 @@ namespace glf
 									const glm::mat4& _view,
 									const std::vector<Helper::Ptr>& _helpers)
 	{
-		glDisable(GL_DEPTH_TEST);
-
 		// Render lighting pass
 		glUseProgram(program.id);
 		glf::CheckError("Check program");
@@ -59,7 +57,6 @@ namespace glf
 			glProgramUniformMatrix4fv(program.id, 	modelVar,  1, 	GL_FALSE, &_helpers[i]->transform[0][0]);
 			_helpers[i]->vao.Draw(_helpers[i]->type,_helpers[i]->vbuffer.count);
 		}
-		glEnable(GL_DEPTH_TEST);
 	}
 	//--------------------------------------------------------------------------
 	HelperRenderer::~HelperRenderer()

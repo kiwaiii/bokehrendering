@@ -39,6 +39,7 @@ namespace glf
 										float			_bokehDepthCutoff,
 										bool			_poissonFiltering,
 										const RenderTarget& _target);
+		int			GetDetectedBokehs(	);
 	public:
 		//----------------------------------------------------------------------
 		struct ResetPass

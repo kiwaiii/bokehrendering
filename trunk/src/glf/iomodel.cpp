@@ -2314,8 +2314,8 @@ namespace glf
 
 				// Load textures
 				glf::Texture2D* diffuseTex = GetDiffuseTex(_folder,mesh.pMaterial->colorMapFilename,textureDB,_resourceManager);
-				//glf::Texture2D* normalTex  = GetNormalTex(_folder,mesh.pMaterial->bumpMapFilename,textureDB,_resourceManager);
-				glf::Texture2D* normalTex  = GetNormalTex(_folder,"",textureDB,_resourceManager);
+				glf::Texture2D* normalTex  = GetNormalTex(_folder,mesh.pMaterial->bumpMapFilename,textureDB,_resourceManager);
+				//glf::Texture2D* normalTex  = GetNormalTex(_folder,"",textureDB,_resourceManager);
 
 				// Create and add regular mesh
 				RegularMesh rmesh;
