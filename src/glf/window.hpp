@@ -79,6 +79,8 @@ namespace ctx
 	extern glf::Camera::Ptr		camera;
 	extern glui::GlutContext*	ui;
 	extern bool 				drawUI;
+	extern bool 				drawTimings;
+	extern bool 				drawHelpers;
 }//namespace 
 
 

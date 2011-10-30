@@ -15,7 +15,7 @@
 #include <glf/ssao.hpp>
 #include <glf/camera.hpp>
 #include <glf/wrapper.hpp>
-#include <glf/dofprocessor2.hpp>
+#include <glf/dofprocessor.hpp>
 #include <glf/postprocessor.hpp>
 #include <glf/utils.hpp>
 #include <fstream>
@@ -37,6 +37,8 @@ namespace ctx
 	glf::Window 							window(glm::ivec2(1280, 720));
 	glui::GlutContext* 						ui;
 	bool									drawHelpers = false;
+	bool									drawTimings = false;
+	bool									drawUI      = false;
 }
 //-----------------------------------------------------------------------------
 namespace
@@ -129,11 +131,20 @@ namespace
 		SkyParams							skyParams;
 		DOFParams							dofParams;
 
+		int									activeBokeh;
 		int									activeBuffer;
 		int									activeMenu;
+
+		#if ENABLE_BOKEH_STATISTICS
+		bool								bokehQuery;
+		bool								bokehRecord;
+		std::ofstream						bokehFile;
+		#endif
 	};
 	Application*							app;
 
+	const char*								bokehNames[]	= {"Pentagonal","Hexagonal","Circle","Star"};
+	struct									bokehType		{ enum Type {BK_PENTAGONAL, BK_HEXAGONAL, BK_CIRCLE,BK_STAR,MAX }; };
 	const char*								bufferNames[]	= {"Composition","Position","Normal","Diffuse"};
 	struct									bufferType		{ enum Type {GB_COMPOSITION,GB_POSITION,GB_NORMAL,GB_DIFFUSE,MAX }; };
 	const char*								menuNames[]		= {"Tone","Sky","CSM","SSAO", "DoF" };
@@ -194,9 +205,16 @@ namespace
 		dofParams.bokehDepthCutoff	= 1.f;
 		dofParams.poissonFiltering	= false;
 
+		activeBokeh					= 1;
 		activeBuffer				= 0;
 		activeMenu					= 2;
 		csmLight.direction			= glm::vec3(0,0,-1);
+
+		#if ENABLE_BOKEH_STATISTICS
+		bokehQuery					= false;
+		bokehRecord					= false;
+		bokehFile.open("BokehPerformances.dat");
+		#endif
 	}
 }
 
@@ -458,6 +476,24 @@ void gui()
 				ctx::ui->HorizontalSlider(sliderRect,0.001f,1.f,&app->dofParams.bokehDepthCutoff);
 
 				ctx::ui->CheckButton(none,"Poisson filtering",&app->dofParams.poissonFiltering);
+
+				// Change bokeh shape
+				int previousActiveBokeh = app->activeBokeh;
+				for(int i=0;i<bokehType::MAX;++i)
+				{
+					bool active = i==app->activeBokeh;
+					ctx::ui->CheckButton(none,bokehNames[i],&active);
+					app->activeBokeh = active?i:app->activeBokeh;
+				}
+				if(previousActiveBokeh != app->activeBokeh)
+				{
+					app->dofProcessor.BokehTexture(glf::directory::TextureDirectory + bokehNames[app->activeBokeh] + std::string("Bokeh.png"));
+				}
+
+				#if ENABLE_BOKEH_STATISTICS
+				if(ctx::ui->Button(none,"Bokeh query"))  app->bokehQuery = true;
+				if(ctx::ui->Button(none,"Bokeh record")) app->bokehRecord = true;
+				#endif
 			}
 			ctx::ui->EndFrame();
 		ctx::ui->EndGroup();
@@ -599,6 +635,27 @@ void display()
 										app->dofParams.poissonFiltering,
 										app->renderTarget2);
 				glf::manager::timings->EndSection(glf::section::DofProcess);
+				
+				// Record performances
+				#if ENABLE_BOKEH_STATISTICS
+				if(app->bokehQuery)
+				{
+					glf::Info("nBokehs : %d",app->dofProcessor.GetDetectedBokehs());
+					app->bokehQuery = false;
+				}
+				if(app->bokehRecord)
+				{
+					app->bokehFile <<
+					app->dofProcessor.GetDetectedBokehs() << " " <<
+					glf::manager::timings->GPUTiming(glf::section::DofReset) << " " <<
+					glf::manager::timings->GPUTiming(glf::section::DofBlurDepth) << " " <<
+					glf::manager::timings->GPUTiming(glf::section::DofDetection) << " " <<
+					glf::manager::timings->GPUTiming(glf::section::DofBlur) << " " <<
+					glf::manager::timings->GPUTiming(glf::section::DofSynchronization) << " " <<
+					glf::manager::timings->GPUTiming(glf::section::DofRendering) << std::endl;
+					app->bokehRecord = false;
+				}
+				#endif
 
 				glBindFramebuffer(GL_FRAMEBUFFER,0);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -639,13 +696,15 @@ void display()
 		default: assert(false);
 	}
 
-	if(ctx::drawHelpers)
-		app->helperRenderer.Draw(projection,view,glf::manager::helpers->helpers);
-
+	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	if(ctx::drawUI) gui();
-	app->timingRenderer.Draw(*glf::manager::timings);
+	if(ctx::drawHelpers)
+		app->helperRenderer.Draw(projection,view,glf::manager::helpers->helpers);
+	if(ctx::drawUI) 
+		gui();
+	if(ctx::drawTimings) 
+		app->timingRenderer.Draw(*glf::manager::timings);
 	glDisable(GL_BLEND);
 
 	glf::CheckError("display");

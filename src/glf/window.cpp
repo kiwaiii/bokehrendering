@@ -15,10 +15,6 @@ bool end();
 void display();
 bool resize(int _w, int _h);
 
-namespace ctx
-{
-	bool drawUI = true;
-}
 
 namespace glf
 {
@@ -56,6 +52,12 @@ namespace glf
 		{
 		case 'u':
 			ctx::drawUI = !ctx::drawUI;
+			break;
+		case 'h':
+			ctx::drawHelpers = !ctx::drawHelpers;
+			break;
+		case 't':
+			ctx::drawTimings = !ctx::drawTimings;
 			break;
 		case 27:
 			end();

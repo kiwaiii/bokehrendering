@@ -19,6 +19,8 @@
 #define ENABLE_GPU_PASSES_TIMING		1
 #define ENABLE_GPU_FRAME_TIMING			0
 //------------------------------------------------------------------------------
+#define ENABLE_BOKEH_STATISTICS			1
+//------------------------------------------------------------------------------
 #define ENABLE_CHECK_ERROR				1
 
 namespace glf
