@@ -18,7 +18,7 @@ A naive approach would be to explicitly render a quad for each pixel, with each 
 Depth of field is an important effect for conveying a realistic sense of depth and scale, particularly in open scenes with a large viewing distance. Traditional real-time applications use a pinhole camera model for rasterization, which results in an infinite depth of field. However real cameras use a thin lens, which introduces a limited depth of field based on aperture size and focal distance. Objects outside of this of this region appear blurred on the final image, while objects inside of it remain sharp. See Figure~\ref{DeRousiers:focus}.
 
 	\begin{figure}[htb]\centering
-	\includegraphics[width=\textwidth]{focus}
+	\includegraphics[width=\textwidth]{DerousiersFigs/focus.pdf}
 	\caption{Depth of field phenomenon, where a thin lens introduces a limited depth of field. In-focus objects appear sharp, while out-of-focus object appear blurred. The size of the circle of confusion depends on the distance beween object and the point at which the camera is focused. We use a linear approximation in order to simplify parameters and as well as run-time computations. }
 	\label{DeRousiers:focus}
 	\end{figure}
