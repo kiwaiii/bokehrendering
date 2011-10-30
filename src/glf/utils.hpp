@@ -135,7 +135,6 @@ namespace glf
 											std::string const & _fs,
 											bool 				_separable=false);
 	//--------------------------------------------------------------------------
-
-}//namespace glf
+}
 
 #endif

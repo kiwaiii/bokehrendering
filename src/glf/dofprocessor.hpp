@@ -97,6 +97,14 @@ namespace glf
 			Program 					program;
 		};
 		//----------------------------------------------------------------------
+		struct SynchronizationPass
+		{
+										SynchronizationPass():program("DOF::SynchronisationPass"){}
+			GLint 						indirectBufferTexUnit;
+			
+			Program 					program;
+		};
+		//----------------------------------------------------------------------
 		struct RenderingPass
 		{
 										RenderingPass():program("DOF::RenderingPass"){}
@@ -116,10 +124,11 @@ namespace glf
 		Texture2D						blurTex;			// Store result of vertical blur
 		Texture2D						bokehShapeTex;		// Store aperture/bokeh shape
 		Texture2D						rotationTex;		// Store rotation for Poisson sampling
-
+		
 		Texture2D						bokehPositionTex;	// Store bokeh position
 		Texture2D						bokehColorTex;		// Store bokeh color
-		GLuint							bokehCountTexID;	// Atomic bokeh counter
+		AtomicCounterBuffer				bokehCounterACB;	// Atomic bokeh counter
+		GLuint							indirectBufferTexID;// Texture object for the indirect buffer
 
 		GLuint							blurDepthFBO;		// Framebuffers
 		GLuint							detectionFBO;		//
@@ -130,8 +139,9 @@ namespace glf
 		DetectionPass					detectionPass;		// Detect pixel which are bokeh
 		BlurSeparablePass				blurSeparablePass;	// Blur pixel which are not bokeh (with a separable filter)
 		BlurPoissonPass					blurPoissonPass;	// Blur pixel which are not bokeh (with a poisson filter)
+		SynchronizationPass				synchronizationPass;// Synchronize bokeh counter with indirect buffer
 		RenderingPass					renderingPass;		// Render bokehs
-		
+				
 		VertexBuffer3F					pointVBO;			// Point VBO
 		VertexArray						pointVAO;			// Point VAO
 		IndirectArrayBuffer				pointIndirectBuffer;// Indirect buffer for instancing bokeh

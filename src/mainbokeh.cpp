@@ -15,7 +15,7 @@
 #include <glf/ssao.hpp>
 #include <glf/camera.hpp>
 #include <glf/wrapper.hpp>
-#include <glf/dofprocessor.hpp>
+#include <glf/dofprocessor2.hpp>
 #include <glf/postprocessor.hpp>
 #include <glf/utils.hpp>
 #include <fstream>

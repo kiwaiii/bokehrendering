@@ -1,11 +1,12 @@
 //-----------------------------------------------------------------------------
 // Include
 //-----------------------------------------------------------------------------
-#include <glf/dofprocessor.hpp>
+#include <glf/dofprocessor2.hpp>
 #include <glf/ioimage.hpp>
 #include <glf/debug.hpp>
 #include <glf/rng.hpp>
 #include <glm/glm.hpp>
+#include <glm/gtc/type_precision.hpp>
 
 //-----------------------------------------------------------------------------
 // Constants
@@ -74,27 +75,23 @@ namespace glf
 			indirectCmd[0].reservedMustBeZero 	= 0;
 			pointIndirectBuffer.Unlock();
 
-			// Create the texture proxy
-			glGenTextures(1, &bokehCountTexID);
-			glBindTexture(GL_TEXTURE_BUFFER, bokehCountTexID);
+			// Create the texture proxy for the indirect buffer
+			glGenTextures(1, &indirectBufferTexID);
+			glBindTexture(GL_TEXTURE_BUFFER, indirectBufferTexID);
 			glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, pointIndirectBuffer.id);
 			glBindTexture(GL_TEXTURE_BUFFER, 0);
 
+			// Allocate atomic counter
+			bokehCounterACB.Allocate(1,GL_DYNAMIC_DRAW);
+
 			// Create point VBO and VAO
 			pointVBO.Allocate(1,GL_STATIC_DRAW);
-			glm::vec3* vertices = pointVBO.Lock();
-			vertices[0] = glm::vec3(0,0,0);
+			glm::vec3* pvertices = pointVBO.Lock();
+			pvertices[0] = glm::vec3(0,0,0);
 			pointVBO.Unlock();
 			pointVAO.Add(pointVBO,semantic::Position,3,GL_FLOAT);
-		}
 
-		// Reset Pass
-		{
-			resetPass.program.Compile(	LoadFile(directory::ShaderDirectory + "bokehreset.vs"),
-										LoadFile(directory::ShaderDirectory + "bokehreset.fs"));
-
-			resetPass.bokehCountTexUnit = resetPass.program["BokehCountTex"].unit;
-			glProgramUniform1i(resetPass.program.id,resetPass.program["BokehCountTex"].location,resetPass.bokehCountTexUnit);
+			glf::CheckError("DofProcessor::Resources");
 		}
 
 		// CoC Pass
@@ -109,28 +106,30 @@ namespace glf
 
 			glProgramUniformMatrix4fv(cocPass.program.id, cocPass.program["Transformation"].location,1, GL_FALSE, &transform[0][0]);
 			glProgramUniform1i(cocPass.program.id, 		  cocPass.program["PositionTex"].location,cocPass.positionTexUnit);
+
+			glf::CheckError("DofProcessor::BlurDepth");
 		}
 
 		// Detection Pass
 		{
 			detectionPass.program.Compile(	LoadFile(directory::ShaderDirectory + "bokehdetection.vs"),
 											LoadFile(directory::ShaderDirectory + "bokehdetection.fs"));
-
+			Info(detectionPass.program.ToString());
 			detectionPass.colorTexUnit		= detectionPass.program["ColorTex"].unit;
 			detectionPass.blurDepthTexUnit	= detectionPass.program["BlurDepthTex"].unit;
 			detectionPass.lumThresholdVar	= detectionPass.program["LumThreshold"].location;
 			detectionPass.cocThresholdVar	= detectionPass.program["CoCThreshold"].location;
 			detectionPass.maxCoCRadiusVar	= detectionPass.program["MaxCoCRadius"].location;
-			detectionPass.bokehCountTexUnit	= detectionPass.program["BokehCountTex"].unit;
 			detectionPass.bokehColorTexUnit	= detectionPass.program["BokehColorTex"].unit;
-			detectionPass.bokehPositionTexUnit= detectionPass.program["BokehPositionTex"].unit;
+			detectionPass.bokehPositionTexUnit= detectionPass.program["BokehPositionTex"].unit;			
 
 			glProgramUniformMatrix4fv(detectionPass.program.id, detectionPass.program["Transformation"].location,1,GL_FALSE,&transform[0][0]);
 			glProgramUniform1i(detectionPass.program.id, detectionPass.program["BlurDepthTex"].location,detectionPass.blurDepthTexUnit);
 			glProgramUniform1i(detectionPass.program.id, detectionPass.program["ColorTex"].location,detectionPass.colorTexUnit);
-			glProgramUniform1i(detectionPass.program.id, detectionPass.program["BokehCountTex"].location,detectionPass.bokehCountTexUnit);
 			glProgramUniform1i(detectionPass.program.id, detectionPass.program["BokehColorTex"].location,detectionPass.bokehColorTexUnit);
 			glProgramUniform1i(detectionPass.program.id, detectionPass.program["BokehPositionTex"].location,detectionPass.bokehPositionTexUnit);
+
+			glf::CheckError("DofProcessor::BlurDetection");
 		}
 
 		// Blur separable pass
@@ -146,6 +145,8 @@ namespace glf
 			glProgramUniformMatrix4fv(blurSeparablePass.program.id, blurSeparablePass.program["Transformation"].location,1,GL_FALSE, &transform[0][0]);
 			glProgramUniform1i(blurSeparablePass.program.id, 		blurSeparablePass.program["BlurDepthTex"].location,blurSeparablePass.blurDepthTexUnit);
 			glProgramUniform1i(blurSeparablePass.program.id, 		blurSeparablePass.program["ColorTex"].location,blurSeparablePass.colorTexUnit);
+
+			glf::CheckError("DofProcessor::BlurSeparable");
 		}
 
 		// Blur poisson pass
@@ -211,6 +212,19 @@ namespace glf
 			glProgramUniform1i(blurPoissonPass.program.id,		  blurPoissonPass.program["ColorTex"].location,blurPoissonPass.colorTexUnit);
 			glProgramUniform1i(blurPoissonPass.program.id,		  blurPoissonPass.program["RotationTex"].location,blurPoissonPass.rotationTexUnit);
 			glProgramUniform2fv(blurPoissonPass.program.id,		  blurPoissonPass.program["Samples[0]"].location,32,&Halton[0][0]);
+
+			glf::CheckError("DofProcessor::BlurPoisson");
+		}
+
+		// Synchronization Pass
+		{
+			synchronizationPass.program.Compile(LoadFile(directory::ShaderDirectory + "bokehsynchronization.vs"),
+												LoadFile(directory::ShaderDirectory + "bokehsynchronization.fs"));
+
+			synchronizationPass.indirectBufferTexUnit = synchronizationPass.program["IndirectBufferTex"].unit;
+			glProgramUniform1i(synchronizationPass.program.id,synchronizationPass.program["IndirectBufferTex"].location,synchronizationPass.indirectBufferTexUnit );
+
+			glf::CheckError("DofProcessor::Synchronization");
 		}
 
 		// Rendering pass
@@ -232,6 +246,8 @@ namespace glf
 			glProgramUniform1i(renderingPass.program.id, renderingPass.program["BokehShapeTex"].location,renderingPass.bokehShapeTexUnit);
 			glProgramUniform1i(renderingPass.program.id, renderingPass.program["BokehColorTex"].location,renderingPass.bokehColorTexUnit);
 			glProgramUniform1i(renderingPass.program.id, renderingPass.program["BlurDepthTex"].location,renderingPass.blurDepthTexUnit);
+
+			glf::CheckError("DofProcessor::Rendering");
 		}
 
 		glf::CheckError("DOFProcessor::Create");
@@ -265,16 +281,15 @@ namespace glf
 
 		// Reset bokeh counter (draw a fake point)
 		glf::manager::timings->StartSection(section::DofReset);
-		glUseProgram(resetPass.program.id);
-			glBindFramebuffer(GL_FRAMEBUFFER,blurDepthFBO);
-			glActiveTexture(GL_TEXTURE0 + resetPass.bokehCountTexUnit);
-			glBindImageTextureEXT(resetPass.bokehCountTexUnit, bokehCountTexID,0,false,0,GL_WRITE_ONLY, GL_R32UI);
-			pointVAO.Draw(GL_POINTS,1,0);
+			glm::uint32* bokehCounterValue = (glm::uint32*)glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 0, sizeof(glm::uint32),GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
+			*bokehCounterValue = 0;
+			glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
 		glf::manager::timings->EndSection(section::DofReset);
 
 		// Compute amount of blur and linear depth for each pixel
 		glf::manager::timings->StartSection(section::DofBlurDepth);
 		glUseProgram(cocPass.program.id);
+			glBindFramebuffer(GL_FRAMEBUFFER,blurDepthFBO);
 			glClear(GL_COLOR_BUFFER_BIT);
 			glProgramUniform1f(cocPass.program.id,			cocPass.farStartVar,	_farStart);
 			glProgramUniform1f(cocPass.program.id,			cocPass.farEndVar,		_farEnd);
@@ -293,35 +308,17 @@ namespace glf
 			glProgramUniform1f(detectionPass.program.id,detectionPass.lumThresholdVar,_lumThreshold);
 			glProgramUniform1f(detectionPass.program.id,detectionPass.maxCoCRadiusVar,_maxCoCRadius);
 
-			glActiveTexture(GL_TEXTURE0 + detectionPass.bokehCountTexUnit);
-			glBindImageTextureEXT(detectionPass.bokehCountTexUnit, bokehCountTexID,0,false,0,GL_READ_WRITE, GL_R32UI);
+			glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER,0,bokehCounterACB.id);
 			glActiveTexture(GL_TEXTURE0 + detectionPass.bokehPositionTexUnit);
-			glBindImageTextureEXT(detectionPass.bokehPositionTexUnit, bokehPositionTex.id,0,false,0,GL_WRITE_ONLY,GL_RGBA32F);
+			glBindImageTexture(detectionPass.bokehPositionTexUnit, bokehPositionTex.id,0,false,0,GL_WRITE_ONLY,GL_RGBA32F);
 			glActiveTexture(GL_TEXTURE0 + detectionPass.bokehColorTexUnit);
-			glBindImageTextureEXT(detectionPass.bokehColorTexUnit, bokehColorTex.id,0,false,0,GL_WRITE_ONLY,GL_RGBA32F);
+			glBindImageTexture(detectionPass.bokehColorTexUnit, bokehColorTex.id,0,false,0,GL_WRITE_ONLY,GL_RGBA32F);
 
 			blurDepthTex.Bind(detectionPass.blurDepthTexUnit);
 			_colorTex.Bind(detectionPass.colorTexUnit);
 			_renderTarget.Draw();
 			glf::CheckError("DOFProcessor::DrawDETECTION");
 		glf::manager::timings->EndSection(section::DofDetection);
-
-			// Print indirect buffer
-			#if 0
-			int count, primCount,first,reservedMustBeZero;
-			DrawArraysIndirectCommand* indirectCmd = pointIndirectBuffer.Lock();
-				count              = indirectCmd[0].count;
-				primCount          = indirectCmd[0].primCount;
-				first              = indirectCmd[0].first;
-				reservedMustBeZero = indirectCmd[0].reservedMustBeZero;
-			pointIndirectBuffer.Unlock();
-			std::stringstream out;
-			out << "count : " << count << "  ";
-			out << "primCount : " << primCount << "  ";
-			out << "first : " << first << "  ";
-			out << "reservedMustBeZero  : " << reservedMustBeZero;
-			glf::Info("%s",out.str().c_str());
-			#endif
 
 		glf::manager::timings->StartSection(section::DofBlur);
 		if(_poissonFiltering)
@@ -362,20 +359,45 @@ namespace glf
 		}
 		glf::manager::timings->EndSection(section::DofBlur);
 
+		// Synchronize bokeh count with indirect draw buffer (draw a dummy point)
+		glf::manager::timings->StartSection(section::DofSynchronization);
+		glUseProgram(synchronizationPass.program.id);
+			glActiveTexture(GL_TEXTURE0 + synchronizationPass.indirectBufferTexUnit);
+			glBindImageTexture(synchronizationPass.indirectBufferTexUnit, indirectBufferTexID,0,false,0,GL_WRITE_ONLY, GL_R32UI);
+			pointVAO.Draw(GL_POINTS,1,0);
+			glf::CheckError("DOFProcessor::DrawSYNCHRONIZATION");
+		glf::manager::timings->EndSection(section::DofSynchronization);
+
 		// Render bokeh as textured quad (with additive blending)
 		glf::manager::timings->StartSection(section::DofRendering);
 		glUseProgram(renderingPass.program.id);
-			glMemoryBarrierEXT(GL_ALL_BARRIER_BITS_EXT);
+			glMemoryBarrier(GL_ALL_BARRIER_BITS);
+			#if 0
+			{
+				int count, primCount,first,reservedMustBeZero;
+				DrawArraysIndirectCommand* indirectCmd = pointIndirectBuffer.Lock();
+					count              = indirectCmd[0].count;
+					primCount          = indirectCmd[0].primCount;
+					first              = indirectCmd[0].first;
+					reservedMustBeZero = indirectCmd[0].reservedMustBeZero;
+				pointIndirectBuffer.Unlock();
+				std::stringstream out;
+				out << "count : " << count << "  ";
+				out << "primCount : " << primCount << "  ";
+				out << "first : " << first << "  ";
+				out << "reservedMustBeZero  : " << reservedMustBeZero;
+				glf::Info("%s",out.str().c_str());
+			}
+			#endif
 			glProgramUniform1f(renderingPass.program.id,renderingPass.maxBokehRadiusVar,_maxBokehRadius);
 			glProgramUniform1f(renderingPass.program.id,renderingPass.bokehDepthCutoffVar,_bokehDepthCutoff);
-			bokehShapeTex.Bind(renderingPass.bokehShapeTexUnit);
-			bokehColorTex.Bind(renderingPass.bokehColorTexUnit);
-			blurDepthTex.Bind(renderingPass.blurDepthTexUnit);
 			bokehPositionTex.Bind(renderingPass.bokehPositionTexUnit);
+			bokehColorTex.Bind(renderingPass.bokehColorTexUnit);
+			bokehShapeTex.Bind(renderingPass.bokehShapeTexUnit);
+			blurDepthTex.Bind(renderingPass.blurDepthTexUnit);			
 			pointVAO.Draw(GL_POINTS,pointIndirectBuffer);
 			glf::CheckError("DOFProcessor::DrawRENDERING");
 		glf::manager::timings->EndSection(section::DofRendering);
-
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
 		glf::CheckError("DOFProcessor::DrawEnd");
 	}

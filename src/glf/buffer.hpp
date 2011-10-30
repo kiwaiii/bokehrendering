@@ -116,6 +116,7 @@ namespace glf
 	typedef IBuffer<GL_DRAW_INDIRECT_BUFFER,DrawArraysIndirectCommand>		IndirectArrayBuffer;
 	typedef IBuffer<GL_DRAW_INDIRECT_BUFFER,DrawElementsIndirectCommand>	IndirectElementBuffer;
 	typedef IBuffer<GL_ELEMENT_ARRAY_BUFFER,unsigned int>		IndexBuffer;
+	typedef IBuffer<GL_ATOMIC_COUNTER_BUFFER,unsigned int>		AtomicCounterBuffer;
 	//--------------------------------------------------------------------------
 	typedef VertexBuffer<float>::Buffer							VertexBuffer1F;
 	typedef VertexBuffer<glm::vec2>::Buffer						VertexBuffer2F;

@@ -45,7 +45,7 @@ namespace glf
 	{
 		assert(_count>0);
 		count = _count;
-		update	  = _update;
+		update= _update;
 
 		glBindBuffer(B,id);
 		glBufferData(B,count*sizeof(T),NULL,update);

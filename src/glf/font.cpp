@@ -97,7 +97,7 @@ namespace glf
 		delete[] textTexture;
 	}
 	//-------------------------------------------------------------------------
-	void FontRenderer::Draw(int _x, int _y, const Font& _font, const std::string _text, const glm::vec4& _color)
+	void FontRenderer::Draw(int _x, int _y, const Font& _font, const std::string& _text, const glm::vec4& _color)
 	{
 		int nCharacters = int(_text.size());
 		assert(nCharacters<maxCharacters);
@@ -122,7 +122,7 @@ namespace glf
 		quadVAO.Draw(GL_TRIANGLES,6,0,nCharacters);
 	}
 	//-------------------------------------------------------------------------
-	unsigned int FontRenderer::ComputeWidth(const Font& _font, const std::string _message) const
+	unsigned int FontRenderer::ComputeWidth(const Font& _font, const std::string& _message) const
 	{
 		unsigned int width 		= 0;
 		const unsigned int size = int(_message.length());

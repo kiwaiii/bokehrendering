@@ -20,9 +20,11 @@ void main()
 	weight		= clamp(weight + blur,0,1);
 
 	FragColor	= vec4(gColor.xyz * alpha * weight,gColor.w);
-if(gl_FragCoord.x<10000)
-{
-	FragColor	= vec4(15000,0,0,1);
-}
+
+    // For debugging/displaying bokehs
+    //if(gl_FragCoord.x<10000)
+    //{
+    //	FragColor	= vec4(0,0,15000,1);
+    //}
 }
 

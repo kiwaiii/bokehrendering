@@ -53,7 +53,7 @@ ENDIF(NOT OPENGL_FOUND)
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR})
 
 IF(MSVC)
-	addExternalPackageGTC("GLEW" "glew-1.6.0")
+	addExternalPackageGTC("GLEW" "glew-1.7.0")
 	addExternalPackageGTC("FREEGLUT" "freeglut-2.6.0")
 	addExternalPackageGTC("GLM" "glm-0.9.2.4")
 ELSE(MSVC)
