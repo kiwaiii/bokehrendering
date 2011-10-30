@@ -99,13 +99,8 @@ namespace glf
 	//-------------------------------------------------------------------------
 	glm::vec3 HybridCamera::Eye() const
 	{
-		float cosTheta, sinTheta, sinPhi, cosPhi;
-		cosTheta = cos(Theta);
-		sinTheta = sin(Theta);
-		cosPhi   = cos(Phi);
-		sinPhi   = sin(Phi);
-
-		return glm::vec3(Distance*sinTheta*cosPhi, Distance*sinTheta*sinPhi, Distance*cosTheta) + center;					  
+		float sinTheta = sin(Theta);
+		return glm::vec3(Distance*sinTheta*cos(Phi), Distance*sinTheta*sin(Phi), Distance*cos(Theta)) + center;					  
 	}
 	//-------------------------------------------------------------------------
 	glm::vec3 HybridCamera::Center() const
@@ -115,21 +110,12 @@ namespace glf
 	//-------------------------------------------------------------------------
 	glm::vec3 HybridCamera::Up() const
 	{
-		#if 0		
-		return glm::vec3(0.f,0.f,1.f);
-		#else
-		float cosTheta, sinTheta, sinPhi, cosPhi;
-		cosTheta = cos(Theta);
-		sinTheta = sin(Theta);
-		cosPhi   = cos(Phi);
-		sinPhi   = sin(Phi);
-
-		glm::vec3 dir	= glm::vec3(Distance*sinTheta*cosPhi, Distance*sinTheta*sinPhi, Distance*cosTheta);
+		float sinTheta = sin(Theta);
+		glm::vec3 dir	= glm::vec3(Distance*sinTheta*cos(Phi), Distance*sinTheta*sin(Phi), Distance*cos(Theta));
 		glm::vec3 n		= glm::vec3(0,0,1);
 		//glm::vec3 dir	= glm::normalize(Eye());
 		glm::vec3 right = glm::normalize(glm::cross(n,dir));
 		return glm::normalize(glm::cross(dir,right)); // up
-		#endif
 	}
 	//-------------------------------------------------------------------------
 	void HybridCamera::MouseEvent(int _x, int _y, Mouse::Button _b, Mouse::State _s)

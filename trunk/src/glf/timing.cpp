@@ -119,6 +119,7 @@ namespace glf
 		int	DofBlurDepth		= 0;
 		int	DofDetection		= 0;
 		int	DofBlur				= 0;
+		int	DofSynchronization	= 0;
 		int	DofRendering		= 0;
 
 		// Pass timings
@@ -148,28 +149,29 @@ namespace glf
 		strTimers.resize(64,"");
 
 		#if ENABLE_GPU_PASSES_TIMING
-		AddSection(section::Gbuffer,		"GBuffer",		true,false);
-		AddSection(section::CsmBuiler,		"CSM Builder",	true,false);
-		AddSection(section::CsmRender,		"CSM Render",	true,false);
-		AddSection(section::SkyRender,		"Sky Render",	true,false);
-		AddSection(section::SsaoRender,		"SSAO Render",	true,false);
-		AddSection(section::SsaoBlur,		"SSAO Blur",	true,false);
+		AddSection(section::Gbuffer,			"GBuffer",				true,false);
+		AddSection(section::CsmBuiler,			"CSM Builder",			true,false);
+		AddSection(section::CsmRender,			"CSM Render",			true,false);
+		AddSection(section::SkyRender,			"Sky Render",			true,false);
+		AddSection(section::SsaoRender,			"SSAO Render",			true,false);
+		AddSection(section::SsaoBlur,			"SSAO Blur",			true,false);
 		#if ENABLE_DOF_PASS_TIMING
-		AddSection(section::DofReset,		"DOF Reset",	true,false);
-		AddSection(section::DofBlurDepth,	"DOF BlurDepth",true,false);
-		AddSection(section::DofDetection,	"DOF Detection",true,false);
-		AddSection(section::DofBlur,		"DOF Blur",		true,false);
-		AddSection(section::DofRendering,	"DOF Rendering",true,false);
+		AddSection(section::DofReset,			"DOF Reset",			true,false);
+		AddSection(section::DofBlurDepth,		"DOF BlurDepth",		true,false);
+		AddSection(section::DofDetection,		"DOF Detection",		true,false);
+		AddSection(section::DofBlur,			"DOF Blur",				true,false);
+		AddSection(section::DofSynchronization,	"DOF Synchronization",	true,false);
+		AddSection(section::DofRendering,		"DOF Rendering",		true,false);
 		#else
-		AddSection(section::DofProcess,		"DOF Process",	true,false);
+		AddSection(section::DofProcess,			"DOF Process",			true,false);
 		#endif 
-		AddSection(section::PostProcess,	"Post Process",	true,false);
+		AddSection(section::PostProcess,		"Post Process",			true,false);
 		#endif
 
 		#if ENABLE_GPU_FRAME_TIMING
-		AddSection(section::Frame,			"Frame",		true,true);
+		AddSection(section::Frame,				"Frame",				true,true);
 		#else
-		AddSection(section::Frame,			"Frame",		false,true);
+		AddSection(section::Frame,				"Frame",				false,true);
 		#endif
 	}
 	//--------------------------------------------------------------------------
@@ -288,29 +290,30 @@ namespace glf
 		verticalOffset	= font.CharHeight('A') + 2;
 
 		#if ENABLE_GPU_PASSES_TIMING
-		DrawGPULine(_timings,section::PostProcess,	x,y,color,buffer); y+=verticalOffset;
+		DrawGPULine(_timings,section::PostProcess,			x,y,color,buffer); y+=verticalOffset;
 		#if ENABLE_DOF_PASS_TIMING
-		DrawGPULine(_timings,section::DofRendering,	x,y,color,buffer); y+=verticalOffset;
-		DrawGPULine(_timings,section::DofBlur,		x,y,color,buffer); y+=verticalOffset;
-		DrawGPULine(_timings,section::DofDetection,	x,y,color,buffer); y+=verticalOffset;
-		DrawGPULine(_timings,section::DofBlurDepth,	x,y,color,buffer); y+=verticalOffset;
-		DrawGPULine(_timings,section::DofReset,		x,y,color,buffer); y+=verticalOffset;
+		DrawGPULine(_timings,section::DofRendering,			x,y,color,buffer); y+=verticalOffset;
+		DrawGPULine(_timings,section::DofSynchronization,	x,y,color,buffer); y+=verticalOffset;
+		DrawGPULine(_timings,section::DofBlur,				x,y,color,buffer); y+=verticalOffset;
+		DrawGPULine(_timings,section::DofDetection,			x,y,color,buffer); y+=verticalOffset;
+		DrawGPULine(_timings,section::DofBlurDepth,			x,y,color,buffer); y+=verticalOffset;
+		DrawGPULine(_timings,section::DofReset,				x,y,color,buffer); y+=verticalOffset;
 		#else
-		DrawGPULine(_timings,section::DofProcess,	x,y,color,buffer); y+=verticalOffset;
+		DrawGPULine(_timings,section::DofProcess,			x,y,color,buffer); y+=verticalOffset;
 		#endif
-		DrawGPULine(_timings,section::SsaoBlur,		x,y,color,buffer); y+=verticalOffset;
-		DrawGPULine(_timings,section::SsaoRender,	x,y,color,buffer); y+=verticalOffset;
-		DrawGPULine(_timings,section::SkyRender,	x,y,color,buffer); y+=verticalOffset;
-		DrawGPULine(_timings,section::CsmRender,	x,y,color,buffer); y+=verticalOffset;
-		DrawGPULine(_timings,section::CsmBuiler,	x,y,color,buffer); y+=verticalOffset;
-		DrawGPULine(_timings,section::Gbuffer,		x,y,color,buffer); y+=verticalOffset;
+		DrawGPULine(_timings,section::SsaoBlur,				x,y,color,buffer); y+=verticalOffset;
+		DrawGPULine(_timings,section::SsaoRender,			x,y,color,buffer); y+=verticalOffset;
+		DrawGPULine(_timings,section::SkyRender,			x,y,color,buffer); y+=verticalOffset;
+		DrawGPULine(_timings,section::CsmRender,			x,y,color,buffer); y+=verticalOffset;
+		DrawGPULine(_timings,section::CsmBuiler,			x,y,color,buffer); y+=verticalOffset;
+		DrawGPULine(_timings,section::Gbuffer,				x,y,color,buffer); y+=verticalOffset;
 		#endif
 
 		#if ENABLE_GPU_FRAME_TIMING
-		DrawGPULine(_timings,section::Frame,		x,y,color,buffer); y+=verticalOffset;
-		DrawCPULine(_timings,section::Frame,		x,y,color,buffer); y+=verticalOffset;
+		DrawGPULine(_timings,section::Frame,				x,y,color,buffer); y+=verticalOffset;
+		DrawCPULine(_timings,section::Frame,				x,y,color,buffer); y+=verticalOffset;
 		#else
-		DrawCPULine(_timings,section::Frame,		x,y,color,buffer); y+=verticalOffset;
+		DrawCPULine(_timings,section::Frame,				x,y,color,buffer); y+=verticalOffset;
 		#endif
 
 		// Draw FPS

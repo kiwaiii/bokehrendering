@@ -57,6 +57,7 @@ namespace glf
 		extern int	DofBlurDepth;
 		extern int	DofDetection;
 		extern int	DofBlur;
+		extern int	DofSynchronization;
 		extern int	DofRendering;
 
 		// Pass timings

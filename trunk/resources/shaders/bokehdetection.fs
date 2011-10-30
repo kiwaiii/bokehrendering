@@ -1,12 +1,10 @@
 //-----------------------------------------------------------------------------
 #version 420
-//#extension GL_NV_gpu_shader5 : enable
-//#extension GL_EXT_shader_image_load_store : enable
 
 //-----------------------------------------------------------------------------
-layout(size1x32) coherent  uniform uimage1D 	BokehCountTex;
-layout(size4x32) writeonly uniform  image2D 	BokehPositionTex;
-layout(size4x32) writeonly uniform  image2D 	BokehColorTex;
+layout(binding = 0, offset = 0) uniform atomic_uint BokehCounter;
+layout(size4x32) writeonly      uniform  image2D 	BokehPositionTex;
+layout(size4x32) writeonly      uniform  image2D 	BokehColorTex;
 //-----------------------------------------------------------------------------
 uniform sampler2D		BlurDepthTex;
 uniform sampler2D		ColorTex;
@@ -48,24 +46,17 @@ void main()
 	// Count point where intensity of neighbors is less than the current pixel
 	if(difLum>LumThreshold && cocSize>CoCThreshold)
 	{
-//if(coord.x > 10000)
-//{
 		ivec2 bufSize, coord;
-		int current = int(imageAtomicAdd(BokehCountTex, 1, 1));
+        int current = int(atomicCounterIncrement(BokehCounter));
 		bufSize 	= textureSize(ColorTex,0).xy;
 		coord.y 	= int(floor(current/bufSize.y));
 		coord.x 	= current - coord.y*bufSize.y;
-//}
 
-//ivec2 coord = ivec2(int(floor(gl_FragCoord.x)),int(floor(gl_FragCoord.y)));
-//if(coord.x > 100)
-//{
 		// Compute energy of the bokeh according to CoC size
 		vec3 lcolor = color.xyz / (3.141592654f*cocSize*cocSize);
 		imageStore(BokehPositionTex,coord,vec4(gl_FragCoord.x,gl_FragCoord.y,depth,blur));
 		imageStore(BokehColorTex,coord,vec4(lcolor,1));
-		color 		= vec3(0);
-//}
+		color 		= vec3(0,0,0);
 	}
 
 	FragColor = vec4(color,1);

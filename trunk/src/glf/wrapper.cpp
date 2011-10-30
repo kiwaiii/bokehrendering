@@ -194,7 +194,6 @@ namespace glf
 		}
 
 		// Get "BLOCKS"
-		int blockUnit = 0;
 		#if VERBOSE_PROGRAM
 		Info("nBlocks : %d",nBlocks);
 		#endif

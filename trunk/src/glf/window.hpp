@@ -2,8 +2,8 @@
 #define GLF_WINDOW_HPP
 
 //------------------------------------------------------------------------------
-// From Christophe Riccio : g-truc.net
-//
+// Original version from Christophe Riccio : g-truc.net
+// Modified by Charles de Rousiers : derousiers.net
 //------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------

@@ -47,10 +47,10 @@ namespace glf
 			void 				Draw(			int _x, 
 												int _y, 
 												const Font& _font,
-												const std::string _message, 
+												const std::string& _message, 
 												const glm::vec4& _color);
 			unsigned int 		ComputeWidth(	const Font& _font, 
-												const std::string _message) const;
+												const std::string& _message) const;
 			void				Reshape(		int _w,
 												int _h);
 		private:
