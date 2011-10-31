@@ -9,6 +9,12 @@
 
 In order to increase realism and immersion, current games make frequent use of depth of field to simulate lenticular phenomena. Typical implementations use screen-space filtering techniques to crudely approximate a camera's circle of confusion for out-of-focus portions of a scene. While such approaches can provide pleasing results with minimal performance impact, crucial features present in real-life photography are still missing. In particular, lens-based cameras produce a phenomenon known as \bokeh (blur in Japanese). Bokeh manifests as distinctive geometric shapes that are most visible in out-of-focus portions of an image with high local contrast. The actual shape itself depends on the shape of the camera’s aperture, which is typically circular, octagonal, hexagonal, or pentagonal.
 
+	\begin{figure}[htb]\centering
+	\includegraphics[width=\textwidth]{montage2.png}
+	\caption{Comparison between a simple blur-based depth of field (left) and a depth of field with bokeh rendering (right). }
+	\label{DeRousiers:blurcomparison}
+	\end{figure}
+
 Current and upcoming DirectX 11 engines (i.e. CryENGINE, Unreal Engine 3, ...) have recently demonstrated new techniques for simulating bokeh depth of field, which reflects a rising interest in reproducing such effects in real-time. However, these techniques have performance requirements that can potentially relegate them to high-end GPU's. The precise implementation details of these techniques also aren't publicly available, making it potentially difficult to integrate these techniques into existing engines. Consequently it remains an active area of research, as there is still a need for implementations that are suitable for a wider range of hardware.
 
 A naive approach would be to explicitly render a quad for each pixel, with each quad using a texture containing the aperture shape. While this can produce excellent results, it's also extremely inefficient due to the heavy fillrate and bandwidth requirements. Instead, we propose an hybrid method which mixes previous filtering-based approaches with quad rendering. Our method selects pixels with high local contrast, and renders a single textured quad for each such pixel. The texture used for the quad contains the camera's aperture shape, which allows the quads to approximate bokeh effects. In order to achieve high performance, we use atomic counters in conjunction with an image texture for random memory access. An indirect draw command is also used, which avoids the need for expensive CPU / GPU synchronization. This efficient OpenGL 4.2 implementation allows rendering of thousands of aperture-shaped quads at high frame-rates, and also ensures the temporal coherency of the rendered \bokeh.
@@ -53,7 +59,7 @@ We observe that only points with a high local contrast will produce distinct \bo
 Our approach is divided into four passes, see Figure~\ref{DeRousiers:pipeline}. The first pass computes the \coc size for each pixel based on its depth value, and then outputs a linear depth value to a render target texture\footnote{If you already have a linear depth buffer as input, you can merge together the first two passes.}. Then, the second pass computes the contrast of the current pixel by comparing the pixel's brightness with the brightness of neighboring pixels. If this contrast is above a pre-defined threshold, its position, \coc size, and average color are appended to a buffer. During the third pass, a blur-based depth of field is computed with one of the previous methods (Gaussian blur, ...). Finally, a fourth pass splats textured quads at the \bokeh positions that were appended to the buffer in the second pass.
 
 	\begin{figure}[htb]\centering
-	\includegraphics[width=\textwidth]{pipeline2}
+	\includegraphics[width=\textwidth]{pipeline}
 	\caption{Overview of the pipeline. It is composed of four passes, and takes as input the color and depth buffers of the current frame. It outputs a final color image with depth of field and \bokeh effects.}
 	\label{DeRousiers:pipeline}
 	\end{figure}
@@ -95,25 +101,25 @@ We use this command in combination with a point VAO. The instanced points are tr
 
 %-------------------------------------------------------------------------------
 \section{Results}
-Figures \ref{DeRousiers:screen1} and \ref{DeRousiers:screen2} show the rendering of a tank with our method. Since the final bokeh shape relies on a texture, we can apply arbitrary shape.
+Figures \ref{DeRousiers:blurcomparison}, \ref{DeRousiers:bokehrendering}, and \ref{DeRousiers:bokehcomparison} show the rendering of a tank with our method. Since the final bokeh shape relies on a texture, we can apply arbitrary shape, see Figure \ref{DeRousiers:bokehcomparison}.
 
 	\begin{figure}[htb]\centering
-	\includegraphics[width=\textwidth]{screen1}
-	\caption{Rendering 1.}
-	\label{DeRousiers:screen1}
+	\includegraphics[width=\textwidth]{screen3.png}
+	\caption{Rendering of a tank with a small depth of field. Bokehs appear clearly on the shinning parts of the tank.}
+	\label{DeRousiers:bokehrendering}
 	\end{figure}
 
 	\begin{figure}[htb]\centering
-	\includegraphics[width=\textwidth]{screen2}
-	\caption{Rendering 2.}
-	\label{DeRousiers:screen2}
+	\includegraphics[width=\textwidth]{montage.pdf}
+	\caption{Rendering of the same scene with different aperture's shapes. From left to right : a circle aperture, a pentagonal aperture, an hexagonal aperture, and a star aperture.}
+	\label{DeRousiers:bokehcomparison}
 	\end{figure}
 
-Figure \ref{DeRousiers:performance} details the rendering times of each passes depending of the number of detected \bokehs. We can see that the blur-based depth of field pass is the most expansive. A lighter approach could be used. Unlike the blur and detection passes, the rendering pass is clearly depending on the number of detected \bokeh. In normal condition, our algorithm detects around 5000 bokehs in the the tank scene. Then, the cost of the rendering pass is less than 2 milliseconds.
+Figure \ref{DeRousiers:performance} details the rendering times of each passes depending of the number of detected \bokehs. We can see that the blur-based depth of field pass is the most expansive. A lighter approach could be used. Unlike the blur and detection passes, the rendering pass is clearly depending on the number of detected \bokeh. In normal condition, our algorithm detects around 5000 \bokehs in the the tank scene. Then, the cost of the rendering pass is less than 2 milliseconds.
 
 \subsection{Performances}
 	\begin{figure}[htb]\centering
-	\includegraphics[width=\textwidth]{performances2}
+	\includegraphics[width=\textwidth]{performances}
 	\caption{Performance.}
 	\label{DeRousiers:performance}
 	\end{figure}
@@ -122,7 +128,7 @@ Figure \ref{DeRousiers:performance} details the rendering times of each passes d
 \section{Discussion}
 Temporal coherence is a natural concern for this approach. Like other methods, we base our approach on the final color buffer. If sub-pixel aliasing is addressed by previous rendering steps, our approach is stable and \bokeh shapes are coherent from frame-to-frame. In the case of sub-pixel aliasing our method exhibits the same limitations as all previous methods, and the resulting \bokeh shapes may flicker.
 
-Also, our method requires preallocated buffers for storing the \bokeh position and color. Consequently, a maximum number of \bokeh points has to be specified. If this number is too low, bokeh points may pop and flicker from frame-to-frame with little coherency. If this number is too large, then GPU memory is potentially wasted. Thus, the maximum number of sprites must be carefully chosen to suit the type of scene being displayed.
+Also, our method requires preallocated buffers for storing the \bokeh position and color. Consequently, a maximum number of \bokeh points has to be specified. If this number is too low, \bokeh points may pop and flicker from frame-to-frame with little coherency. If this number is too large, then GPU memory is potentially wasted. Thus, the maximum number of sprites must be carefully chosen to suit the type of scene being displayed.
 
 %-------------------------------------------------------------------------------
 \section{Conclusion}
