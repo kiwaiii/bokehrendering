@@ -18,7 +18,7 @@ A naive approach would be to explicitly render a quad for each pixel, with each 
 Depth of field is an important effect for conveying a realistic sense of depth and scale, particularly in open scenes with a large viewing distance. Traditional real-time applications use a pinhole camera model for rasterization, which results in an infinite depth of field. However real cameras use a thin lens, which introduces a limited depth of field based on aperture size and focal distance. Objects outside of this of this region appear blurred on the final image, while objects inside of it remain sharp. See Figure~\ref{DeRousiers:focus}.
 
 	\begin{figure}[htb]\centering
-	\includegraphics[width=\textwidth]{DerousiersFigs/focus.pdf}
+	\includegraphics[width=\textwidth]{focus}
 	\caption{Depth of field phenomenon, where a thin lens introduces a limited depth of field. In-focus objects appear sharp, while out-of-focus object appear blurred. The size of the circle of confusion depends on the distance beween object and the point at which the camera is focused. We use a linear approximation in order to simplify parameters and as well as run-time computations. }
 	\label{DeRousiers:focus}
 	\end{figure}
@@ -53,7 +53,7 @@ We observe that only points with a high local contrast will produce distinct \bo
 Our approach is divided into four passes, see Figure~\ref{DeRousiers:pipeline}. The first pass computes the \coc size for each pixel based on its depth value, and then outputs a linear depth value to a render target texture\footnote{If you already have a linear depth buffer as input, you can merge together the first two passes.}. Then, the second pass computes the contrast of the current pixel by comparing the pixel's brightness with the brightness of neighboring pixels. If this contrast is above a pre-defined threshold, its position, \coc size, and average color are appended to a buffer. During the third pass, a blur-based depth of field is computed with one of the previous methods (Gaussian blur, ...). Finally, a fourth pass splats textured quads at the \bokeh positions that were appended to the buffer in the second pass.
 
 	\begin{figure}[htb]\centering
-	\includegraphics[width=\textwidth]{pipeline}
+	\includegraphics[width=\textwidth]{pipeline2}
 	\caption{Overview of the pipeline. It is composed of four passes, and takes as input the color and depth buffers of the current frame. It outputs a final color image with depth of field and \bokeh effects.}
 	\label{DeRousiers:pipeline}
 	\end{figure}
@@ -71,16 +71,16 @@ The resulting \coc size from this equation is normalized to [0,1]. An extra para
 
 
 \subsection{\Bokeh detection}
-The detection pass aims to detect pixels from which we will generate \bokeh shapes. To detect such pixels, we use the following heuristic : \emph{a pixel with high contrast in a given neighborhood will generate a \bokeh shape}. We compare the current pixel luminance $L_{pixel}$ to its neighborhood luminance $L_{neigh}$. If the difference $L_{pixel}-L_{neigh}$ is greater than the threshold \codecmd{LumThreshold}, then the current pixel is registered as a \bokeh point. Pixels detected as requring \bokeh are sparse, which means writing them into a render target texture would be wasteful in terms of both memory usage and bandwidth. To address this problem, we use the \opengl \codecmd{ImageBuffers} in combination with an \codecmd{AtomicCounter}. This allows us to build a vector in which we append parameters for detected \bokeh points. \codecmd{ImageBuffers} have to be preallocated with a given size (\ie the maximum number of \bokeh sprites that can be displayed on screen). The atomic counter \codecmd{BokehCounter} stores the number of appended \bokeh points. Its current value indicates the next free cell in the \codecmd{ImageBuffers} vector. Two \codecmd{ImageBuffers}, \codecmd{BokehPosition} and \codecmd{BokehColor}, are used to store \coc size, position, and color of the detected \bokeh points. 
+The detection pass aims to detect pixels from which we will generate \bokeh shapes. To detect such pixels, we use the following heuristic : \emph{a pixel with high contrast in a given neighborhood will generate a \bokeh shape}. We compare the current pixel luminance $L_{pixel}$ to its neighborhood luminance $L_{neigh}$. If the difference $L_{pixel}-L_{neigh}$ is greater than the threshold \codecmd{LumThreshold}, then the current pixel is registered as a \bokeh point\footnote{We also use the threshold \codecmd{CoCThreshold to discard bokeh with a small radius.}}. Pixels detected as \bokeh are sparse, which means writing them into a render target texture would be wasteful in terms of both memory usage and bandwidth. To address this problem, we use the \opengl \codecmd{ImageBuffers} in combination with an \codecmd{AtomicCounter}. This allows us to build a vector in which we append parameters for detected \bokeh points. \codecmd{ImageBuffers} have to be preallocated with a given size (\ie the maximum number of \bokeh sprites that can be displayed on screen). The atomic counter \codecmd{BokehCounter} stores the number of appended \bokeh points. Its current value indicates the next free cell in the \codecmd{ImageBuffers} vector. Two \codecmd{ImageBuffers}, \codecmd{BokehPosition} and \codecmd{BokehColor}, are used to store \coc size, position, and color of the detected \bokeh points. See Listings \ref{DeRousiers:bokehextractioncpp} and \ref{DeRousiers:bokehextractionfs}.
 
 	\begin{figure}[htb]\centering
-	\includegraphics[width=\textwidth]{extraction}
+	\includegraphics[width=0.8\textwidth]{extraction}
 	\caption{\Bokeh detection. The luminance of the current pixel is compared to its neighborhood. If the difference is greater than \codecmd{LunThreshod}, \bokeh parameters (position, color, \coc) are appended into \codecmd{BokehPosition} and \codecmd{BokehColor} buffers. The atomic counter \codecmd{BokehCounter} is also incremented.}
 	\label{DeRousiers:detection}
 	\end{figure}
 
 \subsection{Blur-based depth of field}
-Several approaches are possible for this pass. We refer readers to previous work for this step. Nevertheless, here is a short summory of popular approaches :
+Several approaches are possible for this pass. We refer readers to previous work for this step. Nevertheless, here is a short summary of popular approaches :
 \begin{itemize}
 	\item Perform a Gaussian blur with fixed kernel width at various resolutions, and apply a linear interpolation to blend them according to \coc size.
 	\item Perform a Poisson disc sampling in screen space, with radius determined by pixel \coc size~\footnote{A random rotation can be applied to a Poisson sampling pattern for transforming aliasing into noise.}.
@@ -89,31 +89,33 @@ Several approaches are possible for this pass. We refer readers to previous work
 
 
 \subsection{\Bokeh rendering}
-In order to avoid CPU/GPU synchronization, we use the indirect drawing command \codecmd{glDrawArraysIndirect}. This command draws instances of a given VBO/VAO, where the number of instances is read from a buffer located in GPU memory. This buffer can be updated from the either the CPU or the GPU. In order to allow the GPU to operate independently of the CPU, we update this buffer from the GPU during the second pass. The atomic counter, used in pass 2, is bound to this indirect buffer. Thus, the number of instances drawn is equal to the number of detected \bokeh points.
+In order to avoid CPU/GPU synchronization, we use the indirect drawing command \codecmd{glDrawArraysIndirect}. This command draws instances of a given VBO/VAO, where the number of instances is read from a buffer located in GPU memory. This buffer can be updated from the either the CPU or the GPU. In order to allow the GPU to operate independently of the CPU, we update this buffer from the GPU before the last pass. We bind this indirect buffer as a \codecmd{ImageTexture} and copy the value of the atomic counter into it. Thus, the number of instances drawn is equal to the number of detected \bokeh points, see Listings \ref{DeRousiers:synchronizationbokehfs} and \ref{DeRousiers:renderingbokehcpp}.
 
-We use this command in combination with a point VAO. The instanced points are translated by the vertex shader such that they are located at the screen space \bokeh position. This position is read from the \codecmd{BokehPosition} buffer, which is indexed using the built-in \codecmd{gl\_InstanceID} input variable. After being transformed in the vertex shader, each point is expanded into a quad in the geometry shader. The size of this quad is determined by the \bokeh size (which is also read from the \codecmd{BokehPosition} buffer ). Finally, the fragment shader applies the \bokeh alpha-texture onto the quad and multiplies it by the \bokeh color (read from the \codecmd{BokehColor} buffer).
+We use this command in combination with a point VAO. The instanced points are translated by the vertex shader such that they are located at the screen space \bokeh position. This position is read from the \codecmd{BokehPosition} buffer, which is indexed using the built-in \codecmd{gl\_InstanceID} input variable. After being transformed in the vertex shader, each point is expanded into a quad in the geometry shader. The size of this quad is determined by the \bokeh size (which is also read from the \codecmd{BokehPosition} buffer ). Finally, the fragment shader applies the \bokeh alpha-texture onto the quad and multiplies it by the \bokeh color (read from the \codecmd{BokehColor} buffer). See Listings \ref{DeRousiers:renderingbokehvs}, \ref{DeRousiers:renderingbokehgs}, and \ref{DeRousiers:renderingbokehfs}.
 
 %-------------------------------------------------------------------------------
 \section{Results}
+Figures \ref{DeRousiers:screen1} and \ref{DeRousiers:screen2} show the rendering of a tank with our method. Since the final bokeh shape relies on a texture, we can apply arbitrary shape.
 
-\subsection{Rendering}
 	\begin{figure}[htb]\centering
-	\includegraphics[width=\textwidth]{todo}
+	\includegraphics[width=\textwidth]{screen1}
 	\caption{Rendering 1.}
-	\label{YourName:fig1}
+	\label{DeRousiers:screen1}
 	\end{figure}
 
 	\begin{figure}[htb]\centering
-	\includegraphics[width=\textwidth]{todo}
+	\includegraphics[width=\textwidth]{screen2}
 	\caption{Rendering 2.}
-	\label{YourName:fig1}
+	\label{DeRousiers:screen2}
 	\end{figure}
+
+Figure \ref{DeRousiers:performance} details the rendering times of each passes depending of the number of detected \bokehs. We can see that the blur-based depth of field pass is the most expansive. A lighter approach could be used. Unlike the blur and detection passes, the rendering pass is clearly depending on the number of detected \bokeh. In normal condition, our algorithm detects around 5000 bokehs in the the tank scene. Then, the cost of the rendering pass is less than 2 milliseconds.
 
 \subsection{Performances}
 	\begin{figure}[htb]\centering
-	\includegraphics[width=\textwidth]{todo}
+	\includegraphics[width=\textwidth]{performances2}
 	\caption{Performance.}
-	\label{YourName:fig1}
+	\label{DeRousiers:performance}
 	\end{figure}
 
 %-------------------------------------------------------------------------------
@@ -126,8 +128,7 @@ Also, our method requires preallocated buffers for storing the \bokeh position a
 \section{Conclusion}
 We have presented an efficient implementation for rendering a depth of field effect with \bokeh. This method allows us to combine an efficient blur-based approach with plausible \bokeh reproduction. We use a heuristic to identify pixels that produce distinct \bokeh shapes, and then render those shapes as textured quads. This implementation avoids costly CPU/GPU synchronization through the use of indirect draw commands. These commands allow the GPU to directly read the number of instances, without the need for CPU readback.
 
-
-While this approach provides good visual results, several optimizations can be made in order to improve performance. In particular, \codecmd{AtomicCounters} can be costly if overused. Dividing the screen into multiple parts and dedicating an atomic counter can allow for better scheduling, which results in less serialization by the GPU. Large \coc sizes also requires rasterization of quads that cover a significant portion of the screen. Using hierarchical rasterization, as proposed in~\cite{Futurmark11}, could improve performance by reducing the number of pixels that need to be shaded and blended.
+While this approach provides good visual results, several optimizations can be made in order to improve performance. In particular, large \coc sizes requires rasterization of quads that cover a significant portion of the screen. Using hierarchical rasterization, as proposed in~\cite{Futurmark11}, could improve performance by reducing the number of pixels that need to be shaded and blended.
 
 
 
@@ -138,17 +139,16 @@ While this approach provides good visual results, several optimizations can be m
 			GLuint count;
 			GLuint primCount;
 			GLuint first;
-
 			GLuint reservedMustBeZero;
 		};
 
-		// Create atomic counter
+		// Create indirect buffer
 		GLuint indirectBufferID;
 		glGenBuffers(1,&indirectBufferID);
 		glBindBuffer(GL_DRAW_INDIRECT_BUFFER,indirectBufferID);
 		DrawArraysIndirectCommand indirectCmd;
 		indirectCmd.count              = 1;
-		indirectCmd.primCount          = 1;
+		indirectCmd.primCount          = 0;
 		indirectCmd.first              = 0;
 		indirectCmd.reservedMustBeZero = 0;
 		glBufferData(GL_DRAW_INDIRECT_BUFFER,sizeof(DrawArraysIndirectCommand),&indirecCmd,GL_DYNAMIC_DRAW);
@@ -159,21 +159,24 @@ While this approach provides good visual results, several optimizations can be m
 		glBindTexture(GL_TEXTURE_BUFFER, bokehCountTexID);
 		glTexBuffer(GL_TEXTURE_BUFFER, GL_R32UI, pointIndirectBuffer.id);
 
+		// Create atomic counter
+		glGenBuffers(1,&bokehCounter);
+		glBindBuffer(GL_ATOMIC_COUNTER_BUFFER,bokehCounter);
+		glBufferData(GL_ATOMIC_COUNTER_BUFFER,sizeof(unsigned int),0,GL_DYNAMIC_DRAW);
+
 		// Create position and color textures with a GL_RGBA32F inner format
 		...
 
 		// Bind atomic counter
-		glActiveTexture(GL_TEXTURE0 + bokehCountTexUnit);
-		glBindTexture(GL_TEXTURE_BUFFER, bokehCountTexID);
-		glBindImageTexture(bokehCountTexUnit,bokehCountTexID,0,false,0,GL_READ_WRITE,GL_R32UI);
+		glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER,0,bokehCounter);
 
 		// Bind position image buffer
 		glActiveTexture(GL_TEXTURE0 + bokehPosionTexUnit);
-		glBindImageTexture(bokehPostionTexUnit,bokehPositionTex.id,0,false,0,GL_READ_WRITE,GL_RGBA32F);
+		glBindImageTexture(bokehPostionTexUnit,bokehPositionTex.id,0,false,0,GL_WRITE_ONLY,GL_RGBA32F);
 
 		// Bind color image buffer
 		glActiveTexture(GL_TEXTURE0 + bokehColorTexUnit);
-		glBindImageTexture(bokehColorTexUnit,bokehColorTex.id,0,false,0,GL_READ_WRITE,GL_RGBA32F);
+		glBindImageTexture(bokehColorTexUnit,bokehColorTex.id,0,false,0,GL_WRITE_ONLY,GL_RGBA32F);
 
 		DrawSceenQuad();
 \end{lstlisting}
@@ -182,12 +185,13 @@ While this approach provides good visual results, several optimizations can be m
 \begin{lstlisting}[language=GLSL,float={htb},caption={Fragment shader for extracting \bokehs \emph{(Pass 2)}.},label={DeRousiers:bokehextractionfs}]	
 	#version 420
 	// Bokeh counter, position (x,y,z,size), and color
-	layout(size1x32) coherent uniform uimage1D 	BokehCountTex;
-	layout(size4x32) coherent uniform  image1D 	BokehPositionTex;
-	layout(size4x32) coherent uniform  image1D 	BokehColorTex;
+	layout(binding=0,offset=0) uniform atomic_uint BokehCounter;
+	layout(size4x32) writeonly uniform image1D BokehPositionTex;
+	layout(size4x32) writeonly uniform image1D BokehColorTex;
 
-	// Constrast threshold
+	// Constrast and CoC thresholds
 	uniform float LumThreshold;
+	uniform float CoCThreshold;
 	...
 
 	float sizeCenter; // Current CoC size
@@ -197,16 +201,26 @@ While this approach provides good visual results, several optimizations can be m
 	// Append pixel whose constrast is greater than the user's threshold
 	float lumNeighs = dot(colorNeighs, vec3(0.299f, 0.587f, 0.114f));
 	float lumCenter = dot(colorCenter, vec3(0.299f, 0.587f, 0.114f));
-	if((lumCenter-lumNeighs)>LumThreshold)
+	if((lumCenter-lumNeighs)>LumThreshold && cocSize>CoCThreshold)
 	{
-		int current = int(imageAtomicAdd(BokehCountTex, 1, 1));
+		int current = int(atomicCounterIncrement(BokehCounter));
 		imageStore(BokehPositionTex,current,vec4(gl_FragCoord.x,gl_FragCoord.y,gl_FragCoord.z,sizeCenter));
 		imageStore(BokehColorTex,current,vec4(colorCenter,1));
 	}
 \end{lstlisting}
 
+\begin{lstlisting}[language=GLSL,float={htb},caption={Synchronization of the indirect buffer with the atomic counter \emph{(Pass 3/4)}.},label={DeRousiers:synchronizationbokehfs}]
+	#version 420
+	layout(binding=0,offset=0) uniform atomic_uint BokehCounter;
+	layout(size1x32) writeonly uniform uimage1D IndirectBufferTex;
+	out vec4 FragColor;
 
-
+	void main()
+	{
+	imageStore(IndirectBufferTex,1,uvec4(atomicCounter(BokehCounter),0,0,0));
+	FragColor = vec4(0);
+	}
+\end{lstlisting}
 
 \begin{lstlisting}[language=C++,float={htb},caption={Host application for rendering bokeh \emph{(Pass 4)}.},label={DeRousiers:renderingbokehcpp}]
 	// Create point VBO
@@ -246,21 +260,21 @@ While this approach provides good visual results, several optimizations can be m
 \end{lstlisting}
 
 
-\begin{lstlisting}[language=C++,float={htb},caption={Pixel shader application for rendering bokeh \emph{(Pass 4)}.},label={DeRousiers:renderingbokehps}]
+\begin{lstlisting}[language=C++,float={htb},caption={Pixel shader application for rendering bokeh \emph{(Pass 4)}.},label={DeRousiers:renderingbokehvs}]
 #version 420
 uniform vec2      PixelScale;       // (1/xResolution,1/yResolution)
 uniform sampler1D BokehPositionTex; // (x,y,z,scale)
 uniform sampler1D BokehColorTex;
 in vec3           Position;
-out float         Radius;
-out vec4          Color;
+out float         vRadius;
+out vec4          vColor;
 
 int main()
 {
 	vec3 pos     = texelFetch(BokehPositionTex,gl_InstanceID,0).xyzw;
-	Radius       = pos.w;
-	Color        = texelFetch(BokehColorTex,gl_InstanceID,0);
-	gl_Position	 = vec4( (Position.xy+pos.xy)*PixelScale,pos.z,1);
+	vRadius      = pos.w;
+	vColor       = texelFetch(BokehColorTex,gl_InstanceID,0);
+	gl_Position	 = vec4( (Position.xy+pos.xy)*PixelScale,0,1);
 }
 \end{lstlisting}
 
@@ -268,10 +282,10 @@ int main()
 #version 420
 uniform mat4     Transformation;
 uniform vec2     PixelScale;
-in  float        Radius[1];
-in  vec4         Color[1];
-out vec4         Radiance;
-out vec2         TexCoord;
+in  float        vRadius[1];
+in  vec4         vColor[1];
+out vec4         gColor;
+out vec2         gTexCoord;
 layout(points)   in;
 layout(triangle_strip, max_vertices = 6) out;
 
@@ -280,50 +294,32 @@ void main()
 	gl_Layer     = 0;
 	vec4 offsetx = vec4(PixelScale.x*Radius[0],0,0,0);
 	vec4 offsety = vec4(0,PixelScale.y*Radius[0],0,0);
-	Radiance     = Color[0];
-
-	// First triangle
-	gl_Position = Transformation*(gl_in[0].gl_Position-offsetx-offsety);
-	TexCoord    = vec2(0,0);
+	gColor       = vColor[0];
+	gl_Position  = Transformation*(gl_in[0].gl_Position-offsetx-offsety);
+	gTexCoord    = vec2(0,0);
 	EmitVertex();
-	gl_Position = Transformation*(gl_in[0].gl_Position+offsetx-offsety);
-	TexCoord    = vec2(1,0);
+	gl_Position  = Transformation*(gl_in[0].gl_Position+offsetx-offsety);
+	gTexCoord    = vec2(1,0);
 	EmitVertex();
-	gl_Position = Transformation*(gl_in[0].gl_Position+offsetx+offsety);
-	TexCoord    = vec2(1,1);
+	gl_Position  = Transformation*(gl_in[0].gl_Position+offsetx-offsety);
+	gTexCoord    = vec2(0,1);
+	EmitVertex();
+	gl_Position  = Transformation*(gl_in[0].gl_Position+offsetx+offsety);
+	gTexCoord    = vec2(1,1);
 	EmitVertex();
 	EndPrimitive();
-	// Second triangle
-	...
 }
 \end{lstlisting}
-
-%	gl_Position = Transformation*(gl_in[0].gl_Position-offsetx-offsety);
-%	TexCoord    = vec2(0,0);
-%	EmitVertex();
-%	gl_Position = Transformation*(gl_in[0].gl_Position+offsetx+offsety);
-%	TexCoord    = vec2(1,1);
-%	EmitVertex();
-%	gl_Position = Transformation*(gl_in[0].gl_Position-offsetx+offsety);
-%	TexCoord    = vec2(0,1);
-%	EmitVertex();
-%	EndPrimitive();
 
 \begin{lstlisting}[language=GLSL,float={htb},caption={Fragment shader for rendering bokeh \emph{(Pass 4)}.},label={DeRousiers:renderingbokehfs}]
 #version 420
 uniform sampler2D    BokehShapeTex; // Bokeh shape texture
-uniform float        Attenuation;   // Factor for attenuating bokeh borders
-in  vec4             Radiance;
-in  vec2             TexCoord;
+in  vec4             gColor;
+in  vec2             gTexCoord;
 out vec4             FragColor;
 void main()
 {
-	// Add an attenuation function in order to avoid hard edge on the 
-	// aperture shape
-	float val = textureLod(BokehShapeTex,TexCoord,0).x;
-	float att = clamp(length(2.f*(TexCoord-vec2(0.5))),0.f,1.f);
-	att       = 1.f - pow(att,Attenuation);
-	FragColor = vec4(Radiance.xyz * val * att,Radiance.w);
+	FragColor = vec4(gColor.xyz * texture(BokehShapeTex,gTexCoord).x,gColor.w);
 }
 \end{lstlisting}
 
