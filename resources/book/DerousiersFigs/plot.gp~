@@ -2,10 +2,10 @@ set terminal postscript enhanced color
 set key left top
 set style line 1 linetype 1 lc rgb "#00BFFF" lw 3
 set style line 2 linetype 3 lc rgb "red" lw 3
-set style line 3 linetype 3 lc rgb "blue" lw 3
-set style line 4 linetype 3 lc rgb "green" lw 3
-set style line 5 linetype 3 lc rgb "orange" lw 3
-set style line 6 linetype 3 lc rgb "#FEB00F" lw 3
+set style line 2 linetype 3 lc rgb "blue" lw 3
+set style line 3 linetype 3 lc rgb "green" lw 3
+set style line 4 linetype 3 lc rgb "orange" lw 3
+set style line 5 linetype 3 lc rgb "#FEB00F" lw 3
 set xlabel "Number of bokehs" font "Helvetica,18"
 set ylabel "Time (ms)" font "Helvetica,18"
 set xrange[2000:11000]
