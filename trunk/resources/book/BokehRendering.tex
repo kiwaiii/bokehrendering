@@ -66,7 +66,7 @@ Our approach is divided into four passes, see Figure~\ref{DeRousiers:pipeline}. 
 
 In order to maintain high performance, it is crucial to avoid CPU/GPU synchronization. We ensure this by making use of an indirect draw command, which renders a number of quads based on the count stored in the append buffer. This way, the number of \bokeh points detected by the CPU is never read back by the CPU.
 
-\subsection{Circles of confusion computation}
+\subsection{Circle of confusion computation}
 Setting up depth of field using physical camera parameters (such as focal length and aperture size) can be non-intuitive for those not familiar with optics or photography. Instead, we define two areas where geometry is out-of-focus : a near/foreground area and a far/background area. Both areas are delimited with a near and far depth values, see Figure~\ref{DeRousiers:focus}. In both regions, the blur amount is linearly interpolated between the two bounds. This allows a simple and intuitive means of describing the depth of field for a given scene.
 
 $$
@@ -101,21 +101,21 @@ We use this command in combination with a point VAO. The instanced points are tr
 
 %-------------------------------------------------------------------------------
 \section{Results}
-Figures \ref{DeRousiers:blurcomparison}, \ref{DeRousiers:bokehrendering}, and \ref{DeRousiers:bokehcomparison} show the rendering of a tank with our method. Since the final bokeh shape relies on a texture, we can apply arbitrary shape, see Figure \ref{DeRousiers:bokehcomparison}.
+Figures \ref{DeRousiers:blurcomparison}, \ref{DeRousiers:bokehrendering}, and \ref{DeRousiers:bokehcomparison} show the rendering of a tank with our method. Since the final bokeh shape is texture-driven, we can apply arbitrary shapes. See Figure \ref{DeRousiers:bokehcomparison}.
 
 	\begin{figure}[htb]\centering
 	\includegraphics[width=\textwidth]{screen3.png}
-	\caption{Rendering of a tank with a small depth of field. Bokehs appear clearly on the shinning parts of the tank.}
+	\caption{Rendering of a tank with a small depth of field. Bokeh shappes are clearly visible on the more reflective surfaces of the tank.}
 	\label{DeRousiers:bokehrendering}
 	\end{figure}
 
 	\begin{figure}[htb]\centering
 	\includegraphics[width=\textwidth]{montage.pdf}
-	\caption{Rendering of the same scene with different aperture's shapes. From left to right : a circle aperture, a pentagonal aperture, an hexagonal aperture, and a star aperture.}
+	\caption{Rendering of the same scene with different aperture shapes. From left to right: a circle aperture, a pentagonal aperture, an hexagonal aperture, and a star aperture.}
 	\label{DeRousiers:bokehcomparison}
 	\end{figure}
 
-Figure \ref{DeRousiers:performance} details the rendering times of each passes depending of the number of detected \bokehs. We can see that the blur-based depth of field pass is the most expansive. A lighter approach could be used. Unlike the blur and detection passes, the rendering pass is clearly depending on the number of detected \bokeh. In normal condition, our algorithm detects around 5000 \bokehs in the the tank scene. Then, the cost of the rendering pass is less than 2 milliseconds.
+Figure \ref{DeRousiers:performance} details the rendering times of each pass as wll as the the number of detected \bokeh points. We can see that the blur-based depth of field pass is the most expensive, indicating that a more optimal approach might be more suitable. Unlike the blur and detection passes, the rendering pass is strongly dependent on the number of detected \bokeh points. Under normal conditions, our algorithm detects around 5000 \bokeh points in the the tank scene. In the case, the cost of the rendering pass is less than 2 milliseconds.
 
 \subsection{Performances}
 	\begin{figure}[htb]\centering
