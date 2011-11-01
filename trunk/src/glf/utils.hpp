@@ -135,6 +135,10 @@ namespace glf
 											std::string const & _fs,
 											bool 				_separable=false);
 	//--------------------------------------------------------------------------
+	void 		Split(						const std::string & _in, 
+											char delim, 
+											std::vector<std::string>& _out);
+}
 }
 
 #endif

@@ -437,4 +437,13 @@ namespace glf
 		return programName;
 	}
 	//--------------------------------------------------------------------------
+	void Split(	const std::string & _in, 
+				char delim, 
+				std::vector<std::string>& _out) 
+	{
+		std::stringstream ss(s);
+		std::string item;
+		while(std::getline(ss, item, delim)) 
+		    elems.push_back(item);
+    }
 }
