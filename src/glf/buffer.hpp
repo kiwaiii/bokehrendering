@@ -30,15 +30,15 @@ namespace glf
 		//------------------------------------------------------------------
 						~IBuffer(	);
 		explicit 		IBuffer(	);
-		explicit 		IBuffer(	std::size_t _nElements,
-										GLenum _update = GL_DYNAMIC_DRAW);
-		void 	 		Allocate(	std::size_t _nElements);
-		void 			Allocate(	std::size_t _nElements, 
+		explicit 		IBuffer(	int _nElements,
+									GLenum _update = GL_DYNAMIC_DRAW);
+		void 	 		Allocate(	int _nElements);
+		void 			Allocate(	int _nElements, 
 									GLenum _update);
 		inline T* 		Lock(		GLenum _access=GL_READ_WRITE);
 		inline void 	Unlock(		);
 		inline void 	Fill(		T* _data, 
-									std::size_t _count);
+									int _count);
 
 	private:
 		// Forbiddent methods
@@ -48,7 +48,7 @@ namespace glf
 	public:
 		GLuint			id;
 		GLenum 			update;		// Frequence of update
-		std::size_t		count;		// Number of element in buffer
+		GLsizei			count;		// Number of element in buffer
 		bool 			lock;		// True if buffer is locked, false otherwise
 	};
 
@@ -136,20 +136,20 @@ namespace glf
 						int      			_nComponents,
 						GLenum   			_componentType,
 						bool     			_normalize=false,
-						std::size_t 		_offset=0);
+						int	 				_offset=0);
 		void Draw( 		GLenum				_primitiveType,
 						const IndexBuffer&	_buffer) const;
 		void Draw( 		GLenum				_primitiveType,
 						const IndexBuffer&	_buffer,
-						std::size_t			_count,
-						std::size_t			_first) const;
+						int					_count,
+						int					_first) const;
 		void Draw(		GLenum				_primitiveType, 
-						std::size_t			_count,
-						std::size_t			_first=0) const;
+						int					_count,
+						int					_first=0) const;
 		void Draw(		GLenum 				_primitiveType,
-						std::size_t 		_count,
-						std::size_t 		_first,
-						std::size_t 		_primCount) const;
+						int 				_count,
+						int 				_first,
+						int 				_primCount) const;
 		void Draw(		GLenum				_primitiveType, 
 						const IndirectArrayBuffer& _indirectBuffer) const;
 		//----------------------------------------------------------------------
