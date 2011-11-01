@@ -2,18 +2,92 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <glf/wrapper.hpp>
+#include <glf/debug.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <sstream>
 
-//-----------------------------------------------------------------------------
-// Constants
-//-----------------------------------------------------------------------------
-#define VERBOSE_PROGRAM 			0
-#define ENABLE_IMAGE_LOAD_STORE		1
-
 namespace glf
 {
+	#if 0
+	//-------------------------------------------------------------------------
+	void ProgramOptions::AddResolution(	const std::string& _name,  
+										int _resX, 
+										int _resY)
+	{
+		std::stringstream option;
+		option << "#define " << _name << "_X " << _resX;
+		option << "#define " << _name << "_Y " << _resY;
+		option << "#define RCP_" << _name << "_X " << 1.f/float(_resX);
+		option << "#define RCP_" << _name << "_Y " << 1.f/float(_resY);
+		options.push_back(option);
+	}
+	//-------------------------------------------------------------------------
+	void ProgramOptions::AddConst(	const std::string& _name,  
+									int _value)
+	{
+		std::stringstream option;
+		option << "const int " << _name << " = " << _value << ";";
+		options.push_back(option);
+	}
+	//-------------------------------------------------------------------------
+	void ProgramOptions::AddConst(	const std::string& _name,  
+									float _value)
+	{
+		std::stringstream option;
+		option << "const float " << _name << " = " << _value << ";";
+		options.push_back(option);
+	}
+	//-------------------------------------------------------------------------
+	void ProgramOptions::AddConst(	const std::string& _name,  
+									const glm::ivec2& _value)
+	{
+		std::stringstream option;
+		option << "const ivec2 " << _name << " = ivec2(" << _value.x << "," << _value.y << ");";
+		options.push_back(option);
+	}
+	//-------------------------------------------------------------------------
+	void ProgramOptions::AddDefine(	const std::string& _name, 
+									int _value)
+	{
+		std::stringstream option;
+		option << "#define " << _name << " " << _value;
+		options.push_back(option);
+	}
+	//-------------------------------------------------------------------------
+	void ProgramOptions::ToString(	) const
+	{
+		std::stringstream out;
+		for(unsigned int i=0;i<options.size();++i)
+			out << options[i] << std::endl;
+		return out;
+	}
+	//-------------------------------------------------------------------------
+	void ProgramOptions::Combine(	const std::string& _input,
+									const std::string& _output);
+	{
+		std::vector<std::string> lines;
+		Split(_input, '\n',lines);
+	
+		// Look for #version
+		std::string version		= "#version";
+		unsigned int lineIndex	= 0;
+		bool versionFound		= false;
+		while(lineIndex<lines.size() && !versionFound)
+		{
+			versionFound = lines[i].compare(version) == version.size();
+			if(!versionFound) ++lineIndex;
+		}
+
+		// Merge output lines		
+		for(unsigned int i=0;i<=lineIndex;++i)
+			_output << lines;
+		for(unsigned int i=0;i<=options.size();++i)
+			_output << options[i] << std::endl;
+		for(unsigned int i=lineIndex+1;i<=lines.size();++i)
+			_output << lines;
+	}
+	#endif
 	//-------------------------------------------------------------------------
 	Variable::Variable():
 	name(""),
@@ -92,44 +166,40 @@ namespace glf
 				_type == GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE ||
 				_type == GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY ||
 				_type == GL_UNSIGNED_INT_SAMPLER_BUFFER ||
-				_type == GL_UNSIGNED_INT_SAMPLER_2D_RECT
-				#if ENABLE_IMAGE_LOAD_STORE
-				||
-				_type == GL_IMAGE_1D_EXT ||
-				_type == GL_IMAGE_2D_EXT ||
-				_type == GL_IMAGE_3D_EXT ||
-				_type == GL_IMAGE_2D_RECT_EXT ||
-				_type == GL_IMAGE_CUBE_EXT ||
-				_type == GL_IMAGE_BUFFER_EXT ||
-				_type == GL_IMAGE_1D_ARRAY_EXT ||
-				_type == GL_IMAGE_2D_ARRAY_EXT ||
-				_type == GL_IMAGE_CUBE_MAP_ARRAY_EXT ||
-				_type == GL_IMAGE_2D_MULTISAMPLE_EXT ||
-				_type == GL_IMAGE_2D_MULTISAMPLE_ARRAY_EXT ||
-				_type == GL_INT_IMAGE_1D_EXT ||
-				_type == GL_INT_IMAGE_2D_EXT ||
-				_type == GL_INT_IMAGE_3D_EXT ||
-				_type == GL_INT_IMAGE_2D_RECT_EXT ||
-				_type == GL_INT_IMAGE_CUBE_EXT ||
-				_type == GL_INT_IMAGE_BUFFER_EXT ||
-				_type == GL_INT_IMAGE_1D_ARRAY_EXT ||
-				_type == GL_INT_IMAGE_2D_ARRAY_EXT ||
-				_type == GL_INT_IMAGE_CUBE_MAP_ARRAY_EXT ||
-				_type == GL_INT_IMAGE_2D_MULTISAMPLE_EXT ||
-				_type == GL_INT_IMAGE_2D_MULTISAMPLE_ARRAY_EXT ||
-				_type == GL_UNSIGNED_INT_IMAGE_1D_EXT ||
-				_type == GL_UNSIGNED_INT_IMAGE_2D_EXT ||
-				_type == GL_UNSIGNED_INT_IMAGE_3D_EXT ||
-				_type == GL_UNSIGNED_INT_IMAGE_2D_RECT_EXT ||
-				_type == GL_UNSIGNED_INT_IMAGE_CUBE_EXT ||
-				_type == GL_UNSIGNED_INT_IMAGE_BUFFER_EXT ||
-				_type == GL_UNSIGNED_INT_IMAGE_1D_ARRAY_EXT ||
-				_type == GL_UNSIGNED_INT_IMAGE_2D_ARRAY_EXT ||
-				_type == GL_UNSIGNED_INT_IMAGE_CUBE_MAP_ARRAY_EXT ||
-				_type == GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_EXT ||
-				_type == GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY_EXT
-				#endif
-				;
+				_type == GL_UNSIGNED_INT_SAMPLER_2D_RECT ||
+				_type == GL_IMAGE_1D ||
+				_type == GL_IMAGE_2D ||
+				_type == GL_IMAGE_3D ||
+				_type == GL_IMAGE_2D_RECT ||
+				_type == GL_IMAGE_CUBE ||
+				_type == GL_IMAGE_BUFFER ||
+				_type == GL_IMAGE_1D_ARRAY ||
+				_type == GL_IMAGE_2D_ARRAY ||
+				_type == GL_IMAGE_CUBE_MAP_ARRAY ||
+				_type == GL_IMAGE_2D_MULTISAMPLE ||
+				_type == GL_IMAGE_2D_MULTISAMPLE_ARRAY ||
+				_type == GL_INT_IMAGE_1D ||
+				_type == GL_INT_IMAGE_2D ||
+				_type == GL_INT_IMAGE_3D ||
+				_type == GL_INT_IMAGE_2D_RECT ||
+				_type == GL_INT_IMAGE_CUBE ||
+				_type == GL_INT_IMAGE_BUFFER ||
+				_type == GL_INT_IMAGE_1D_ARRAY ||
+				_type == GL_INT_IMAGE_2D_ARRAY ||
+				_type == GL_INT_IMAGE_CUBE_MAP_ARRAY ||
+				_type == GL_INT_IMAGE_2D_MULTISAMPLE ||
+				_type == GL_INT_IMAGE_2D_MULTISAMPLE_ARRAY ||
+				_type == GL_UNSIGNED_INT_IMAGE_1D ||
+				_type == GL_UNSIGNED_INT_IMAGE_2D ||
+				_type == GL_UNSIGNED_INT_IMAGE_3D ||
+				_type == GL_UNSIGNED_INT_IMAGE_2D_RECT ||
+				_type == GL_UNSIGNED_INT_IMAGE_CUBE ||
+				_type == GL_UNSIGNED_INT_IMAGE_BUFFER ||
+				_type == GL_UNSIGNED_INT_IMAGE_1D_ARRAY ||
+				_type == GL_UNSIGNED_INT_IMAGE_2D_ARRAY ||
+				_type == GL_UNSIGNED_INT_IMAGE_CUBE_MAP_ARRAY ||
+				_type == GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE ||
+				_type == GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY;
 	}
 	//-------------------------------------------------------------------------
 	void Program::AnalyzeProgram(const std::string& _name, GLuint _id, std::map<std::string,Variable>& _variables)
@@ -140,7 +210,7 @@ namespace glf
 		glGetProgramiv(_id, GL_ACTIVE_UNIFORMS, 			&nUniforms);
 		glGetProgramiv(_id, GL_ACTIVE_UNIFORM_BLOCKS, 	&nBlocks);
 		
-		#if VERBOSE_PROGRAM
+		#if ENABLE_VERBOSE_PROGRAM
 		Info("---------------------------------------------------------------");
 		Info("Program : %s",_name.c_str());
 		#endif
@@ -152,7 +222,7 @@ namespace glf
 		GLenum type;
 		GLchar name[ShaderAttributeMaxLength];
 		maxLength = ShaderAttributeMaxLength;
-		#if VERBOSE_PROGRAM
+		#if ENABLE_VERBOSE_PROGRAM
 		Info("nAttributes : %d",nAttributes);
 		#endif
 		for(int index=0; index<nAttributes; ++index)
@@ -172,7 +242,7 @@ namespace glf
 
 		// Get "UNIFORMS"
 		int textureUnit = 0;
-		#if VERBOSE_PROGRAM
+		#if ENABLE_VERBOSE_PROGRAM
 		Info("nUniforms : %d",nUniforms);
 		#endif
 		for(int index=0; index<nUniforms; ++index) 
@@ -194,7 +264,7 @@ namespace glf
 		}
 
 		// Get "BLOCKS"
-		#if VERBOSE_PROGRAM
+		#if ENABLE_VERBOSE_PROGRAM
 		Info("nBlocks : %d",nBlocks);
 		#endif
 		for(int index=0; index<nBlocks; ++index) 

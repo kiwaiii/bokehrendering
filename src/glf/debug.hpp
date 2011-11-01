@@ -22,6 +22,7 @@
 #define ENABLE_BOKEH_STATISTICS			1
 //------------------------------------------------------------------------------
 #define ENABLE_CHECK_ERROR				1
+#define ENABLE_VERBOSE_PROGRAM 			0
 
 namespace glf
 {
