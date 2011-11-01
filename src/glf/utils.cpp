@@ -344,7 +344,13 @@ namespace glf
 
 		if(Result != GL_TRUE)
 		{
-			Error("Shader compilation failded\n\nSource : \n%s\n\nError : \n%s\n", Source, &Buffer[0]);	
+			// Append line number in front of sources
+			std::stringstream sourceWithLineNumbers;
+			std::vector<std::string> lines;
+			Split(Source,'\n',lines);
+			for(unsigned int i=0;i<lines.size();++i)
+				sourceWithLineNumbers << i << " : " << lines[i] << std::endl;
+			Error("Shader compilation failded\n\nSource : \n%s\n\nError : \n%s\n", sourceWithLineNumbers.str().c_str(), &Buffer[0]);	
 		}
 
 		return Result == GL_TRUE;
@@ -441,9 +447,9 @@ namespace glf
 				char delim, 
 				std::vector<std::string>& _out) 
 	{
-		std::stringstream ss(s);
+		std::stringstream ss(_in);
 		std::string item;
 		while(std::getline(ss, item, delim)) 
-		    elems.push_back(item);
+		    _out.push_back(item);
     }
 }

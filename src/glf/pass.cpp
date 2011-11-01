@@ -19,7 +19,7 @@ namespace glf
 	modelVar(INVALID_ID),
 	framebuffer(INVALID_ID)
 	{
-		program.Compile(LoadFile(directory::ShaderDirectory + "gbuffer.vs"),
+		program.Compile(ProgramOptions::CreateVSOptions().Append(LoadFile(directory::ShaderDirectory + "gbuffer.vs")),
 						LoadFile(directory::ShaderDirectory + "gbuffer.fs"));
 
 		transformVar	= program["Transform"].location;

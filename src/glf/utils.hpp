@@ -23,6 +23,7 @@
 //------------------------------------------------------------------------------
 #include <glm/glm.hpp>
 #include <string>
+#include <vector>
 
 #ifdef WIN32
 //------------------------------------------------------------------------------
@@ -138,7 +139,6 @@ namespace glf
 	void 		Split(						const std::string & _in, 
 											char delim, 
 											std::vector<std::string>& _out);
-}
 }
 
 #endif

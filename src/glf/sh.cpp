@@ -25,7 +25,7 @@ namespace glf
 	programProjection("SHBuiler"),
 	resolution(_resolution)
 	{
-		programProjection.Compile(	LoadFile(directory::ShaderDirectory + "shbuilder.vs"),
+		programProjection.Compile(	ProgramOptions::CreateVSOptions().Append(LoadFile(directory::ShaderDirectory + "shbuilder.vs")),
 									LoadFile(directory::ShaderDirectory + "shbuilder.fs"));
 		glm::mat4 transformation = ScreenQuadTransform();
 		glProgramUniformMatrix4fv(programProjection.id, programProjection["Transformation"].location, 1, GL_FALSE, &transformation[0][0]);
@@ -127,7 +127,7 @@ namespace glf
 	SHRenderer::SHRenderer(int _w, int _h):
 	program("SHRenderer")
 	{
-		program.Compile(LoadFile(directory::ShaderDirectory + "shrenderer.vs"),
+		program.Compile(ProgramOptions::CreateVSOptions().Append(LoadFile(directory::ShaderDirectory + "shrenderer.vs")),
 						LoadFile(directory::ShaderDirectory + "shrenderer.fs"));
 
 		shLightVar			= program["SHLight[0]"].location;

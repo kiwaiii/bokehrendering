@@ -14,7 +14,7 @@ namespace glf
 	SSAOPass::SSAOPass(int _w, int _h):
 	program("SSAOPass")
 	{
-		program.Compile(LoadFile(directory::ShaderDirectory + "ssao.vs"),
+		program.Compile(ProgramOptions::CreateVSOptions().Append(LoadFile(directory::ShaderDirectory + "ssao.vs")),
 						LoadFile(directory::ShaderDirectory + "ssao.fs"));
 
 		betaVar				= program["Beta"].location;
@@ -122,7 +122,7 @@ namespace glf
 	BilateralPass::BilateralPass(int _w, int _h):
 	program("BilateralPass")
 	{
-		program.Compile(LoadFile(directory::ShaderDirectory + "bilateral.vs"),
+		program.Compile(ProgramOptions::CreateVSOptions().Append(LoadFile(directory::ShaderDirectory + "bilateral.vs")),
 						LoadFile(directory::ShaderDirectory + "bilateral.fs"));
 
 		sigmaHVar			= program["SigmaH"].location;
