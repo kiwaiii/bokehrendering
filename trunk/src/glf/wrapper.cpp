@@ -9,7 +9,6 @@
 
 namespace glf
 {
-	#if 1
 	//-------------------------------------------------------------------------
 	void ProgramOptions::AddResolution(	const std::string& _name,  
 										int _resX, 
@@ -47,27 +46,16 @@ namespace glf
 		options.push_back(option.str());
 	}
 	//-------------------------------------------------------------------------
-	template<typename T>
-	void ProgramOptions::AddDefine(	const std::string& _name, 
-									const T& _value)
-	{
-		std::stringstream option;
-		option << "#define " << _name << " " << _value;
-		options.push_back(option.str());
-	}
-	//-------------------------------------------------------------------------
-	void ProgramOptions::ToString(	) const
+	std::string ProgramOptions::ToString(	) const
 	{
 		std::stringstream out;
 		for(unsigned int i=0;i<options.size();++i)
 			out << options[i] << std::endl;
-		return out;
+		return out.str();
 	}
 	//-------------------------------------------------------------------------
-	void ProgramOptions::Append(	const std::string& _input);
+	std::string ProgramOptions::Append(	const std::string& _input) const
 	{
-		std::string output;
-
 		std::vector<std::string> lines;
 		Split(_input, '\n',lines);
 	
@@ -77,40 +65,40 @@ namespace glf
 		bool versionFound		= false;
 		while(lineIndex<lines.size() && !versionFound)
 		{
-			versionFound = lines[i].compare(version) == version.size();
+			versionFound = lines[lineIndex].compare(0,8,version,0,8) == 0;
 			if(!versionFound) ++lineIndex;
 		}
+		assert(versionFound);
 
 		// Merge output lines		
+		std::stringstream output;
 		for(unsigned int i=0;i<=lineIndex;++i)
-			output << lines;
-		for(unsigned int i=0;i<=options.size();++i)
-			output << options[i] << std::endl;
-		for(unsigned int i=lineIndex+1;i<=lines.size();++i)
-			output << lines;
+			output << lines[i] << std::endl;
+		output << ToString();
+		for(unsigned int i=lineIndex+1;i<lines.size();++i)
+			output << lines[i] << std::endl;
 
-		return output;
+		return output.str();
 	}
 	//-------------------------------------------------------------------------
-	ProgramOption ProgramOptions::CreateVSOptions()
+	ProgramOptions ProgramOptions::CreateVSOptions()
 	{
-		ProgramOption options;
-		options.AddDefine("ATTR_POSITION",	semantic::Position);
-		options.AddDefine("ATTR_NORMAL",	semantic::Normal);
-		options.AddDefine("ATTR_TEXCOORD",	semantic::TexCoord);
-		options.AddDefine("ATTR_TANGENT",	semantic::Tangent);
-		options.AddDefine("ATTR_COLOR",	semantic::Color);
-		options.AddDefine("ATTR_BITANGENT",semantic::Bitangent);
+		ProgramOptions options;
+		options.AddDefine<int>("ATTR_POSITION",	semantic::Position);
+		options.AddDefine<int>("ATTR_NORMAL",	semantic::Normal);
+		options.AddDefine<int>("ATTR_TEXCOORD",	semantic::TexCoord);
+		options.AddDefine<int>("ATTR_TANGENT",	semantic::Tangent);
+		options.AddDefine<int>("ATTR_COLOR",	semantic::Color);
+		options.AddDefine<int>("ATTR_BITANGENT",semantic::Bitangent);
 		return options;
 	}
 	//-------------------------------------------------------------------------
-	ProgramOption ProgramOptions::CreateFSOptions()
+	ProgramOptions ProgramOptions::CreateFSOptions(int _w, int _h)
 	{
-		ProgramOption options;
-		options.AddResolution("SCREEN_RESOLUTION",ctx::window.Size.x,ctx::window.Size.y);
+		ProgramOptions options;
+		options.AddResolution("SCREEN_RESOLUTION",_w,_h);
 		return options;
 	}
-	#endif
 	//-------------------------------------------------------------------------
 	Variable::Variable():
 	name(""),

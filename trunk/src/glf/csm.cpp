@@ -102,7 +102,7 @@ namespace glf
 	CSMBuilder::CSMBuilder():
 	program("CSMBuilder")
 	{
-		program.Compile(LoadFile(directory::ShaderDirectory + "csmbuilder.vs"),
+		program.Compile(ProgramOptions::CreateVSOptions().Append(LoadFile(directory::ShaderDirectory + "csmbuilder.vs")),
 						LoadFile(directory::ShaderDirectory + "csmbuilder.gs"),
 						LoadFile(directory::ShaderDirectory + "csmbuilder.fs"));
 
@@ -281,7 +281,7 @@ namespace glf
 	CSMRenderer::CSMRenderer(int _w, int _h):
 	program("CSMRenderer")
 	{
-		program.Compile(LoadFile(directory::ShaderDirectory + "csmrenderer.vs"),
+		program.Compile(ProgramOptions::CreateVSOptions().Append(LoadFile(directory::ShaderDirectory + "csmrenderer.vs")),
 						LoadFile(directory::ShaderDirectory + "csmrenderer.fs"));
 
 		viewPosVar 			= program["ViewPos"].location;

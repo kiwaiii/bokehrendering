@@ -21,7 +21,7 @@ namespace glf
 					~GPUSectionTimer();
 		void		StartSection();	// Indicates the start of the section
 		void		EndSection();	// Indicates the end of the section
-		double		Timing() const;	// Return the average elapsed time into this section
+		float		Timing() const;	// Return the average elapsed time into this section
 	private:
 		GLuint		id;
 		bool		waiting;
@@ -35,10 +35,10 @@ namespace glf
 					~CPUSectionTimer();
 		void		StartSection();	// Indicates the start of the section
 		void		EndSection();	// Indicates the end of the section
-		double		Timing() const;	// Return the average elapsed time into this section
+		float		Timing() const;	// Return the average elapsed time into this section
 	private:
-		float		startTime;
-		double		current;
+		int			startTime;
+		int			current;
 	};
 	//--------------------------------------------------------------------------
 	namespace section
@@ -83,8 +83,8 @@ namespace glf
 					~TimingManager(		);
 		void 		StartSection(		int _section);
 		void 		EndSection(			int _section);
-		double 		GPUTiming(			int _section) const;
-		double 		CPUTiming(			int _section) const;
+		float 		GPUTiming(			int _section) const;
+		float 		CPUTiming(			int _section) const;
 		const std::string& Name(		int _section) const;
 
 	private:

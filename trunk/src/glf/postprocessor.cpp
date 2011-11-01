@@ -23,7 +23,7 @@ namespace glf
 
 		// Tone Mapping
 		{
-			toneMapping.program.Compile(	LoadFile(directory::ShaderDirectory + "tonemap.vs"),
+			toneMapping.program.Compile(	ProgramOptions::CreateVSOptions().Append(LoadFile(directory::ShaderDirectory + "tonemap.vs")),
 											LoadFile(directory::ShaderDirectory + "tonemap.fs") );
 			toneMapping.colorTexUnit		= toneMapping.program["ColorTex"].unit;
 			toneMapping.exposureVar			= toneMapping.program["Exposure"].location;

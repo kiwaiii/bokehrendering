@@ -14,16 +14,16 @@ namespace glf
 	{
 		double timerToFloat(GLuint64 timer) 
 		{
-			GLuint64EXT tmp = timer;
-			//unsigned long nsec = tmp % 1000;
+			GLuint64 tmp = timer;
+			//GLuint64 nsec = tmp % 1000;
 			tmp /= 1000;
-			unsigned long mcsec = tmp % 1000;
+			GLuint64 mcsec = tmp % 1000;
 			tmp /= 1000;
-			unsigned long misec = tmp % 1000;
+			GLuint64 misec = tmp % 1000;
 			tmp /= 1000;
-			unsigned long sec = tmp;
+			GLuint64 sec = tmp;
 	
-			return (double) ((int) sec * 1000.0 + (int) misec + 0.001 * (int) mcsec);
+			return double(int(sec) * 1000.0 + int(misec) + 0.001 * int(mcsec));
 		}
 	}
 	//-------------------------------------------------------------------------
@@ -72,9 +72,9 @@ namespace glf
 		}
 	}
 	//-------------------------------------------------------------------------
-	double GPUSectionTimer::Timing() const
+	float GPUSectionTimer::Timing() const
 	{
-		return current;
+		return float(current);
 	}
 	//-------------------------------------------------------------------------
 	CPUSectionTimer::CPUSectionTimer()
@@ -98,9 +98,9 @@ namespace glf
 		current = glutGet(GLUT_ELAPSED_TIME) - startTime;
 	}
 	//-------------------------------------------------------------------------
-	double CPUSectionTimer::Timing() const
+	float CPUSectionTimer::Timing() const
 	{
-		return current;
+		return float(current);
 	}
 	//--------------------------------------------------------------------------
 	namespace section
@@ -222,7 +222,7 @@ namespace glf
 		if(section::IsCPUSection(_section)) cpuTimers[section::ToIndex(_section)]->EndSection();
 	}
 	//--------------------------------------------------------------------------
-	double TimingManager::GPUTiming(int _section) const
+	float TimingManager::GPUTiming(int _section) const
 	{
 		if(section::IsGPUSection(_section))
 			return gpuTimers[section::ToIndex(_section)]->Timing();
@@ -230,7 +230,7 @@ namespace glf
 			return 0;
 	}
 	//--------------------------------------------------------------------------
-	double TimingManager::CPUTiming(int _section) const
+	float TimingManager::CPUTiming(int _section) const
 	{
 		if(section::IsCPUSection(_section))
 			return cpuTimers[section::ToIndex(_section)]->Timing();

@@ -1,11 +1,7 @@
 //-----------------------------------------------------------------------------
 #version 410
 
-// Declare all the semantics
-#define ATTR_POSITION	0
-
 uniform mat4 Transformation;
-
 layout(location = ATTR_POSITION) in  vec3 Position;
 
 void main()

@@ -131,6 +131,7 @@ namespace
 		SkyParams							skyParams;
 		DOFParams							dofParams;
 
+		bool								updateLighting;
 		int									activeBokeh;
 		int									activeBuffer;
 		int									activeMenu;
@@ -205,6 +206,7 @@ namespace
 		dofParams.bokehDepthCutoff	= 1.f;
 		dofParams.poissonFiltering	= false;
 
+		updateLighting				= true;
 		activeBokeh					= 1;
 		activeBuffer				= 0;
 		activeMenu					= 2;
@@ -216,27 +218,6 @@ namespace
 		bokehFile.open("BokehPerformances.dat");
 		#endif
 	}
-}
-
-//------------------------------------------------------------------------------
-void UpdateLight()
-{
-	glDisable(GL_STENCIL_TEST);
-	glDisable(GL_BLEND);
-
-	app->skyBuilder.SetSunFactor(app->skyParams.sunFactor);
-	app->skyBuilder.SetPosition(app->skyParams.sunTheta,app->skyParams.sunPhi);
-	app->skyBuilder.SetTurbidity(float(app->skyParams.turbidity));
-	app->skyBuilder.Update();
-	app->shBuilder.Project(app->skyBuilder.skyTexture,app->shLight);
-	float sunLuminosity = glm::max(glm::dot(app->skyBuilder.sunIntensity, glm::vec3(0.299f, 0.587f, 0.114f)), 0.0001f);
-
-	glm::vec3 dir;
-	dir.x = -sin(app->skyParams.sunTheta)*cos(app->skyParams.sunPhi);
-	dir.y = -sin(app->skyParams.sunTheta)*sin(app->skyParams.sunPhi);
-	dir.z = -cos(app->skyParams.sunTheta);
-	app->csmLight.SetDirection(dir);
-	app->csmLight.SetIntensity(glm::vec3(sunLuminosity));
 }
 //------------------------------------------------------------------------------
 bool resize(int _w, int _h)
@@ -282,8 +263,6 @@ bool begin()
 											app->scene.transformations[i]);
 	}
 	#endif
-
-	UpdateLight();
 
 	glf::CheckError("initScene::end");
 
@@ -349,7 +328,7 @@ void gui()
 
 				if(update)
 				{
-					UpdateLight();
+					app->updateLighting = true;
 				}
 			}
 
@@ -512,8 +491,29 @@ void display()
 	float nearValue				= ctx::camera->Near();
 	glm::vec3 viewPos			= ctx::camera->Eye();
 
-	// Enable writting into the depth buffer
+	// Update lighting if needed
 	glDisable(GL_BLEND);
+	glDisable(GL_DEPTH_TEST);
+	if(app->updateLighting)
+	{
+		app->skyBuilder.SetSunFactor(app->skyParams.sunFactor);
+		app->skyBuilder.SetPosition(app->skyParams.sunTheta,app->skyParams.sunPhi);
+		app->skyBuilder.SetTurbidity(float(app->skyParams.turbidity));
+		app->skyBuilder.Update();
+		app->shBuilder.Project(app->skyBuilder.skyTexture,app->shLight);
+		float sunLuminosity = glm::max(glm::dot(app->skyBuilder.sunIntensity, glm::vec3(0.299f, 0.587f, 0.114f)), 0.0001f);
+
+		glm::vec3 dir;
+		dir.x = -sin(app->skyParams.sunTheta)*cos(app->skyParams.sunPhi);
+		dir.y = -sin(app->skyParams.sunTheta)*sin(app->skyParams.sunPhi);
+		dir.z = -cos(app->skyParams.sunTheta);
+		app->csmLight.SetDirection(dir);
+		app->csmLight.SetIntensity(glm::vec3(sunLuminosity));
+
+		app->updateLighting = false;
+	}
+
+	// Enable writting into the depth buffer
 	glDepthMask(true);
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_STENCIL_TEST);

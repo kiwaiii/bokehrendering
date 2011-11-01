@@ -21,7 +21,7 @@ namespace glf
 		vao.Add(vbuffer,semantic::Position,3,GL_FLOAT);
 		vao.Add(tbuffer,semantic::TexCoord,3,GL_FLOAT);
 
-		program.Compile(LoadFile(directory::ShaderDirectory + "cubemap.vs"),
+		program.Compile(ProgramOptions::CreateVSOptions().Append(LoadFile(directory::ShaderDirectory + "cubemap.vs")),
 						LoadFile(directory::ShaderDirectory + "cubemap.fs"));
 		envTexUnit			= program["EnvTex"].unit;
 		transformVar		= program["Transformation"].location;
@@ -62,7 +62,7 @@ namespace glf
 		CreateCubePos(vbo);
 		vao.Add(vbo,semantic::Position,3,GL_FLOAT);
 
-		program.Compile(LoadFile(directory::ShaderDirectory + "skybuilder.vs"),
+		program.Compile(ProgramOptions::CreateVSOptions().Append(LoadFile(directory::ShaderDirectory + "skybuilder.vs")),
 						LoadFile(directory::ShaderDirectory + "skybuilder.gs"),
 						LoadFile(directory::ShaderDirectory + "skybuilder.fs"));
 

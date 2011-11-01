@@ -96,7 +96,7 @@ namespace glf
 
 		// CoC Pass
 		{
-			cocPass.program.Compile(LoadFile(directory::ShaderDirectory + "bokehcoc.vs"),
+			cocPass.program.Compile(ProgramOptions::CreateVSOptions().Append(LoadFile(directory::ShaderDirectory + "bokehcoc.vs")),
 									LoadFile(directory::ShaderDirectory + "bokehcoc.fs"));
 
 			cocPass.farStartVar			= cocPass.program["FarStart"].location;
@@ -112,7 +112,7 @@ namespace glf
 
 		// Detection Pass
 		{
-			detectionPass.program.Compile(	LoadFile(directory::ShaderDirectory + "bokehdetection.vs"),
+			detectionPass.program.Compile(	ProgramOptions::CreateVSOptions().Append(LoadFile(directory::ShaderDirectory + "bokehdetection.vs")),
 											LoadFile(directory::ShaderDirectory + "bokehdetection.fs"));
 			Info(detectionPass.program.ToString());
 			detectionPass.colorTexUnit		= detectionPass.program["ColorTex"].unit;
@@ -134,7 +134,7 @@ namespace glf
 
 		// Blur separable pass
 		{
-			blurSeparablePass.program.Compile(	LoadFile(directory::ShaderDirectory + "bokehblur.vs"),
+			blurSeparablePass.program.Compile(	ProgramOptions::CreateVSOptions().Append(LoadFile(directory::ShaderDirectory + "bokehblur.vs")),
 												LoadFile(directory::ShaderDirectory + "bokehblur.fs"));
 
 			blurSeparablePass.blurDepthTexUnit	= blurSeparablePass.program["BlurDepthTex"].unit;
@@ -198,7 +198,7 @@ namespace glf
 			rotationTex.Fill(GL_RG,GL_FLOAT,(unsigned char*)&rotations[0][0]);
 			delete[] rotations;
 
-			blurPoissonPass.program.Compile(	LoadFile(directory::ShaderDirectory + "bokehblurpoisson.vs"),
+			blurPoissonPass.program.Compile(	ProgramOptions::CreateVSOptions().Append(LoadFile(directory::ShaderDirectory + "bokehblurpoisson.vs")),
 												LoadFile(directory::ShaderDirectory + "bokehblurpoisson.fs"));
 
 			blurPoissonPass.blurDepthTexUnit	= blurPoissonPass.program["BlurDepthTex"].unit;
@@ -229,7 +229,7 @@ namespace glf
 
 		// Rendering pass
 		{
-			renderingPass.program.Compile(	LoadFile(directory::ShaderDirectory + "bokehrendering.vs"),
+			renderingPass.program.Compile(	ProgramOptions::CreateVSOptions().Append(LoadFile(directory::ShaderDirectory + "bokehrendering.vs")),
 											LoadFile(directory::ShaderDirectory + "bokehrendering.gs"),
 											LoadFile(directory::ShaderDirectory + "bokehrendering.fs"));
 

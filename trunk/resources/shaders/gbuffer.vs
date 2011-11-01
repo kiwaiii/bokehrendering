@@ -1,14 +1,5 @@
 //-----------------------------------------------------------------------------
-//#version 330 core
-#version 410 core
-
-// Declare all the semantics
-#define ATTR_POSITION	0
-#define ATTR_NORMAL		1
-#define ATTR_TEXCOORD	2
-#define ATTR_TANGENT	3
-#define ATTR_COLOR		4
-#define ATTR_BITANGENT	5
+#version 420 core
 
 uniform mat4 Transform;
 uniform mat4 Model;

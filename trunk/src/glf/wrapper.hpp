@@ -13,13 +13,12 @@
 
 namespace glf
 {
-	#if 1
 	//-------------------------------------------------------------------------
 	class ProgramOptions
 	{
 	public:
 		static ProgramOptions 	CreateVSOptions();
-		static ProgramOptions 	CreateFSOptions();
+		static ProgramOptions 	CreateFSOptions(int _w, int _h);
 
 		template<typename T>
 		void 		AddDefine(	const std::string& _name, 
@@ -36,11 +35,10 @@ namespace glf
 		void 		AddDefine(	const std::string& _name, 
 								int _value);
 		std::string	ToString(	) const;
-		std::string	Append(		const std::string& _source);
+		std::string	Append(		const std::string& _source) const;
 	private:
 		std::vector<std::string> options;
 	};
-	#endif
 	//-------------------------------------------------------------------------
 	struct Variable
 	{

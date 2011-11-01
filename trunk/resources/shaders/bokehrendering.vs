@@ -1,8 +1,6 @@
 //------------------------------------------------------------------------------
 #version 410
 
-#define ATTR_POSITION			0
-
 uniform vec2		PixelScale;
 uniform sampler2D	BokehPositionTex; //(x,y,scale)
 uniform sampler2D	BokehColorTex;
