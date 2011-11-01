@@ -37,8 +37,8 @@ namespace glf
 	//--------------------------------------------------------------------------
 	void VertexArray::Draw( 	GLenum _primitiveType,
 								const IndexBuffer& _buffer,
-								std::size_t _count,
-								std::size_t _first) const
+								int _count,
+								int _first) const
 	{
 		glBindVertexArray(id);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _buffer.id);
@@ -47,8 +47,8 @@ namespace glf
 	}
 	//--------------------------------------------------------------------------
 	void VertexArray::Draw(		GLenum _primitiveType, 
-								std::size_t _count,
-								std::size_t _first) const
+								int _count,
+								int _first) const
 	{
 		glBindVertexArray(id);
 		glDrawArrays(_primitiveType, _first, _count);
@@ -56,9 +56,9 @@ namespace glf
 	}
 	//--------------------------------------------------------------------------
 	void VertexArray::Draw(		GLenum _primitiveType, 
-								std::size_t _count,
-								std::size_t _first,
-								std::size_t _primCount) const
+								int _count,
+								int _first,
+								int _primCount) const
 	{
 		glBindVertexArray(id);
 		glDrawArraysInstanced(_primitiveType,_first,_count,_primCount);

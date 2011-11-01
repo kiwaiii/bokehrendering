@@ -88,8 +88,8 @@ namespace glf
 												const glm::mat4& _t)
 	{
 		Helper::Ptr ref = Helper::Create();
-		ref->vbuffer.Allocate(_points.size(),GL_STATIC_DRAW);
-		ref->cbuffer.Allocate(_points.size(),GL_STATIC_DRAW);
+		ref->vbuffer.Allocate(int(_points.size()),GL_STATIC_DRAW);
+		ref->cbuffer.Allocate(int(_points.size()),GL_STATIC_DRAW);
 		ref->type  = GL_POINTS;
 		ref->transform = _t;
 

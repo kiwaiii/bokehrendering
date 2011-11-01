@@ -2,10 +2,10 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include <glf/camera.hpp>
+#include <glf/utils.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <cassert>
 #include <cmath>
-#include <glf/utils.hpp>
 #include <limits>
 
 namespace glf

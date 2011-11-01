@@ -9,7 +9,7 @@ namespace glf
 {
 	//-------------------------------------------------------------------------
 	template<GLenum B, typename T>
-	IBuffer<B,T>::IBuffer(std::size_t _count, GLenum _update):
+	IBuffer<B,T>::IBuffer(int _count, GLenum _update):
 	BufferType(B),
 	update(_update),
 	count(_count),
@@ -35,13 +35,13 @@ namespace glf
 	}
 	//-------------------------------------------------------------------------
 	template<GLenum B, typename T>
-	void IBuffer<B,T>::Allocate(std::size_t _count)
+	void IBuffer<B,T>::Allocate(int _count)
 	{
 		Allocate(_count, update);
 	}
 	//-------------------------------------------------------------------------
 	template<GLenum B, typename T>
-	void IBuffer<B,T>::Allocate(std::size_t _count, GLenum _update)
+	void IBuffer<B,T>::Allocate(int _count, GLenum _update)
 	{
 		assert(_count>0);
 		count = _count;
@@ -85,7 +85,7 @@ namespace glf
 	}
 	//-------------------------------------------------------------------------
 	template<GLenum B, typename T>
-	void IBuffer<B,T>::Fill(T* _data, std::size_t _count)
+	void IBuffer<B,T>::Fill(T* _data, int _count)
 	{	
 		assert(!lock);
 
@@ -101,7 +101,7 @@ namespace glf
 								int      	_nComponents,
 								GLenum   	_componentType,
 								bool     	_normalize,
-								std::size_t _offset)
+								int			_offset)
 	{
 		glBindVertexArray(id);
 			glBindBuffer(GL_ARRAY_BUFFER, _buffer.id);
@@ -117,5 +117,6 @@ namespace glf
 
 		assert(glf::CheckError("VertexArray::Add"));
 	}
+	//-------------------------------------------------------------------------
 }
 

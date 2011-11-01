@@ -3,8 +3,6 @@
 //-----------------------------------------------------------------------------
 #include <glf/wrapper.hpp>
 #include <glf/debug.hpp>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <sstream>
 
 namespace glf

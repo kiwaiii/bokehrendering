@@ -1129,10 +1129,9 @@ namespace
 	/*resize and use destructor on elements if it gets smaller*/
 	static unsigned vector_resized(vector* p, size_t size, void dtor(void*))
 	{
-	  size_t i;
 	  if(size < p->size)
 	  {
-		for(i = size; i < p->size; i++)
+		for(size_t i = size; i < p->size; i++)
 		{
 		  dtor(&((char*)(p->data))[i * p->typesize]);
 		}
@@ -1366,10 +1365,10 @@ namespace
 
 	static void string_set(char** out, const char* in)
 	{
-	  size_t insize = strlen(in), i = 0;
+	  size_t insize = strlen(in);
 	  if(string_resize(out, insize))
 	  {
-		for(i = 0; i < insize; i++)
+		for(size_t i = 0; i < insize; i++)
 		{
 		  (*out)[i] = in[i];
 		}
@@ -6809,9 +6808,9 @@ namespace glf
 
 			unsigned char* rout = new unsigned char[4*w*h];
 			// Vertical flip
-			for(int y=0;y<h;++y)
-			for(int x=0;x<w;++x)
-			for(int c=0;c<4;++c)
+			for(unsigned int y=0;y<h;++y)
+			for(unsigned int x=0;x<w;++x)
+			for(unsigned int c=0;c<4;++c)
 				rout[c + 4*x + 4*w*y] = out[c + 4*x + 4*w*(h-1-y)];
 
 			if(_verbose)

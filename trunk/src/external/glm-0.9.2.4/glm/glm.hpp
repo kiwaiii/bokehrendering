@@ -18,6 +18,10 @@
 #include <limits>
 #include "core/setup.hpp"
 
+#ifdef WIN32
+	#pragma warning( disable : 4201 )
+#endif
+
 #if(defined(GLM_MESSAGES) && !defined(GLM_MESSAGE_CORE_INCLUDED_DISPLAYED))
 #	define GLM_MESSAGE_CORE_INCLUDED_DISPLAYED
 #	pragma message("GLM: Core library included")
