@@ -9,18 +9,18 @@
 
 namespace glf
 {
-	#if 0
+	#if 1
 	//-------------------------------------------------------------------------
 	void ProgramOptions::AddResolution(	const std::string& _name,  
 										int _resX, 
 										int _resY)
 	{
 		std::stringstream option;
-		option << "#define " << _name << "_X " << _resX;
-		option << "#define " << _name << "_Y " << _resY;
-		option << "#define RCP_" << _name << "_X " << 1.f/float(_resX);
-		option << "#define RCP_" << _name << "_Y " << 1.f/float(_resY);
-		options.push_back(option);
+		option << "#define " << _name << "_X " << _resX << std::endl;
+		option << "#define " << _name << "_Y " << _resY << std::endl;
+		option << "#define RCP_" << _name << "_X " << 1.f/float(_resX) << std::endl;
+		option << "#define RCP_" << _name << "_Y " << 1.f/float(_resY) << std::endl;
+		options.push_back(option.str());
 	}
 	//-------------------------------------------------------------------------
 	void ProgramOptions::AddConst(	const std::string& _name,  
@@ -28,7 +28,7 @@ namespace glf
 	{
 		std::stringstream option;
 		option << "const int " << _name << " = " << _value << ";";
-		options.push_back(option);
+		options.push_back(option.str());
 	}
 	//-------------------------------------------------------------------------
 	void ProgramOptions::AddConst(	const std::string& _name,  
@@ -36,7 +36,7 @@ namespace glf
 	{
 		std::stringstream option;
 		option << "const float " << _name << " = " << _value << ";";
-		options.push_back(option);
+		options.push_back(option.str());
 	}
 	//-------------------------------------------------------------------------
 	void ProgramOptions::AddConst(	const std::string& _name,  
@@ -44,15 +44,16 @@ namespace glf
 	{
 		std::stringstream option;
 		option << "const ivec2 " << _name << " = ivec2(" << _value.x << "," << _value.y << ");";
-		options.push_back(option);
+		options.push_back(option.str());
 	}
 	//-------------------------------------------------------------------------
+	template<typename T>
 	void ProgramOptions::AddDefine(	const std::string& _name, 
-									int _value)
+									const T& _value)
 	{
 		std::stringstream option;
 		option << "#define " << _name << " " << _value;
-		options.push_back(option);
+		options.push_back(option.str());
 	}
 	//-------------------------------------------------------------------------
 	void ProgramOptions::ToString(	) const
@@ -63,9 +64,10 @@ namespace glf
 		return out;
 	}
 	//-------------------------------------------------------------------------
-	void ProgramOptions::Combine(	const std::string& _input,
-									const std::string& _output);
+	void ProgramOptions::Append(	const std::string& _input);
 	{
+		std::string output;
+
 		std::vector<std::string> lines;
 		Split(_input, '\n',lines);
 	
@@ -81,11 +83,32 @@ namespace glf
 
 		// Merge output lines		
 		for(unsigned int i=0;i<=lineIndex;++i)
-			_output << lines;
+			output << lines;
 		for(unsigned int i=0;i<=options.size();++i)
-			_output << options[i] << std::endl;
+			output << options[i] << std::endl;
 		for(unsigned int i=lineIndex+1;i<=lines.size();++i)
-			_output << lines;
+			output << lines;
+
+		return output;
+	}
+	//-------------------------------------------------------------------------
+	ProgramOption ProgramOptions::CreateVSOptions()
+	{
+		ProgramOption options;
+		options.AddDefine("ATTR_POSITION",	semantic::Position);
+		options.AddDefine("ATTR_NORMAL",	semantic::Normal);
+		options.AddDefine("ATTR_TEXCOORD",	semantic::TexCoord);
+		options.AddDefine("ATTR_TANGENT",	semantic::Tangent);
+		options.AddDefine("ATTR_COLOR",	semantic::Color);
+		options.AddDefine("ATTR_BITANGENT",semantic::Bitangent);
+		return options;
+	}
+	//-------------------------------------------------------------------------
+	ProgramOption ProgramOptions::CreateFSOptions()
+	{
+		ProgramOption options;
+		options.AddResolution("SCREEN_RESOLUTION",ctx::window.Size.x,ctx::window.Size.y);
+		return options;
 	}
 	#endif
 	//-------------------------------------------------------------------------

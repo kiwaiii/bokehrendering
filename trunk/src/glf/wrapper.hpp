@@ -13,11 +13,17 @@
 
 namespace glf
 {
-	#if 0
+	#if 1
 	//-------------------------------------------------------------------------
 	class ProgramOptions
 	{
 	public:
+		static ProgramOptions 	CreateVSOptions();
+		static ProgramOptions 	CreateFSOptions();
+
+		template<typename T>
+		void 		AddDefine(	const std::string& _name, 
+								const T& _value);
 		void 		AddResolution(const std::string& _name,  
 								int _resX, 
 								int _resY);
@@ -29,11 +35,8 @@ namespace glf
 								const glm::ivec2& _value);
 		void 		AddDefine(	const std::string& _name, 
 								int _value);
-		void 		AddDefine(	const std::string& _name, 
-								float _value);
-		void		ToString(	) const;
-		void		Combine(	const std::string& _input,
-								const std::string& _output);
+		std::string	ToString(	) const;
+		std::string	Append(		const std::string& _source);
 	private:
 		std::vector<std::string> options;
 	};
@@ -89,5 +92,10 @@ namespace glf
 	};
 	//-------------------------------------------------------------------------
 }
+
+//-----------------------------------------------------------------------------
+// Inline includes
+//-----------------------------------------------------------------------------
+#include <glf/wrapper.inl>
 
 #endif
