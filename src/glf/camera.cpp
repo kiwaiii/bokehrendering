@@ -4,7 +4,6 @@
 #include <glf/camera.hpp>
 #include <glf/utils.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <cassert>
 #include <cmath>
 #include <limits>
 
@@ -16,8 +15,8 @@ namespace glf
 	Camera::Camera():
 	nearPlane(0.1f),
 	farPlane(100.f),
-	ratio(1.f),
-	fov(std::numeric_limits<float>::infinity())
+	fov(std::numeric_limits<float>::infinity()),
+	ratio(1.f)
 	{
 
 	}

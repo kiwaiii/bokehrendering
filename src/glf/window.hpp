@@ -81,7 +81,7 @@ namespace ctx
 	extern bool 				drawUI;
 	extern bool 				drawTimings;
 	extern bool 				drawHelpers;
-}//namespace 
+}
 
 
 //-----------------------------------------------------------------------------

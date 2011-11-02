@@ -56,7 +56,6 @@ namespace glf
 			waiting = true;
 		}
 
-
 		if(waiting)
 		{
 			GLint available = 0;

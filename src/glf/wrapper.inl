@@ -11,8 +11,7 @@ namespace glf
 									const T& _value)
 	{
 		std::stringstream option;
-		//option << "#define " << _name << " " << _value;
-		//option << "#define ";
+		option << "#define " << _name << " " << _value;
 		options.push_back(option.str());
 	}
 	//-------------------------------------------------------------------------

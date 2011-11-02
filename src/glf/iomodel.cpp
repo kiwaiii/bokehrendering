@@ -518,9 +518,9 @@ namespace
 	{
 		Vertex vertex =
 		{
-		    0.0f, 0.0f, 0.0f,
-		    0.0f, 0.0f,
-		    0.0f, 0.0f, 0.0f
+		    {0.0f, 0.0f, 0.0f},
+		    {0.0f, 0.0f},
+		    {0.0f, 0.0f, 0.0f}
 		};
 
 		m_attributeBuffer[index] = material;
@@ -546,10 +546,10 @@ namespace
 	{
 		Vertex vertex =
 		{
-		    0.0f, 0.0f, 0.0f,
-		    0.0f, 0.0f,
-		    0.0f, 0.0f, 0.0f,
-		    0.0f, 0.0f, 0.0f
+		    {0.0f, 0.0f, 0.0f},
+		    {0.0f, 0.0f},
+		    {0.0f, 0.0f, 0.0f},
+		    {0.0f, 0.0f, 0.0f}
 		};
 
 		m_attributeBuffer[index] = material;
@@ -584,10 +584,10 @@ namespace
 	{
 		Vertex vertex =
 		{
-		    0.0f, 0.0f, 0.0f,
-		    0.0f, 0.0f,
-		    0.0f, 0.0f, 0.0f,
-		    0.0f, 0.0f, 0.0f
+		    {0.0f, 0.0f, 0.0f},
+		    {0.0f, 0.0f},
+		    {0.0f, 0.0f, 0.0f},
+		    {0.0f, 0.0f, 0.0f}
 		};
 
 		m_attributeBuffer[index] = material;
@@ -620,10 +620,10 @@ namespace
 	{
 		Vertex vertex =
 		{
-		    0.0f, 0.0f, 0.0f,
-		    0.0f, 0.0f,
-		    0.0f, 0.0f, 0.0f,
-		    0.0f, 0.0f, 0.0f
+		    {0.0f, 0.0f, 0.0f},
+		    {0.0f, 0.0f},
+		    {0.0f, 0.0f, 0.0f},
+		    {0.0f, 0.0f, 0.0f}
 		};
 
 		m_attributeBuffer[index] = material;
@@ -1115,9 +1115,9 @@ namespace
 		{
 		    Material defaultMaterial =
 		    {
-		        0.2f, 0.2f, 0.2f, 1.0f,
-		        0.8f, 0.8f, 0.8f, 1.0f,
-		        0.0f, 0.0f, 0.0f, 1.0f,
+		        {0.2f, 0.2f, 0.2f, 1.0f},
+		        {0.8f, 0.8f, 0.8f, 1.0f},
+		        {0.0f, 0.0f, 0.0f, 1.0f},
 		        0.0f,
 		        1.0f,
 		        std::string("default"),
@@ -1604,7 +1604,13 @@ namespace glf
 		{
 			// Load objects
 			ModelOBJ loader;
-			assert(loader.import((_folder+_filename).c_str(), true));
+			bool loadOK = loader.import((_folder+_filename).c_str(), true);
+			assert(loadOK);
+			if(!loadOK)
+			{
+				glf::Error("Load model error (Folder: %s, Filename: %s)",_folder.c_str(),_filename.c_str());
+				exit(-1);
+			}
 
 			int nObjects = loader.getNumberOfMeshes();
 			if(_verbose)
@@ -1620,6 +1626,7 @@ namespace glf
 				glf::Info("nIndices        : %d",loader.getNumberOfIndices());
 				glf::Info("nTriangles      : %d",loader.getNumberOfTriangles());
 			}
+			assert(nObjects>0);
 			assert(loader.hasNormals());
 			assert(loader.hasTangents());
 			assert(loader.hasTextureCoords());

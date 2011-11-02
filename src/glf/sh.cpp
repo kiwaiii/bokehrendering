@@ -69,8 +69,8 @@ namespace glf
 								GL_COLOR_ATTACHMENT6 };
 		glDrawBuffers(7,buffers);
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
-		assert(glf::CheckFramebuffer(shFrameProjection));
-		assert(glf::CheckError("SHBuilder::SHBuilder"));
+		glf::CheckFramebuffer(shFrameProjection);
+		glf::CheckError("SHBuilder::SHBuilder");
 	}
 	//--------------------------------------------------------------------------
 	void SHBuilder::Project(const TextureArray2D& 	_sourceTex, 
@@ -89,7 +89,7 @@ namespace glf
 		glClear(GL_COLOR_BUFFER_BIT);
 		glUseProgram(programProjection.id);
 		vao.Draw(GL_TRIANGLES,6,0);
-		assert(glf::CheckFramebuffer(shFrameProjection));
+		glf::CheckFramebuffer(shFrameProjection);
 
 		// Reduce
 		glBindTexture(GL_TEXTURE_2D_ARRAY,shTexture.id);

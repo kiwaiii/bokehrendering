@@ -201,17 +201,22 @@ namespace glf
 		glutInitWindowPosition(64, 64);
 		glutInit(&argc, argv);
 		glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);// | GLUT_MULTISAMPLE);
+
+		int WindowHandle = glutCreateWindow(argv[0]);
+		glewExperimental = GL_TRUE; 
+		glewInit();
+		glutDestroyWindow(WindowHandle);
+
 		glutInitContextVersion(Major, Minor);
-		if(glf::Version(Major, Minor) >= 320)
+		if(glf::Version(Major, Minor) >= 410)
 		{
-			glutInitContextProfile(GLUT_CORE_PROFILE | GLUT_DEBUG); // GLUT_COMPATIBILITY_PROFILE
+			glutInitContextProfile(GLUT_CORE_PROFILE);
+			//glutInitContextProfile(GLUT_CORE_PROFILE | GLUT_DEBUG);
+			//glutInitContextProfile(GLUT_COMPATIBILITY_PROFILE | GLUT_DEBUG);
 			//glutInitContextFlags(GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
 		}
 
 		glutCreateWindow(argv[0]);
-		glewExperimental = GL_TRUE; 
-		glewInit();
-
 		glGetError();
 		glf::init();
 		ctx::ui = new glui::GlutContext();
@@ -231,9 +236,7 @@ namespace glf
 			glutIdleFunc(		glf::idle);
 			glutCloseFunc(		glf::close);
 			glutMouseWheelFunc( glf::wheel );
-
 			glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
-
 			glutMainLoop();
 
 			return true;

@@ -6797,12 +6797,18 @@ namespace glf
 		{
 			// Decode data
 			unsigned char* out;
-			unsigned w; 
-			unsigned h;
+			unsigned w = 0; 
+			unsigned h = 0;
 			unsigned error = LodePNG_decode32_file(&out, &w, &h, _filename.c_str());
 			if(error!=0)
 			{
 				glf::Error("Texture does not exist : %s",_filename.c_str());
+				assert(false);
+			}
+
+			if(w==0 || h == 0)
+			{
+				glf::Error("Texture resolution problem : %s",_filename.c_str());
 				assert(false);
 			}
 

@@ -76,8 +76,8 @@ namespace glf
 		{
 			nearPlanes[i] = 0.1f;
 			farPlanes[i]  = 100.f;
-		}		
-		assert(glf::CheckError("CSMLight::CSMLight"));
+		}
+		glf::CheckError("CSMLight::CSMLight");
 	}
 	//-------------------------------------------------------------------------
 	CSMLight::~CSMLight()

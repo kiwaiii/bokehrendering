@@ -3,7 +3,7 @@
 #-------------------------------------------------------------------------------
 cmake_minimum_required(VERSION 2.6)
 SET(CMAKE_VERBOSE_MAKEFILE ON)	
-SET(CMAKE_BUILD_TYPE Debug)
+SET(CMAKE_BUILD_TYPE Release)
 
 #-------------------------------------------------------------------------------
 # Macro
@@ -38,26 +38,27 @@ ENDIF(MSVC)
 #-------------------------------------------------------------------------------
 IF(MSVC)
 ELSE(MSVC)
-	SET(CMAKE_CXX_FLAGS "-O0 -g -pg")
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g -pg -Wall")
+	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall")
 	#SET(CMAKE_LD_FLAGS  "-msse2 -mfmath=sse")
 ENDIF(MSVC)
 
 #-------------------------------------------------------------------------------
 # Extra directories
 #-------------------------------------------------------------------------------
-FIND_PACKAGE(OpenGL)
-IF(NOT OPENGL_FOUND)
-	MESSAGE("ERROR: OpenGL not found")
-ENDIF(NOT OPENGL_FOUND)
-
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR})
 
 IF(MSVC)
+	FIND_PACKAGE(OpenGL)
+	IF(NOT OPENGL_FOUND)
+		MESSAGE("ERROR: OpenGL not found")
+	ENDIF(NOT OPENGL_FOUND)
 	addExternalPackage("FREEGLUT" "freeglut-2.6.0")
 	addExternalPackage("GLEW" "glew-1.7.0")
 	addExternalPackage("GLM" "glm-0.9.2.4")
 ELSE(MSVC)
 	FIND_PACKAGE(GLUT)
+	INCLUDE_DIRECTORIES(/usr/include/nvidia-current/)
 	addExternalPackage("GLEW" "glew-1.7.0")
 	addExternalPackage("GLM" "glm-0.9.2.4")
 ENDIF(MSVC)
