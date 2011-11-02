@@ -1,53 +1,49 @@
 {
-	"sky":
+	"dof":
 	{
-		"sunTheta"			: 0,
-		"sunPhi"			: 0,
-		"sunFactor"			: 0,
-		"turbidity"			: 0,
+		"nSamples"			: 24,
+		"nearStart"			: 0.01,
+		"nearEnd"			: 3.00,
+		"farStart"			: 10.0,
+		"farEnd"			: 20.0,
+		"maxCoCRadius"		: 10.0,
+		"maxBokehRadius"	: 15.0,
+		"lumThreshold"		: 5000.0,
+		"cocThreshold"		: 3.5,
+		"bokehDepthCutoff"	: 1.0,
+		"poissonFiltering"	: false
 	},
 
-	"tone":
+	"sky":
 	{
-		"toneExposure"		: 0,
+		"sunTheta"			: 0.63,
+		"sunPhi"			: 5.31,
+		"sunFactor"			: 3.50,
+		"turbidity"			: 2
 	},
 
 	"csm":
 	{
 		"nCascades"			: 4,
 		"resolution"		: 1024,
-		"nSamples"			: 0,
-		"bias"				: 0,
+		"nSamples"			: 1,
+		"bias"				: 0.0016,
 		"aperture"			: 0,
-		"cascadeAlpha"		: 0,
+		"blendFactor"		: 1,
+		"cascadeAlpha"		: 0.5
 	},
 
 	"ssao":
 	{
-		"beta"				: 0,
-		"epsilon"			: 0,
-		"sigma"				: 0,
-		"kappa"				: 0,
-		"radius"			: 0,
-		"nSamples"			: 0,
-		"sigmaH"			: 0,
-		"sigmaV"			: 0,
-		"nTaps"				: 0,
-	},
-
-	"dof":
-	{
-		"nSamples"			: 0,
-		"nearStart"			: 0,
-		"nearEnd"			: 0,
-		"farStart"			: 0,
-		"farEnd"			: 0,
-		"maxCoCRadius"		: 0,
-		"maxBokehRadius"	: 0,
-		"lumThreshold"		: 0,
-		"cocThreshold"		: 0,
-		"bokehDepthCutoff"	: 0,
-		"poissonFiltering"	: 0,
+		"beta"				: 0.0001,
+		"epsilon"			: 0.0722,
+		"sigma"				: 1.0,
+		"kappa"				: 1.0,
+		"radius"			: 1.0,
+		"nSamples"			: 16,
+		"sigmaH"			: 1.0,
+		"sigmaV"			: 1.0,
+		"nTaps"				: 1
 	},
 
 	"directory":
@@ -55,7 +51,12 @@
 		"textures"			: "../resources/textures/",
 		"shaders"			: "../resources/shaders/",
 		"scenes"			: "../resources/scenes/",
-		"models"			: "../resources/models/",
+		"models"			: "../resources/models/"
 	},
+
+	"tone":
+	{
+		"expToneExposure"	: -4.08
+	}
 }
 

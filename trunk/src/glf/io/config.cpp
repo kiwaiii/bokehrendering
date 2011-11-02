@@ -636,6 +636,11 @@ namespace glf
 
 			// Parse data
 			root = cJSON_Parse(fileContent);
+			if(root==NULL)
+			{
+				Error("Error during parsing (file: %s): \n %s",_filename.c_str(),cJSON_GetErrorPtr());
+				exit(-1);
+			}
 			delete[] fileContent;
 
 			return root;
@@ -660,7 +665,7 @@ namespace glf
 			assert(_node != NULL);
 			ConfigNode* node = GetNode(_node,_tag.c_str());
 			if(node!=NULL)
-				return bool(node->valueint);
+				return node->valueint>0;
 			else
 				return _default;
 		}
@@ -714,32 +719,45 @@ namespace glf
 			assert(_node != NULL);
 			return cJSON_GetArraySize(_node);
 		}
+		//----------------------------------------------------------------------
+		glm::vec3 ConfigLoader::GetVec3(ConfigNode* _node,
+										const std::string& _tag,
+										glm::vec3 _default) const
+		{
+			assert(_node != NULL);
+			ConfigNode* node = GetNode(_node,_tag.c_str());
+			if(node!=NULL)
+			{
+				glm::vec3 v;
+				assert(GetCount(node)==3);
+				v.x = float(GetNode(node,0)->valuedouble);
+				v.y = float(GetNode(node,1)->valuedouble);
+				v.z = float(GetNode(node,2)->valuedouble);
+				return v;
+			}
+			else
+				return _default;
+		}
+		//----------------------------------------------------------------------
+		glm::vec4 ConfigLoader::GetVec4(ConfigNode* _node,
+										const std::string& _tag,
+										glm::vec4 _default) const
+		{
+			assert(_node != NULL);
+			ConfigNode* node = GetNode(_node,_tag.c_str());
+			if(node!=NULL)
+			{
+				glm::vec4 v;
+				assert(GetCount(node)==4);
+				v.x = float(GetNode(node,0)->valuedouble);
+				v.y = float(GetNode(node,1)->valuedouble);
+				v.z = float(GetNode(node,2)->valuedouble);
+				v.w = float(GetNode(node,3)->valuedouble);
+				return v;
+			}
+			else
+				return _default;
+		}
+		//----------------------------------------------------------------------
 	}
 }
-
-/*
-	// JSON loading example
-	{
-		// Load file
-		std::ifstream file(_filename.c_str());
-
-		// Compute file size
-		std::size_t dataSize;
-		{
-			long pos = file.tellg();
-			file.seekg(0, std::ios_base::end);
-			dataSize = file.tellg();
-			file.seekg(pos, std::ios_base::beg);
-		}
-
-		// Load data
-		char* fileContent = new char[dataSize];
-		file.read(fileContent,sizeof(char)*dataSize);
-
-		// Parse data
-		cJSON *root   = cJSON_Parse(fileContent);
-		Info("firstName : %s",cJSON_GetObjectItem(root,"firstName")->valuestring);
-
-		delete[] fileContent;
-	}
-*/

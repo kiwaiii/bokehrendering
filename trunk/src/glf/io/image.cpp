@@ -1,7 +1,6 @@
 //------------------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------------------
-#include <glf/io/image.hpp>
 #include <cstring>
 #include <vector>
 #include <string>
@@ -13,7 +12,6 @@
 //------------------------------------------------------------------------------
 // Macros
 //------------------------------------------------------------------------------
-#define VERSION_STRING "20111009"
 
 namespace 
 {
@@ -41,6 +39,7 @@ namespace
 	//		3. This notice may not be removed or altered from any source
 	//		distribution.
 	//--------------------------------------------------------------------------
+	#define VERSION_STRING "20111009"
 
 	/* ////////////////////////////////////////////////////////////////////////// */
 	/* Code Sections                                                              */
@@ -6784,7 +6783,7 @@ namespace
 //------------------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------------------
-#include <glf/ioimage.hpp>
+#include <glf/io/image.hpp>
 #include <glf/utils.hpp>
 
 namespace glf
@@ -6804,13 +6803,13 @@ namespace glf
 			if(error!=0)
 			{
 				glf::Error("Texture does not exist : %s",_filename.c_str());
-				assert(false);
+				exit(-1);
 			}
 
 			if(w==0 || h == 0)
 			{
 				glf::Error("Texture resolution problem : %s",_filename.c_str());
-				assert(false);
+				exit(-1);
 			}
 
 			unsigned char* rout = new unsigned char[4*w*h];

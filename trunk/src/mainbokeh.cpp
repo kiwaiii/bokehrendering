@@ -5,7 +5,6 @@
 //------------------------------------------------------------------------------
 #include <glf/window.hpp>
 #include <glf/scene.hpp>
-#include <glf/iomodel.hpp>
 #include <glf/buffer.hpp>
 #include <glf/pass.hpp>
 #include <glf/csm.hpp>
@@ -18,12 +17,12 @@
 #include <glf/dofprocessor.hpp>
 #include <glf/postprocessor.hpp>
 #include <glf/utils.hpp>
+#include <glf/io/scene.hpp>
 #include <glf/io/config.hpp>
 #include <fstream>
 #include <cstring>
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
-#include <glui/arial12.hpp>
 //------------------------------------------------------------------------------
 #ifdef WIN32
 	#pragma warning( disable : 4996 )
@@ -68,6 +67,8 @@ namespace
 	struct CSMParams
 	{
 		int 								nSamples;
+		int 								nCascades;
+		int 								resolution;
 		float								bias;
 		float								aperture;
 		float								blendFactor;
@@ -104,7 +105,13 @@ namespace
 
 	struct Application
 	{
-											Application(int,int);
+		Application(						int _w, 
+											int _h,
+											const SkyParams& _skyParams,
+											const ToneParams& _toneParams,
+											const CSMParams& _csmParams,
+											const SSAOParams& _ssaoParams,
+											const DOFParams& _dofParams);
 		glf::ResourceManager				resources;
 		glf::SceneManager					scene;
 
@@ -159,13 +166,19 @@ namespace
 	const char*								menuNames[]		= {"Tone","Sky","CSM","SSAO", "DoF" };
 	struct									menuType		{ enum Type {MN_TONE,MN_SKY,MN_CSM,MN_SSAO,MN_DOF,MAX }; };
 
-	Application::Application(int _w, int _h):
+	Application::Application(				int _w, 
+											int _h,
+											const SkyParams& _skyParams,
+											const ToneParams& _toneParams,
+											const CSMParams& _csmParams,
+											const SSAOParams& _ssaoParams,
+											const DOFParams& _dofParams):
 	timingRenderer(_w,_h),
 	gbuffer(_w,_h),
 	renderSurface(_w,_h),
 	renderTarget1(_w,_h),
 	renderTarget2(_w,_h),
-	csmLight(1024,1024,4),
+	csmLight(_csmParams.resolution,_csmParams.resolution,_csmParams.nCascades),
 	csmBuilder(),
 	csmRenderer(_w,_h),
 	cubeMap(),
@@ -178,56 +191,11 @@ namespace
 	dofProcessor(_w,_h),
 	postProcessor(_w,_h)
 	{
-
-		glf::io::ConfigLoader loader;
-		glf::io::ConfigNode* root	= loader.Load("config.json");
-
-		glf::io::ConfigNode *dofNode= loader.GetNode(root,"dof");
-		dofParams.nSamples 			= loader.GetInt(dofNode,"nSamples",24);
-		dofParams.poissonFiltering 	= loader.GetInt(dofNode,"poissonFiltering",false);
-		dofParams.nearStart 		= loader.GetFloat(dofNode,"nearStart",0.01f);
-		dofParams.nearEnd 			= loader.GetFloat(dofNode,"nearEnd",3.f);
-		dofParams.farStart 			= loader.GetFloat(dofNode,"farStart",10.f);
-		dofParams.farEnd 			= loader.GetFloat(dofNode,"farEnd",20.f);
-		dofParams.maxCoCRadius 		= loader.GetFloat(dofNode,"maxCoCRadius",10.f);
-		dofParams.maxBokehRadius 	= loader.GetFloat(dofNode,"maxBokehRadius",15.f);
-		dofParams.lumThreshold 		= loader.GetFloat(dofNode,"lumThreshold",5000.f);
-		dofParams.cocThreshold 		= loader.GetFloat(dofNode,"cocThreshold",3.5f);
-		dofParams.bokehDepthCutoff 	= loader.GetFloat(dofNode,"bokehDepthCutoff",1.f);
-
-		glf::io::ConfigNode *skyNode= loader.GetNode(root,"sky");
-		skyParams.turbidity 		= loader.GetInt(skyNode,"turbidity",2);
-		skyParams.sunTheta 			= loader.GetFloat(skyNode,"sunTheta",0.63f);
-		skyParams.sunPhi 			= loader.GetFloat(skyNode,"sunPhi",5.31f);
-		skyParams.sunFactor 		= loader.GetFloat(skyNode,"sunFactor",3.5f);
-
-		glf::io::ConfigNode*csmNode	= loader.GetNode(root,"csm");
-		csmParams.nSamples 			= loader.GetInt(csmNode,"nSamples",1);
-		csmParams.bias 				= loader.GetFloat(csmNode,"bias",0.0016f);
-		csmParams.aperture 			= loader.GetFloat(csmNode,"aperture",0.f);
-		csmParams.blendFactor 		= loader.GetFloat(csmNode,"blendFactor",1.f);
-		csmParams.cascadeAlpha 		= loader.GetFloat(csmNode,"cascadeAlpha",0.5f);
-
-		glf::io::ConfigNode*ssaoNode= loader.GetNode(root,"ssao");
-		ssaoParams.nSamples 		= loader.GetInt(ssaoNode,"nSamples",16);
-		ssaoParams.nTaps 			= loader.GetInt(ssaoNode,"nTaps",1);
-		ssaoParams.beta 			= loader.GetFloat(ssaoNode,"beta",10e-04f);
-		ssaoParams.epsilon 			= loader.GetFloat(ssaoNode,"epsilon",0.0722f);
-		ssaoParams.sigma 			= loader.GetFloat(ssaoNode,"sigma",1.f);
-		ssaoParams.kappa 			= loader.GetFloat(ssaoNode,"kappa",1.f);
-		ssaoParams.radius 			= loader.GetFloat(ssaoNode,"radius",1.f);
-		ssaoParams.sigmaH 			= loader.GetFloat(ssaoNode,"sigmaH",1.f);
-		ssaoParams.sigmaV 			= loader.GetFloat(ssaoNode,"sigmaV",1.f);
-
-		glf::io::ConfigNode*toneNode= loader.GetNode(root,"tone");
-		toneParams.toneExposure 	= loader.GetFloat(toneNode,"expToneExposure",-4.08f);
-		toneParams.toneExposure		= pow(10.f,toneParams.expToneExposure);
-
-		glf::io::ConfigNode*dirNode	= loader.GetNode(root,"directory");
-		glf::directory::TextureDirectory 	= loader.GetString(dirNode,"textures");
-		glf::directory::ShaderDirectory 	= loader.GetString(dirNode,"shaders");
-		glf::directory::SceneDirectory 		= loader.GetString(dirNode,"scenes");
-		glf::directory::ModelDirectory 		= loader.GetString(dirNode,"models");
+		skyParams					= _skyParams;
+		toneParams					= _toneParams;
+		csmParams					= _csmParams;
+		ssaoParams					= _ssaoParams;
+		dofParams					= _dofParams;
 
 		updateLighting				= true;
 		activeBokeh					= 1;
@@ -259,14 +227,70 @@ bool begin()
 	glCullFace(GL_BACK);
 	glf::CheckError("begin");
 
-	ctx::camera 			= glf::Camera::Ptr(new glf::HybridCamera());
-	glf::manager::timings	= glf::TimingManager::Create();
-	glf::manager::helpers	= glf::HelperManager::Create();
-	app 					= new Application(ctx::window.Size.x,ctx::window.Size.y);
+	// Load configuration
+	glf::io::ConfigLoader loader;
+	glf::io::ConfigNode* root	= loader.Load("../resources/configs/config.json");
+		
+	DOFParams dofParams;
+	glf::io::ConfigNode *dofNode= loader.GetNode(root,"dof");
+	dofParams.nSamples 			= loader.GetInt(dofNode,"nSamples",24);
+	dofParams.poissonFiltering 	= loader.GetBool(dofNode,"poissonFiltering",false);
+	dofParams.nearStart 		= loader.GetFloat(dofNode,"nearStart",0.01f);
+	dofParams.nearEnd 			= loader.GetFloat(dofNode,"nearEnd",3.f);
+	dofParams.farStart 			= loader.GetFloat(dofNode,"farStart",10.f);
+	dofParams.farEnd 			= loader.GetFloat(dofNode,"farEnd",20.f);
+	dofParams.maxCoCRadius 		= loader.GetFloat(dofNode,"maxCoCRadius",10.f);
+	dofParams.maxBokehRadius 	= loader.GetFloat(dofNode,"maxBokehRadius",15.f);
+	dofParams.lumThreshold 		= loader.GetFloat(dofNode,"lumThreshold",5000.f);
+	dofParams.cocThreshold 		= loader.GetFloat(dofNode,"cocThreshold",3.5f);
+	dofParams.bokehDepthCutoff 	= loader.GetFloat(dofNode,"bokehDepthCutoff",1.f);
 
-	glf::io::LoadScene(	"../resources/models/tank/",
-						"tank.obj",
-						glm::rotate(90.f,1.f,0.f,0.f),
+	SkyParams skyParams;
+	glf::io::ConfigNode *skyNode= loader.GetNode(root,"sky");
+	skyParams.turbidity 		= loader.GetInt(skyNode,"turbidity",2);
+	skyParams.sunTheta 			= loader.GetFloat(skyNode,"sunTheta",0.63f);
+	skyParams.sunPhi 			= loader.GetFloat(skyNode,"sunPhi",5.31f);
+	skyParams.sunFactor 		= loader.GetFloat(skyNode,"sunFactor",3.5f);
+
+	ToneParams toneParams;
+	glf::io::ConfigNode*toneNode= loader.GetNode(root,"tone");
+	toneParams.expToneExposure	= loader.GetFloat(skyNode,"expToneExposure",-4.08f);
+	toneParams.toneExposure		= pow(10.f,toneParams.expToneExposure);
+
+	CSMParams csmParams;
+	glf::io::ConfigNode*csmNode	= loader.GetNode(root,"csm");
+	csmParams.nSamples 			= loader.GetInt(csmNode,"nSamples",1);
+	csmParams.nCascades			= loader.GetInt(csmNode,"nCascades",4);
+	csmParams.resolution		= loader.GetInt(csmNode,"resolution",1024);
+	csmParams.bias 				= loader.GetFloat(csmNode,"bias",0.0016f);
+	csmParams.aperture 			= loader.GetFloat(csmNode,"aperture",0.f);
+	csmParams.cascadeAlpha 		= loader.GetFloat(csmNode,"cascadeAlpha",0.5f);
+	csmParams.blendFactor		= loader.GetFloat(csmNode,"blendFactor",1.0f);
+
+	SSAOParams ssaoParams;
+	glf::io::ConfigNode*ssaoNode= loader.GetNode(root,"ssao");
+	ssaoParams.nSamples 		= loader.GetInt(ssaoNode,"nSamples",16);
+	ssaoParams.nTaps 			= loader.GetInt(ssaoNode,"nTaps",1);
+	ssaoParams.beta 			= loader.GetFloat(ssaoNode,"beta",10e-04f);
+	ssaoParams.epsilon 			= loader.GetFloat(ssaoNode,"epsilon",0.0722f);
+	ssaoParams.sigma 			= loader.GetFloat(ssaoNode,"sigma",1.f);
+	ssaoParams.kappa 			= loader.GetFloat(ssaoNode,"kappa",1.f);
+	ssaoParams.radius 			= loader.GetFloat(ssaoNode,"radius",1.f);
+	ssaoParams.sigmaH 			= loader.GetFloat(ssaoNode,"sigmaH",1.f);
+	ssaoParams.sigmaV 			= loader.GetFloat(ssaoNode,"sigmaV",1.f);
+
+	ctx::camera 				= glf::Camera::Ptr(new glf::HybridCamera());
+	glf::manager::timings		= glf::TimingManager::Create();
+	glf::manager::helpers		= glf::HelperManager::Create();
+	app 						= new Application(	ctx::window.Size.x,
+													ctx::window.Size.y,
+													skyParams,
+													toneParams,
+													csmParams,
+													ssaoParams,
+													dofParams);
+
+	glf::io::LoadScene(	glf::directory::SceneDirectory + "tank.json",
 						app->resources,
 						app->scene,
 						true);

@@ -1,5 +1,5 @@
-#ifndef GLF_IO_IMAGE_HPP
-#define GLF_IO_IMAGE_HPP
+#ifndef GLF_IO_LIGHT_HPP
+#define GLF_IO_LIGHT_HPP
 
 //-----------------------------------------------------------------------------
 // Include

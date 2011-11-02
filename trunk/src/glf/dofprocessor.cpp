@@ -2,7 +2,7 @@
 // Include
 //-----------------------------------------------------------------------------
 #include <glf/dofprocessor.hpp>
-#include <glf/ioimage.hpp>
+#include <glf/io/image.hpp>
 #include <glf/debug.hpp>
 #include <glf/rng.hpp>
 #include <glm/glm.hpp>

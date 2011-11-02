@@ -5,6 +5,7 @@
 // Includes
 //------------------------------------------------------------------------------
 #include <string>
+#include <glm/glm.hpp>
 
 namespace glf
 {
@@ -41,6 +42,12 @@ namespace glf
 			float			GetFloat(	ConfigNode* _node,
 										const std::string& _tag,
 										float _default = 0) const;
+			glm::vec3		GetVec3(	ConfigNode* _node,
+										const std::string& _tag,
+										glm::vec3 _default = glm::vec3(0)) const;
+			glm::vec4		GetVec4(	ConfigNode* _node,
+										const std::string& _tag,
+										glm::vec4 _default = glm::vec4(0)) const;
 			std::string		GetString(	ConfigNode* _node,
 										const std::string& _tag,
 										const std::string& _default = "") const;

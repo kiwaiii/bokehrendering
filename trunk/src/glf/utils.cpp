@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 #define VERBOSE_COMPILATION 1
 #define NOMINMAX
-#define ENABLE_MSVC_CONSOLE 0
+#define ENABLE_MSVC_CONSOLE 1
 
 //------------------------------------------------------------------------------
 // Helpers function for WIN32
