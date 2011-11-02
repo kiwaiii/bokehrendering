@@ -3,7 +3,7 @@
 #-------------------------------------------------------------------------------
 cmake_minimum_required(VERSION 2.6)
 SET(CMAKE_VERBOSE_MAKEFILE ON)	
-SET(CMAKE_BUILD_TYPE Release)
+SET(CMAKE_BUILD_TYPE Debug)
 
 #-------------------------------------------------------------------------------
 # Macro
@@ -68,6 +68,7 @@ ENDIF(MSVC)
 #-------------------------------------------------------------------------------
 ADD_SUBDIRECTORY(glf)
 ADD_SUBDIRECTORY(glui)
+ADD_SUBDIRECTORY(glf/io)
 
 #-------------------------------------------------------------------------------
 # Libraries definitions
