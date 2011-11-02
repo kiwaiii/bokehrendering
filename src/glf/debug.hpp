@@ -26,6 +26,8 @@
 //------------------------------------------------------------------------------
 #define ENABLE_CHECK_ERROR				1
 #define ENABLE_VERBOSE_PROGRAM 			0
+#define ENABLE_ASSERT_ON_ERROR			1
+#define ENABLE_EXIT_ON_ERROR			1
 
 namespace glf
 {

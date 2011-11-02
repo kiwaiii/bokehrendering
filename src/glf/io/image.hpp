@@ -1,8 +1,8 @@
-#ifndef GLF_IO_LIGHT_HPP
-#define GLF_IO_LIGHT_HPP
+#ifndef GLF_IO_IMAGE_HPP
+#define GLF_IO_IMAGE_HPP
 
 //-----------------------------------------------------------------------------
-// Include
+// Includes
 //-----------------------------------------------------------------------------
 #include <glf/texture.hpp>
 #include <string>
@@ -14,7 +14,9 @@ namespace glf
 		void LoadTexture(	const std::string& _filename,
 							Texture2D& _texture,
 							bool _srgb,
+							bool _allocateMipmap,
 							bool _verbose=true);
-	};
+	}
 }
+
 #endif

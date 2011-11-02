@@ -1538,7 +1538,7 @@ namespace glf
 				if(!FindTexture(filename,_textureDB,texture))
 				{
 					texture = _resourceManager.CreateTexture2D();
-					LoadTexture(filename,*texture,true);
+					LoadTexture(filename,*texture,true,true);
 
 					texture->SetFiltering(GL_LINEAR_MIPMAP_LINEAR,GL_LINEAR);
 					texture->SetAnisotropy(MAX_ANISOSTROPY);
@@ -1560,7 +1560,7 @@ namespace glf
 				if(!FindTexture(filename,_textureDB,texture))
 				{
 					texture = _resourceManager.CreateTexture2D();
-					LoadTexture(filename,*texture,false);
+					LoadTexture(filename,*texture,false,true);
 
 					texture->SetFiltering(GL_LINEAR_MIPMAP_LINEAR,GL_LINEAR);
 					texture->SetAnisotropy(MAX_ANISOSTROPY);

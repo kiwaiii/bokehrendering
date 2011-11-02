@@ -169,6 +169,14 @@ namespace glf
 		#else
 		std::cout << "[Error] " << sBuffer << std::endl << std::flush;
 		#endif
+
+		#if ENABLE_ASSERT_ON_ERROR
+		assert(false);
+		#endif
+
+		#if ENABLE_EXIT_ON_ERROR
+		exit(-1);
+		#endif
 	}
 	//--------------------------------------------------------------------------
 	int Version(int Major, int Minor)
