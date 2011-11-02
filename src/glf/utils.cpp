@@ -66,7 +66,7 @@ namespace glf
 	//-------------------------------------------------------------------------
 	int NextMipmapDimension(int _dim, int _level)
 	{
-		return int(std::max(1.f, floor(float(_dim / (1<<_level) )) ));
+		return int(std::max(1.f, float(floor( float(_dim / (1<<_level)) )) ));
 	}
 	//-------------------------------------------------------------------------
 	std::string ToString(const glm::mat4& _mat)

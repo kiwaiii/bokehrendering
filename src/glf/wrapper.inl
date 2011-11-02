@@ -1,6 +1,7 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
+#include <sstream>
 
 namespace glf
 {
@@ -10,7 +11,8 @@ namespace glf
 									const T& _value)
 	{
 		std::stringstream option;
-		option << "#define " << _name << " " << _value;
+		//option << "#define " << _name << " " << _value;
+		//option << "#define ";
 		options.push_back(option.str());
 	}
 	//-------------------------------------------------------------------------
