@@ -32,8 +32,11 @@ namespace glf
 	//-------------------------------------------------------------------------
 	namespace directory
 	{
-		std::string ShaderDirectory  = "../resources/shaders/";
+		std::string ShaderDirectory	 = "../resources/shaders/";
 		std::string TextureDirectory = "../resources/textures/";
+		std::string SceneDirectory	 = "../resources/scenes/";
+		std::string ModelDirectory	 = "../resources/models/";
+		std::string ConfigDirectory	 = "../resources/configs/";
 	}
 	//-------------------------------------------------------------------------
 	glm::mat4	ScreenQuadTransform()
@@ -451,6 +454,16 @@ namespace glf
 		std::stringstream ss(_in);
 		std::string item;
 		while(std::getline(ss, item, delim)) 
-		    _out.push_back(item);
-    }
+			_out.push_back(item);
+	}
+	//--------------------------------------------------------------------------
+	std::size_t	FileSize(std::ifstream& _file)
+	{
+		long pos = _file.tellg();
+		_file.seekg(0, std::ios_base::end);
+		std::size_t dataSize = _file.tellg();
+		_file.seekg(pos, std::ios_base::beg);
+		return dataSize;
+	}
+	//--------------------------------------------------------------------------
 }

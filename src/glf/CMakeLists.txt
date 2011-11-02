@@ -1,4 +1,4 @@
-SET(GLF_SRCS
+SET(GLF_SRCS	${GLF_SRCS}
 				glf/buffer.cpp
 				glf/camera.cpp
 				glf/csm.cpp

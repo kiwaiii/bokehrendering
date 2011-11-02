@@ -89,6 +89,9 @@ namespace glf
 	{
 		extern std::string ShaderDirectory;
 		extern std::string TextureDirectory;
+		extern std::string SceneDirectory;
+		extern std::string ModelDirectory;
+		extern std::string ConfigDirectory;
 	}
 	//-------------------------------------------------------------------------
 	std::string ToString(					const glm::mat4& _mat);
@@ -139,6 +142,7 @@ namespace glf
 	void 		Split(						const std::string & _in, 
 											char delim, 
 											std::vector<std::string>& _out);
+	std::size_t	FileSize(					std::ifstream& _file);
 }
 
 #endif

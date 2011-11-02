@@ -18,6 +18,7 @@
 #include <glf/dofprocessor.hpp>
 #include <glf/postprocessor.hpp>
 #include <glf/utils.hpp>
+#include <glf/io/config.hpp>
 #include <fstream>
 #include <cstring>
 #include <glm/glm.hpp>
@@ -177,41 +178,56 @@ namespace
 	dofProcessor(_w,_h),
 	postProcessor(_w,_h)
 	{
-		ssaoParams.beta				= 10e-04f;
-		ssaoParams.epsilon			= 0.0722f;
-		ssaoParams.sigma			= 1.f;
-		ssaoParams.kappa			= 1.f;
-		ssaoParams.radius			= 1.0f;
-		ssaoParams.nSamples			= 16;
-		ssaoParams.sigmaH			= 1.f;
-		ssaoParams.sigmaV			= 1.f;
-		ssaoParams.nTaps			= 1;//4;
 
-		toneParams.expToneExposure 	=-4.08f;
+		glf::io::ConfigLoader loader;
+		glf::io::ConfigNode* root	= loader.Load("config.json");
+
+		glf::io::ConfigNode *dofNode= loader.GetNode(root,"dof");
+		dofParams.nSamples 			= loader.GetInt(dofNode,"nSamples",24);
+		dofParams.poissonFiltering 	= loader.GetInt(dofNode,"poissonFiltering",false);
+		dofParams.nearStart 		= loader.GetFloat(dofNode,"nearStart",0.01f);
+		dofParams.nearEnd 			= loader.GetFloat(dofNode,"nearEnd",3.f);
+		dofParams.farStart 			= loader.GetFloat(dofNode,"farStart",10.f);
+		dofParams.farEnd 			= loader.GetFloat(dofNode,"farEnd",20.f);
+		dofParams.maxCoCRadius 		= loader.GetFloat(dofNode,"maxCoCRadius",10.f);
+		dofParams.maxBokehRadius 	= loader.GetFloat(dofNode,"maxBokehRadius",15.f);
+		dofParams.lumThreshold 		= loader.GetFloat(dofNode,"lumThreshold",5000.f);
+		dofParams.cocThreshold 		= loader.GetFloat(dofNode,"cocThreshold",3.5f);
+		dofParams.bokehDepthCutoff 	= loader.GetFloat(dofNode,"bokehDepthCutoff",1.f);
+
+		glf::io::ConfigNode *skyNode= loader.GetNode(root,"sky");
+		skyParams.turbidity 		= loader.GetInt(skyNode,"turbidity",2);
+		skyParams.sunTheta 			= loader.GetFloat(skyNode,"sunTheta",0.63f);
+		skyParams.sunPhi 			= loader.GetFloat(skyNode,"sunPhi",5.31f);
+		skyParams.sunFactor 		= loader.GetFloat(skyNode,"sunFactor",3.5f);
+
+		glf::io::ConfigNode*csmNode	= loader.GetNode(root,"csm");
+		csmParams.nSamples 			= loader.GetInt(csmNode,"nSamples",1);
+		csmParams.bias 				= loader.GetFloat(csmNode,"bias",0.0016f);
+		csmParams.aperture 			= loader.GetFloat(csmNode,"aperture",0.f);
+		csmParams.blendFactor 		= loader.GetFloat(csmNode,"blendFactor",1.f);
+		csmParams.cascadeAlpha 		= loader.GetFloat(csmNode,"cascadeAlpha",0.5f);
+
+		glf::io::ConfigNode*ssaoNode= loader.GetNode(root,"ssao");
+		ssaoParams.nSamples 		= loader.GetInt(ssaoNode,"nSamples",16);
+		ssaoParams.nTaps 			= loader.GetInt(ssaoNode,"nTaps",1);
+		ssaoParams.beta 			= loader.GetFloat(ssaoNode,"beta",10e-04f);
+		ssaoParams.epsilon 			= loader.GetFloat(ssaoNode,"epsilon",0.0722f);
+		ssaoParams.sigma 			= loader.GetFloat(ssaoNode,"sigma",1.f);
+		ssaoParams.kappa 			= loader.GetFloat(ssaoNode,"kappa",1.f);
+		ssaoParams.radius 			= loader.GetFloat(ssaoNode,"radius",1.f);
+		ssaoParams.sigmaH 			= loader.GetFloat(ssaoNode,"sigmaH",1.f);
+		ssaoParams.sigmaV 			= loader.GetFloat(ssaoNode,"sigmaV",1.f);
+
+		glf::io::ConfigNode*toneNode= loader.GetNode(root,"tone");
+		toneParams.toneExposure 	= loader.GetFloat(toneNode,"expToneExposure",-4.08f);
 		toneParams.toneExposure		= pow(10.f,toneParams.expToneExposure);
 
-		csmParams.nSamples			= 1;
-		csmParams.bias				= 0.0016f;
-		csmParams.aperture			= 0.0f;
-		csmParams.blendFactor		= 1.f;
-		csmParams.cascadeAlpha		= 0.5f;
-
-		skyParams.sunTheta			= 0.63f;
-		skyParams.sunPhi			= 5.31f;
-		skyParams.turbidity			= 2;
-		skyParams.sunFactor			= 3.5f;
-
-		dofParams.nearStart			= 0.01f;
-		dofParams.nearEnd			= 3.00f;
-		dofParams.farStart			= 10.f;
-		dofParams.farEnd			= 20.f;
-		dofParams.maxCoCRadius		= 10.f;
-		dofParams.maxBokehRadius	= 15.f;
-		dofParams.nSamples			= 24;
-		dofParams.lumThreshold		= 5000.f;
-		dofParams.cocThreshold		= 3.5f;
-		dofParams.bokehDepthCutoff	= 1.f;
-		dofParams.poissonFiltering	= false;
+		glf::io::ConfigNode*dirNode	= loader.GetNode(root,"directory");
+		glf::directory::TextureDirectory 	= loader.GetString(dirNode,"textures");
+		glf::directory::ShaderDirectory 	= loader.GetString(dirNode,"shaders");
+		glf::directory::SceneDirectory 		= loader.GetString(dirNode,"scenes");
+		glf::directory::ModelDirectory 		= loader.GetString(dirNode,"models");
 
 		updateLighting				= true;
 		activeBokeh					= 1;
