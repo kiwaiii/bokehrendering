@@ -17,6 +17,7 @@
 //------------------------------------------------------------------------------
 #define VERBOSE_COMPILATION 1
 #define NOMINMAX
+#define ENABLE_MSVC_CONSOLE 0
 
 //------------------------------------------------------------------------------
 // Helpers function for WIN32
@@ -124,7 +125,7 @@ namespace glf
 		vsprintf(sBuffer, _format, Params);
 		va_end(Params);
 		
-		#ifdef WIN32
+		#if (defined WIN32) && ENABLE_MSVC_CONSOLE
 		char ssBuffer[BUFFER_LOG_SIZE];
 		sprintf(ssBuffer,"[Info] %s\n",sBuffer);
 		OutputDebugString(s2ws(std::string(ssBuffer)).c_str());
@@ -141,7 +142,7 @@ namespace glf
 		vsprintf(sBuffer, _format, Params);
 		va_end(Params);
 		
-		#ifdef WIN32
+		#if (defined WIN32) && ENABLE_MSVC_CONSOLE
 		char ssBuffer[BUFFER_LOG_SIZE];
 		sprintf(ssBuffer,"[Warning] %s\n",sBuffer);
 		OutputDebugString(s2ws(std::string(ssBuffer)).c_str());
@@ -158,7 +159,7 @@ namespace glf
 		vsprintf(sBuffer, _format, Params);
 		va_end(Params);
 		
-		#ifdef WIN32
+		#if (defined WIN32) && ENABLE_MSVC_CONSOLE
 		char ssBuffer[BUFFER_LOG_SIZE];
 		sprintf(ssBuffer,"[Error] %s\n",sBuffer);
 		OutputDebugString(s2ws(std::string(ssBuffer)).c_str());
