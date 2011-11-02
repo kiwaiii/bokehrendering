@@ -7,8 +7,6 @@ SET(GLF_SRCS	${GLF_SRCS}
 				glf/font.cpp
 				glf/helper.cpp
 				glf/geometry.cpp
-				glf/ioimage.cpp
-				glf/iomodel.cpp
 				glf/memory.cpp
 				glf/pass.cpp
 				glf/postprocessor.cpp

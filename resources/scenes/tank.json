@@ -4,18 +4,11 @@
 		{
 			"name"      : "tank",
 			"file"      : "tank.obj",
+			"folder"    : "tank",
 			"translate" : [0, 0, 0],
-			"rotate"    : [0, 0, 0],
+			"rotate"    : [90, 0, 0],
 			"scale"     : 1
-		},
-
-		{
-			"name"      : "tank",
-			"file"      : "tank.obj",
-			"translate" : [0, 0, 0],
-			"rotate"    : [0, 0, 0],
-			"scale"     : 1
-		},
+		}
 	],
 
 	"lights":
@@ -23,15 +16,15 @@
 		{
 			"name"      : "tank",
 			"type"      : "point",
-			"intensity" : [0, 0, 0],
-		},
+			"intensity" : [0, 0, 0]
+		}
 	],
 
 	"camera":
 	{
 		"position"    : [0, 0, 0],
 		"target"      : [0, 0, 0],
-		"type"        : "orbit",
-	},
+		"type"        : "orbit"
+	}
 }
 

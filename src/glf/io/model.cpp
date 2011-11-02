@@ -23,7 +23,6 @@
 //------------------------------------------------------------------------------
 // Macros
 //------------------------------------------------------------------------------
-#define ENABLE_ANISOSTROPIC_FILTERING	1
 #define MAX_ANISOSTROPY					16.f
 
 // OBJ loader
@@ -1595,7 +1594,7 @@ namespace glf
 			}
 		}
 		//----------------------------------------------------------------------
-		void LoadScene(		const std::string& _folder,
+		void LoadModel(		const std::string& _folder,
 							const std::string& _filename,
 							const glm::mat4& _transform,
 							ResourceManager& _resourceManager,
@@ -1605,7 +1604,6 @@ namespace glf
 			// Load objects
 			ModelOBJ loader;
 			bool loadOK = loader.import((_folder+_filename).c_str(), true);
-			assert(loadOK);
 			if(!loadOK)
 			{
 				glf::Error("Load model error (Folder: %s, Filename: %s)",_folder.c_str(),_filename.c_str());
@@ -1717,8 +1715,11 @@ namespace glf
 
 				// Load textures
 				glf::Texture2D* diffuseTex = GetDiffuseTex(_folder,mesh.pMaterial->colorMapFilename,textureDB,_resourceManager);
+				#if ENABLE_LOAD_NORMAL_MAP
 				glf::Texture2D* normalTex  = GetNormalTex(_folder,mesh.pMaterial->bumpMapFilename,textureDB,_resourceManager);
-				//glf::Texture2D* normalTex  = GetNormalTex(_folder,"",textureDB,_resourceManager);
+				#else
+				glf::Texture2D* normalTex  = GetNormalTex(_folder,"",textureDB,_resourceManager);
+				#endif
 
 				// Create and add regular mesh
 				RegularMesh rmesh;

@@ -12,7 +12,7 @@ namespace glf
 {
 	namespace io
 	{
-		void LoadScene(		const std::string& _folder,
+		void LoadModel(		const std::string& _folder,
 							const std::string& _filename,
 							const glm::mat4& _transform,
 							ResourceManager& _resourceManager,
