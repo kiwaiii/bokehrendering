@@ -15,6 +15,7 @@ namespace glf
 	diffuseTexUnit(INVALID_ID),
 	normalTexUnit(INVALID_ID),
 	roughnessVar(INVALID_ID),
+	specularityVar(INVALID_ID),
 	transformVar(INVALID_ID),
 	modelVar(INVALID_ID),
 	framebuffer(INVALID_ID)

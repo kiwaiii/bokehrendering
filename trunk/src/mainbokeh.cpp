@@ -22,14 +22,20 @@
 #include <cstring>
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
+#include <glui/arial12.hpp>
 //------------------------------------------------------------------------------
 #ifdef WIN32
 	#pragma warning( disable : 4996 )
 	#pragma warning( disable : 4201 )
 #endif
 //------------------------------------------------------------------------------
-#define MAJOR_VERSION	4
-#define MINOR_VERSION	2
+#ifdef WIN32
+	#define MAJOR_VERSION	4
+	#define MINOR_VERSION	2
+#else
+	#define MAJOR_VERSION	4
+	#define MINOR_VERSION	1	// Create a 4.2 context. Driver bug 285.05.09 on ubuntu 10.11
+#endif
 
 //-----------------------------------------------------------------------------
 namespace ctx
@@ -280,7 +286,6 @@ void gui()
 	static char labelBuffer[512];
 	static glui::Rect none(0,0,200,20);
 	static glui::Rect frameRect(0,0,200,10);
-	static int frameLayout = glui::Flags::Layout::DEFAULT;
 	static glui::Rect sliderRect(0, 0, 200, 12);
 
 	ctx::ui->Begin();
@@ -404,7 +409,6 @@ void gui()
 
 			if(app->activeMenu == menuType::MN_TONE)
 			{
-				static float expToneExposure = -4;
 				sprintf(labelBuffer,"Tone Exposure : 10^%.2f",app->toneParams.expToneExposure);
 				ctx::ui->Label(none,labelBuffer);
 				ctx::ui->HorizontalSlider(sliderRect,-6.f,6.f,&app->toneParams.expToneExposure);

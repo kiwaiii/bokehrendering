@@ -96,8 +96,8 @@ namespace glf
 		glDrawBuffer(GL_COLOR_ATTACHMENT0);
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
 
-		assert(glf::CheckFramebuffer(skyFramebuffer));
-		assert(glf::CheckError("SkyBuilder::SkyBuilder"));
+		glf::CheckFramebuffer(skyFramebuffer);
+		glf::CheckError("SkyBuilder::SkyBuilder");
 	}
 	//-------------------------------------------------------------------------
 	SkyBuilder::~SkyBuilder()

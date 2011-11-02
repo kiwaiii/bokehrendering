@@ -30,8 +30,8 @@ namespace glf
 		Texture2D 						diffuseTex;		// RGB : albedo / A : roughness
 		Texture2D  						depthTex; 		// Depth/Stencil buffer
 
-		GLint 	 						normalTexUnit;
 		GLint 	 						diffuseTexUnit;
+		GLint 	 						normalTexUnit;
 		GLint	 						roughnessVar;
 		GLint	 						specularityVar;
 
