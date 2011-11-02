@@ -51,11 +51,72 @@ namespace glf
 				default 		: Error("Automatic conversion : Yet unsupported texture inner format"); assert(false); break;
 			}
 		}
+		//-------------------------------------------------------------------------
+		/*void ToInnerFormat(GLenum _format, GLenum _type, GLenum& _innerFormat)
+		{
+			switch(_format)
+			{
+				case GL_RGBA :
+				{
+					switch(_type)
+					{
+						case GL_FLOAT		:
+						case GL_INTEGER		: _type = 
+						case GL_UNSIGNED_INT:
+						case GL_UNSIGNED_SHORT
+						case GL_UNSIGNED_BYTE;
+					}
+				}
+				// TODO ?
+				case GL_RGBA32F 			: _format = GL_RGBA; _type = GL_FLOAT; break;
+				case GL_RGB32F  			: _format = GL_RGB;  _type = GL_FLOAT; break;
+				case GL_RG32F   			: _format = GL_RG;   _type = GL_FLOAT; break;
+				case GL_R32F    			: _format = GL_RED;  _type = GL_FLOAT; break;
+
+				case GL_RGBA16F 			: _format = GL_RGBA; _type = GL_FLOAT; break;
+				case GL_RGB16F  			: _format = GL_RGB;  _type = GL_FLOAT; break;
+				case GL_RG16F   			: _format = GL_RG;   _type = GL_FLOAT; break;
+				case GL_R16F    			: _format = GL_RED;  _type = GL_FLOAT; break;
+
+				case GL_RGBA32UI			: _format = GL_RGBA_INTEGER; _type = GL_UNSIGNED_INT; break;
+				case GL_RGB32UI 			: _format = GL_RGB_INTEGER;  _type = GL_UNSIGNED_INT; break;
+				case GL_RG32UI  			: _format = GL_RG_INTEGER;   _type = GL_UNSIGNED_INT; break;
+				case GL_R32UI   			: _format = GL_RED_INTEGER;  _type = GL_UNSIGNED_INT; break;
+
+				case GL_RGBA16UI			: _format = GL_RGBA_INTEGER; _type = GL_UNSIGNED_SHORT; break;
+				case GL_RGB16UI 			: _format = GL_RGB_INTEGER;  _type = GL_UNSIGNED_SHORT; break;
+				case GL_RG16UI  			: _format = GL_RG_INTEGER;   _type = GL_UNSIGNED_SHORT; break;
+				case GL_R16UI   			: _format = GL_RED_INTEGER;  _type = GL_UNSIGNED_SHORT; break;
+	
+				case GL_RGBA8 				: _format = GL_RGBA; _type = GL_UNSIGNED_BYTE; break;
+				case GL_RGB8  				: _format = GL_RGB;  _type = GL_UNSIGNED_BYTE; break;
+				case GL_RG8  				: _format = GL_RG;   _type = GL_UNSIGNED_BYTE; break;
+				case GL_R8    				: _format = GL_RED;  _type = GL_UNSIGNED_BYTE; break;
+
+				case GL_SRGB8_ALPHA8	 	: _format = GL_RGBA; _type = GL_UNSIGNED_BYTE; break;
+				case GL_SRGB8  				: _format = GL_RGB;  _type = GL_UNSIGNED_BYTE; break;
+
+				case GL_DEPTH_COMPONENT32F	: _format = GL_DEPTH_COMPONENT;  _type = GL_FLOAT; break;
+				case GL_DEPTH32F_STENCIL8	: _format = GL_DEPTH_STENCIL;	 _type = GL_FLOAT_32_UNSIGNED_INT_24_8_REV; break;
+
+				case GL_COMPRESSED_RGB_S3TC_DXT1_EXT 	: _format = GL_RGB;  _type = GL_UNSIGNED_BYTE; break;
+				case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT 	: _format = GL_RGBA; _type = GL_UNSIGNED_BYTE; break;
+				case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT 	: _format = GL_RGBA; _type = GL_UNSIGNED_BYTE; break;
+				case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT 	: _format = GL_RGBA; _type = GL_UNSIGNED_BYTE; break;
+
+				default 		: Error("Automatic conversion : Yet unsupported texture inner format"); assert(false); break;
+			}
+		}*/
 	}
 	//-------------------------------------------------------------------------
 	void InnerFormatSplitter(GLenum _innerFormat, GLenum& _format, GLenum& _type)
 	{
 		ToFormat(_innerFormat, _format, _type);
+	}
+	//-------------------------------------------------------------------------
+	void InnerFormatMerger(GLenum _format, GLenum _type, GLenum& _innerFormat)
+	{
+
 	}
 	//-------------------------------------------------------------------------
 	Texture1D::Texture1D():
