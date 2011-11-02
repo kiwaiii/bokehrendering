@@ -8,14 +8,15 @@ SET(CMAKE_BUILD_TYPE Debug)
 #-------------------------------------------------------------------------------
 # Macro
 #-------------------------------------------------------------------------------
-MACRO(addExternalPackageGTC NAME DIRECTORY)
+MACRO(addExternalPackage NAME DIRECTORY)
 	SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/external/${DIRECTORY}/util)
 	SET(${NAME}_PACKAGE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/${DIRECTORY})
 	FIND_PACKAGE(${NAME})
 	IF(NOT ${NAME}_FOUND)
 		MESSAGE("ERROR: ${NAME} not found")
 	ENDIF(NOT ${NAME}_FOUND)
-ENDMACRO(addExternalPackageGTC)
+ENDMACRO(addExternalPackage)
+
 #-------------------------------------------------------------------------------
 # Project configuration
 #-------------------------------------------------------------------------------
@@ -45,7 +46,6 @@ ENDIF(MSVC)
 # Extra directories
 #-------------------------------------------------------------------------------
 FIND_PACKAGE(OpenGL)
-FIND_PACKAGE(GLUT)
 IF(NOT OPENGL_FOUND)
 	MESSAGE("ERROR: OpenGL not found")
 ENDIF(NOT OPENGL_FOUND)
@@ -53,14 +53,13 @@ ENDIF(NOT OPENGL_FOUND)
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR})
 
 IF(MSVC)
-	addExternalPackageGTC("GLEW" "glew-1.7.0")
-	addExternalPackageGTC("FREEGLUT" "freeglut-2.6.0")
-	addExternalPackageGTC("GLM" "glm-0.9.2.4")
+	addExternalPackage("FREEGLUT" "freeglut-2.6.0")
+	addExternalPackage("GLEW" "glew-1.7.0")
+	addExternalPackage("GLM" "glm-0.9.2.4")
 ELSE(MSVC)
-	INCLUDE_DIRECTORIES(/usr/include/nvidia-current/)
-	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/external/glm-0.9.2.4/)
-	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/external/glew-1.6.0/include/)
-	LINK_DIRECTORIES(${CMAKE_SOURCE_DIR}/external/glew-1.5.7/lib/)
+	FIND_PACKAGE(GLUT)
+	addExternalPackage("GLEW" "glew-1.7.0")
+	addExternalPackage("GLM" "glm-0.9.2.4")
 ENDIF(MSVC)
 
 #-------------------------------------------------------------------------------
@@ -73,4 +72,4 @@ ADD_SUBDIRECTORY(glui)
 # Libraries definitions
 #-------------------------------------------------------------------------------
 ADD_EXECUTABLE(BOKEH mainbokeh.cpp ${GLF_SRCS} ${GLUI_SRCS})
-TARGET_LINK_LIBRARIES(BOKEH ${OPENGL_LIBRARY} ${GLEW_LIBRARY} ${FREEGLUT_LIBRARY})
+TARGET_LINK_LIBRARIES(BOKEH ${OPENGL_LIBRARY} ${GLEW_LIBRARY} ${FREEGLUT_LIBRARY} ${GLUT_LIBRARY})
