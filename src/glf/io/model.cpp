@@ -100,7 +100,7 @@ namespace
 		~ModelOBJ();
 
 		void destroy();
-		bool import(const char *pszFilename, bool rebuildNormals = false);
+		bool import(const char *pszFilename, bool rebuildNormals = false, bool rebuildTangents = false);
 		void normalize(float scaleTo = 1.0f, bool center = true);
 		void reverseWinding();
 
@@ -370,7 +370,7 @@ namespace
 		m_vertexCache.clear();
 	}
 	//--------------------------------------------------------------------------
-	bool ModelOBJ::import(const char *pszFilename, bool rebuildNormals)
+	bool ModelOBJ::import(const char *pszFilename, bool rebuildNormals, bool rebuildTangents)
 	{
 		FILE *pFile = fopen(pszFilename, "r");
 
@@ -422,14 +422,20 @@ namespace
 		}
 
 		// Build tangents is required.
-
-		for (int i = 0; i < m_numberOfMaterials; ++i)
+		if(rebuildTangents)
 		{
-		    if (!m_materials[i].bumpMapFilename.empty())
-		    {
-		        generateTangents();
-		        break;
-		    }
+			generateTangents();
+		}
+		else
+		{
+			for (int i = 0; i < m_numberOfMaterials; ++i)
+			{
+				if (!m_materials[i].bumpMapFilename.empty())
+				{
+					generateTangents();
+					break;
+				}
+			}
 		}
 
 		return true;
@@ -1508,7 +1514,11 @@ namespace glf
 										const std::string& _inFile, 
 										const std::string& _default)
 			{
-				return _inFile.compare("")==0?_default:(_inFolder+_inFile);
+				std::string extension;
+				if(glf::GetExtension(_inFile,extension))
+					return _inFolder+_inFile;
+				else
+					return _default;
 			}
 			//------------------------------------------------------------------
 			bool FindTexture(	const std::string& _filename, 
@@ -1603,7 +1613,7 @@ namespace glf
 		{
 			// Load objects
 			ModelOBJ loader;
-			bool loadOK = loader.import((_folder+_filename).c_str(), true);
+			bool loadOK = loader.import((_folder+_filename).c_str(), true, true);
 			if(!loadOK)
 			{
 				glf::Error("Load model error (Folder: %s, Filename: %s)",_folder.c_str(),_filename.c_str());
@@ -1625,9 +1635,10 @@ namespace glf
 				glf::Info("nTriangles      : %d",loader.getNumberOfTriangles());
 			}
 			assert(nObjects>0);
+			assert(loader.hasTextureCoords());
 			assert(loader.hasNormals());
 			assert(loader.hasTangents());
-			assert(loader.hasTextureCoords());
+
 
 			// Create VBO
 			glf::VertexBuffer3F* vb = _resourceManager.CreateVBO3F();

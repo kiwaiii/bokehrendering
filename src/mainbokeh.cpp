@@ -128,7 +128,8 @@ namespace
 		glf::CSMRenderer					csmRenderer;
 
 		glf::CubeMap						cubeMap;
-		glf::SkyBuilder						skyBuilder;
+		//glf::SkyBuilder						skyBuilder;
+		glf::NightSkyBuilder				skyBuilder;
 
 		glf::SHLight						shLight;
 		glf::SHBuilder						shBuilder;

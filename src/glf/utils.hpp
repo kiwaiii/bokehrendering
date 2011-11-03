@@ -142,7 +142,9 @@ namespace glf
 	void 		Split(						const std::string & _in, 
 											char delim, 
 											std::vector<std::string>& _out);
-	std::size_t	FileSize(					std::ifstream& _file);
+	std::size_t	GetFileSize(				std::ifstream& _file);
+	bool		GetExtension(				const std::string& _filename, 
+											std::string& _extension);
 }
 
 #endif
