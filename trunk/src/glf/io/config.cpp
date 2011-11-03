@@ -630,7 +630,7 @@ namespace glf
 				exit(-1);
 			}
 			assert(file);
-			std::size_t dataSize = FileSize(file);
+			std::size_t dataSize = glf::GetFileSize(file);
 			char* fileContent = new char[dataSize];
 			file.read(fileContent,sizeof(char)*dataSize);
 

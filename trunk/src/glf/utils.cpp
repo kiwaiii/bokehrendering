@@ -465,7 +465,7 @@ namespace glf
 			_out.push_back(item);
 	}
 	//--------------------------------------------------------------------------
-	std::size_t	FileSize(std::ifstream& _file)
+	std::size_t	GetFileSize(std::ifstream& _file)
 	{
 		long pos = _file.tellg();
 		_file.seekg(0, std::ios_base::end);
@@ -473,5 +473,14 @@ namespace glf
 		_file.seekg(pos, std::ios_base::beg);
 		return dataSize;
 	}
+	//--------------------------------------------------------------------------
+	bool GetExtension(const std::string& _filename, std::string& _extension)
+    {
+		// Extract "." position
+		int position = _filename.find_last_of(".", -1);
+		if(position == -1) return false;
+		_extension = _filename.substr(position,  _filename.size() - ++position);
+		return true;
+    }
 	//--------------------------------------------------------------------------
 }

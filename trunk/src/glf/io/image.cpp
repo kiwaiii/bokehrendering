@@ -31,6 +31,11 @@ namespace glf
 				{
 					Error("Load image error : file does not exist (%s)",_filename.c_str());
 				}
+				
+				if(_verbose)
+				{
+					Info("Load image : %s",_filename.c_str());
+				}
 
 				// Convert all to RGBA. TODO Need improvement ...
 				GLenum format;
@@ -70,16 +75,25 @@ namespace glf
 				ILinfo ImageInfo;
 				iluGetImageInfo(&ImageInfo);
 				if( ImageInfo.Origin == IL_ORIGIN_UPPER_LEFT )
+				{
 					iluFlipImage();
+					if(_verbose) Info("Flip image");
+				}
 
 				switch(type)
 				{
 					case GL_UNSIGNED_BYTE	:
 					{
 						if(_srgb)
+						{
 							_texture.Allocate( GL_SRGB8_ALPHA8, ilGetInteger(IL_IMAGE_WIDTH),ilGetInteger(IL_IMAGE_HEIGHT),_allocateMipmap);
+							if(_verbose) Info("Allocate texture - format:GL_SRGB8_ALPHA8, w:%d, h:%d, mipmap:%s",ilGetInteger(IL_IMAGE_WIDTH),ilGetInteger(IL_IMAGE_HEIGHT), (_allocateMipmap?"TRUE":"FALSE") );
+						}
 						else
+						{
 							_texture.Allocate( GL_RGBA8, ilGetInteger(IL_IMAGE_WIDTH),ilGetInteger(IL_IMAGE_HEIGHT),_allocateMipmap);
+							if(_verbose) Info("Allocate texture - format:GL_RGBA8, w:%d, h:%d, mipmap:%s",ilGetInteger(IL_IMAGE_WIDTH),ilGetInteger(IL_IMAGE_HEIGHT), (_allocateMipmap?"TRUE":"FALSE") );
+						}
 					}
 					break;
 					case GL_FLOAT			:
@@ -87,6 +101,7 @@ namespace glf
 						if(_srgb)
 							Warning("Try to convert to SRGB, but texture format is not compatible");
 						_texture.Allocate( GL_RGBA32F, ilGetInteger(IL_IMAGE_WIDTH),ilGetInteger(IL_IMAGE_HEIGHT),_allocateMipmap);
+						if(_verbose) Info("Allocate texture - format:GL_RGBA32F, w:%d, h:%d, mipmap:%s",ilGetInteger(IL_IMAGE_WIDTH),ilGetInteger(IL_IMAGE_HEIGHT), (_allocateMipmap?"TRUE":"FALSE") );
 					}
 					break;
 					default 				:
