@@ -94,19 +94,39 @@ namespace glf
 
 		GLuint							skyFramebuffer;
 		TextureArray2D					skyTexture;
-		Program							program;
+		Texture1D						starTexture;
 		int								resolution;
 		float							sunTheta;
 		float							sunPhi;
 		float 							sunFactor;
 		glm::vec3						sunIntensity;
 		float							turbidity;
-		GLint							sunSphCoordVar;
-		GLint							turbidityVar;
-		GLint							sunFactorVar;
-		GLint							drawSunVar;
-		VertexBuffer3F					vbo;
-		VertexArray						vao;
+		int								nStars;
+
+		struct Sky
+		{
+										Sky():program("NightSky"){}
+			GLint						sunSphCoordVar;
+			GLint						turbidityVar;
+			GLint						sunFactorVar;
+			GLint						drawSunVar;
+			Program						program;
+		};
+
+		struct Star
+		{
+										Star():program("NightStar"){}
+			GLint						starTexUnit;
+			GLint						starFactorVar;
+			Program						program;
+		};
+
+		Sky								sky;
+		Star							star;
+		VertexBuffer3F					cubeVBO;
+		VertexArray						cubeVAO;
+		VertexBuffer3F					pointVBO;
+		VertexArray						pointVAO;
 	private:
 		glm::vec3 	ToCartesian(		float _theta, 
 										float _phi);
@@ -122,6 +142,7 @@ namespace glf
 		glm::vec3 	ComputeSunIntensity(float _sunTheta, 
 										float _sunPhi, 
 										float _turbidity);
+		void 		UpdateStar(			float _maxIntensity);
 	};
 	//--------------------------------------------------------------------------
 }

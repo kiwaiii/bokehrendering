@@ -361,7 +361,7 @@ namespace glf
 			std::vector<std::string> lines;
 			Split(Source,'\n',lines);
 			for(unsigned int i=0;i<lines.size();++i)
-				sourceWithLineNumbers << i << " : " << lines[i] << std::endl;
+				sourceWithLineNumbers << i+1 << " : " << lines[i] << std::endl;
 			Error("Shader compilation failded\n\nSource : \n%s\n\nError : \n%s\n", sourceWithLineNumbers.str().c_str(), &Buffer[0]);	
 		}
 
@@ -475,12 +475,12 @@ namespace glf
 	}
 	//--------------------------------------------------------------------------
 	bool GetExtension(const std::string& _filename, std::string& _extension)
-    {
+	{
 		// Extract "." position
 		int position = _filename.find_last_of(".", -1);
 		if(position == -1) return false;
 		_extension = _filename.substr(position,  _filename.size() - ++position);
 		return true;
-    }
+	}
 	//--------------------------------------------------------------------------
 }
