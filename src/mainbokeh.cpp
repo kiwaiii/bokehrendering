@@ -291,7 +291,7 @@ bool begin()
 													ssaoParams,
 													dofParams);
 
-	glf::io::LoadScene(	glf::directory::SceneDirectory + "tank.json",
+	glf::io::LoadScene(	glf::directory::SceneDirectory + "f14.json",
 						app->resources,
 						app->scene,
 						true);

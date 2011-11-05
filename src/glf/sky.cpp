@@ -2,6 +2,7 @@
 // Include
 //-----------------------------------------------------------------------------
 #include <glf/sky.hpp>
+#include <glf/rng.hpp>
 #include <glf/geometry.hpp>
 #include <glf/window.hpp>
 
@@ -257,54 +258,95 @@ namespace glf
 		XYZ.z			= ((1.f - x - y) / y) * XYZ.y;
 
 		// Conversion from XYZ to RGB
-	//	FragColor = vec4( vec3(1.0) - exp(-(1.0/15000.0) * (XYZ2RGB * XYZ)), 1);
+		//	FragColor = vec4( vec3(1.0) - exp(-(1.0/15000.0) * (XYZ2RGB * XYZ)), 1);
 		return XYZ2RGB * XYZ;
 	}
 	//-------------------------------------------------------------------------
 	NightSkyBuilder::NightSkyBuilder(int _res):
-	program("NightSky"),
 	resolution(_res),
 	sunTheta(0),
 	sunPhi(0),
 	sunFactor(1),
-	turbidity(2)
+	turbidity(2),
+	nStars(2048)
 	{
-		CreateCubePos(vbo);
-		vao.Add(vbo,semantic::Position,3,GL_FLOAT);
+		// Create resources
+		{
+			// Cube for rendering cube map
+			CreateCubePos(cubeVBO);
+			cubeVAO.Add(cubeVBO,semantic::Position,3,GL_FLOAT);
 
-		program.Compile(ProgramOptions::CreateVSOptions().Append(LoadFile(directory::ShaderDirectory + "nightskybuilder.vs")),
-						LoadFile(directory::ShaderDirectory + "nightskybuilder.gs"),
-						LoadFile(directory::ShaderDirectory + "nightskybuilder.fs"));
+			// Point for stars
+			pointVBO.Allocate(1);
+			pointVBO.Lock()[0] = glm::vec3(0,0,0);
+			pointVBO.Unlock();
+			pointVAO.Add(pointVBO,semantic::Position,3,GL_FLOAT);
 
-		drawSunVar	 		= program["DrawSun"].location;
-		sunFactorVar 		= program["SunFactor"].location;
-		turbidityVar 		= program["Turbidity"].location;
-		sunSphCoordVar 		= program["SunSphCoord"].location;
+			// Init stars buffer
+			// 32FP is needed, otherwise we lack of contrast
+			starTexture.Allocate(GL_RGBA32F,nStars);
+			starTexture.SetWrapping(GL_CLAMP_TO_EDGE);
+			starTexture.SetFiltering(GL_NEAREST,GL_NEAREST);
+			UpdateStar(1);
 
-		glProgramUniform2f(program.id, sunSphCoordVar,	sunTheta, sunPhi);
-		glProgramUniform1f(program.id, turbidityVar,	turbidity);
+			// Init sky map
+			// 32FP is needed, otherwise we lack of contrast
+			skyTexture.Allocate(GL_RGBA32F,resolution,resolution,6,true);
+			skyTexture.SetWrapping(GL_CLAMP_TO_EDGE,GL_CLAMP_TO_EDGE);
+			skyTexture.SetFiltering(GL_LINEAR_MIPMAP_LINEAR,GL_LINEAR);
 
-		glm::mat4 transformations[6];
-		glm::mat4 proj	   = glm::perspective(90.0f, 1.f, 0.1f, 1.5f);
-		transformations[0] = proj * glm::lookAt(glm::vec3(0,0,0),glm::vec3( 1, 0, 0),glm::vec3(0, 0, 1)); // Positive X
-		transformations[1] = proj * glm::lookAt(glm::vec3(0,0,0),glm::vec3(-1, 0, 0),glm::vec3(0, 0, 1)); // Negative X
-		transformations[2] = proj * glm::lookAt(glm::vec3(0,0,0),glm::vec3( 0, 1, 0),glm::vec3(0, 0, 1)); // Positive Y
-		transformations[3] = proj * glm::lookAt(glm::vec3(0,0,0),glm::vec3( 0,-1, 0),glm::vec3(0, 0, 1)); // Negative Y
-		transformations[4] = proj * glm::lookAt(glm::vec3(0,0,0),glm::vec3( 0, 0, 1),glm::vec3(0,-1, 0)); // Positive Z
-		transformations[5] = proj * glm::lookAt(glm::vec3(0,0,0),glm::vec3( 0, 0,-1),glm::vec3(0, 1, 0)); // Negative Z
-		glProgramUniformMatrix4fv(program.id, program["Transformations[0]"].location, 6, GL_FALSE, &transformations[0][0][0]);
+			// Init sky framebuffer
+			glGenFramebuffers(1,&skyFramebuffer);
+			glBindFramebuffer(GL_FRAMEBUFFER,skyFramebuffer);
+			glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, skyTexture.id, 0);
+			glDrawBuffer(GL_COLOR_ATTACHMENT0);
+			glBindFramebuffer(GL_FRAMEBUFFER,0);
+		}
 
-		// Init sky map & sky framebuffer
-		// 32FP is needed, otherwise we lack of contrast
-		skyTexture.Allocate(GL_RGBA32F,resolution,resolution,6,true);
-		skyTexture.SetWrapping(GL_CLAMP_TO_EDGE,GL_CLAMP_TO_EDGE);
-		skyTexture.SetFiltering(GL_LINEAR_MIPMAP_LINEAR,GL_LINEAR);
+		// Create sky shader
+		{
+			sky.program.Compile(ProgramOptions::CreateVSOptions().Append(LoadFile(directory::ShaderDirectory + "nightskybuilder.vs")),
+								LoadFile(directory::ShaderDirectory + "nightskybuilder.gs"),
+								LoadFile(directory::ShaderDirectory + "nightskybuilder.fs"));
 
-		glGenFramebuffers(1,&skyFramebuffer);
-		glBindFramebuffer(GL_FRAMEBUFFER,skyFramebuffer);
-		glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, skyTexture.id, 0);
-		glDrawBuffer(GL_COLOR_ATTACHMENT0);
-		glBindFramebuffer(GL_FRAMEBUFFER,0);
+			sky.drawSunVar	 		= sky.program["DrawSun"].location;
+			sky.sunFactorVar 		= sky.program["SunFactor"].location;
+			sky.turbidityVar 		= sky.program["Turbidity"].location;
+			sky.sunSphCoordVar 		= sky.program["SunSphCoord"].location;
+
+			glProgramUniform2f(sky.program.id, sky.sunSphCoordVar,	sunTheta, sunPhi);
+			glProgramUniform1f(sky.program.id, sky.turbidityVar,	turbidity);
+
+			glm::mat4 transformations[6];
+			glm::mat4 proj	   = glm::perspective(90.0f, 1.f, 0.1f, 1.5f);
+			transformations[0] = proj * glm::lookAt(glm::vec3(0,0,0),glm::vec3( 1, 0, 0),glm::vec3(0, 0, 1)); // Positive X
+			transformations[1] = proj * glm::lookAt(glm::vec3(0,0,0),glm::vec3(-1, 0, 0),glm::vec3(0, 0, 1)); // Negative X
+			transformations[2] = proj * glm::lookAt(glm::vec3(0,0,0),glm::vec3( 0, 1, 0),glm::vec3(0, 0, 1)); // Positive Y
+			transformations[3] = proj * glm::lookAt(glm::vec3(0,0,0),glm::vec3( 0,-1, 0),glm::vec3(0, 0, 1)); // Negative Y
+			transformations[4] = proj * glm::lookAt(glm::vec3(0,0,0),glm::vec3( 0, 0, 1),glm::vec3(0,-1, 0)); // Positive Z
+			transformations[5] = proj * glm::lookAt(glm::vec3(0,0,0),glm::vec3( 0, 0,-1),glm::vec3(0, 1, 0)); // Negative Z
+			glProgramUniformMatrix4fv(sky.program.id, sky.program["Transformations[0]"].location, 6, GL_FALSE, &transformations[0][0][0]);
+		}
+
+		// Create star shader
+		{
+			star.program.Compile(ProgramOptions::CreateVSOptions().Append(LoadFile(directory::ShaderDirectory + "nightstarbuilder.vs")),
+								 LoadFile(directory::ShaderDirectory + "nightstarbuilder.gs"),
+								 LoadFile(directory::ShaderDirectory + "nightstarbuilder.fs"));
+
+			star.starFactorVar 		= star.program["StarFactor"].location;
+			star.starTexUnit 		= star.program["StarTex"].unit;
+
+			glm::mat4 transformations[6];
+			glm::mat4 proj	   = glm::perspective(90.0f, 1.f, 0.1f, 1.5f);
+			transformations[0] = proj * glm::lookAt(glm::vec3(0,0,0),glm::vec3( 1, 0, 0),glm::vec3(0, 0, 1)); // Positive X
+			transformations[1] = proj * glm::lookAt(glm::vec3(0,0,0),glm::vec3(-1, 0, 0),glm::vec3(0, 0, 1)); // Negative X
+			transformations[2] = proj * glm::lookAt(glm::vec3(0,0,0),glm::vec3( 0, 1, 0),glm::vec3(0, 0, 1)); // Positive Y
+			transformations[3] = proj * glm::lookAt(glm::vec3(0,0,0),glm::vec3( 0,-1, 0),glm::vec3(0, 0, 1)); // Negative Y
+			transformations[4] = proj * glm::lookAt(glm::vec3(0,0,0),glm::vec3( 0, 0, 1),glm::vec3(0,-1, 0)); // Positive Z
+			transformations[5] = proj * glm::lookAt(glm::vec3(0,0,0),glm::vec3( 0, 0,-1),glm::vec3(0, 1, 0)); // Negative Z
+			glProgramUniformMatrix4fv(star.program.id, star.program["Transformations[0]"].location, 6, GL_FALSE, &transformations[0][0][0]);
+		}
 
 		glf::CheckFramebuffer(skyFramebuffer);
 		glf::CheckError("SkyBuilder::SkyBuilder");
@@ -315,10 +357,28 @@ namespace glf
 
 	}
 	//-------------------------------------------------------------------------
+	void NightSkyBuilder::UpdateStar(float _maxIntensity)
+	{
+		glf::RNG rng;
+		glm::vec4* starData = new glm::vec4[nStars];
+		for(int i=0;i<nStars;++i)
+		{
+			float theta		= acos(rng.RandomFloat());
+			float phi		= rng.RandomFloat() * M_PI * 2.f;
+			float intensity = glm::clamp(_maxIntensity * rng.RandomFloat(),_maxIntensity*0.3f,_maxIntensity);
+			starData[i] 	= glm::vec4(ToCartesian(theta,phi),intensity);
+		}
+		starTexture.Fill(GL_RGBA,GL_FLOAT,(unsigned char*)&starData[0][0]);
+		delete[] starData;
+	}
+	//-------------------------------------------------------------------------
 	void NightSkyBuilder::SetSunFactor(		float _sunFactor)
 	{
 		sunFactor 		= _sunFactor;
-		glProgramUniform1f(program.id, sunFactorVar, sunFactor);
+		glProgramUniform1f(sky.program.id, sky.sunFactorVar, sunFactor);
+
+		glm::vec3 color = ComputeSunIntensity(sunTheta, sunPhi, turbidity) * sunFactor;
+		glProgramUniform3f(star.program.id, star.starFactorVar, color.x, color.y, color.z);
 	}
 	//-------------------------------------------------------------------------
 	void NightSkyBuilder::SetPosition(		float _theta, 
@@ -326,8 +386,8 @@ namespace glf
 	{
 		sunTheta 		= _theta;
 		sunPhi	 		= _phi;
-		sunIntensity 	= ComputeSunIntensity(sunTheta,sunPhi, turbidity);
-		glProgramUniform2f(program.id, sunSphCoordVar,	sunTheta, sunPhi);
+		sunIntensity 	= ComputeSunIntensity(sunTheta,sunPhi,turbidity);
+		glProgramUniform2f(sky.program.id, sky.sunSphCoordVar, sunTheta, sunPhi);
 
 	}
 	//-------------------------------------------------------------------------
@@ -335,7 +395,7 @@ namespace glf
 	{
 		turbidity 		= _turbidity;
 		sunIntensity 	= ComputeSunIntensity(sunTheta,sunPhi, turbidity);
-		glProgramUniform1f(program.id, turbidityVar,	turbidity);
+		glProgramUniform1f(sky.program.id, sky.turbidityVar, turbidity);
 	}
 	//-------------------------------------------------------------------------
 	void NightSkyBuilder::Update(bool _drawSun)
@@ -344,20 +404,27 @@ namespace glf
 		glDepthMask(false);
 		glCullFace(GL_FRONT);
 	
-		glProgramUniform1i(program.id, drawSunVar,	_drawSun);
+		glProgramUniform1i(sky.program.id, sky.drawSunVar, _drawSun);
 
 		// Draw into a texture array since render to cube map doesn't work =/ (Driver's bug?)
 		// Face are ordered just as cubemap's face (+x,-x,+y,-y,+z,-z)
 		// Render to cube map : http://pastie.org/796448
-		glUseProgram(program.id);
 		glViewport(0,0,skyTexture.size.x,skyTexture.size.y);
-			glBindFramebuffer(GL_FRAMEBUFFER,skyFramebuffer);
-				glClear(GL_COLOR_BUFFER_BIT);
-				vao.Draw(GL_TRIANGLES,vbo.count,0);
-			glBindFramebuffer(GL_FRAMEBUFFER,0);
-		glViewport(0,0,ctx::window.Size.x,ctx::window.Size.y);
+		glBindFramebuffer(GL_FRAMEBUFFER,skyFramebuffer);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+			glUseProgram(sky.program.id);
+			cubeVAO.Draw(GL_TRIANGLES,cubeVBO.count,0);
 
 		glCullFace(GL_BACK);
+//glPointSize(9.f);
+			glUseProgram(star.program.id);
+			starTexture.Bind(star.starTexUnit);
+			pointVAO.Draw(GL_POINTS,1,0,nStars);
+//glPointSize(1.f);
+		glBindFramebuffer(GL_FRAMEBUFFER,0);
+		glViewport(0,0,ctx::window.Size.x,ctx::window.Size.y);
+
 		glDepthMask(true);
 		glEnable(GL_DEPTH_TEST);
 
@@ -461,13 +528,14 @@ namespace glf
 		float y 		= PerezFunction(dot(t,A_y),dot(t,B_y),dot(t,C_y),dot(t,D_y),dot(t,E_y),cosTheta,gamma,thetaS,zenith_y);
 
 		// Conversion from xyZ to XYZ
+		vec3 color      = vec3(0.098039f,0.219607f,0.419607f);
 		vec3 XYZ;
-		XYZ.y 			= abs(PerezFunction(dot(t,A_Y),dot(t,B_Y),dot(t,C_Y),dot(t,D_Y),dot(t,E_Y),cosTheta,gamma,thetaS,zenith_Y))*factor * 0.01;
+		XYZ.y 			= abs(PerezFunction(dot(t,A_Y),dot(t,B_Y),dot(t,C_Y),dot(t,D_Y),dot(t,E_Y),cosTheta,gamma,thetaS,zenith_Y))*factor * 0.001;
 		XYZ.x 			= XYZ.y;
 		XYZ.z			= XYZ.y;
 
 		// Conversion from XYZ to RGB
 	//	FragColor = vec4( vec3(1.0) - exp(-(1.0/15000.0) * (XYZ2RGB * XYZ)), 1);
-		return XYZ2RGB * XYZ;
+		return (XYZ2RGB * XYZ) * color;
 	}
 }

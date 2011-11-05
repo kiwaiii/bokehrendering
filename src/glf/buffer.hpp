@@ -137,6 +137,8 @@ namespace glf
 						GLenum   			_componentType,
 						bool     			_normalize=false,
 						int	 				_offset=0);
+
+		// Regular drawing functions
 		void Draw( 		GLenum				_primitiveType,
 						const IndexBuffer&	_buffer) const;
 		void Draw( 		GLenum				_primitiveType,
@@ -146,13 +148,15 @@ namespace glf
 		void Draw(		GLenum				_primitiveType, 
 						int					_count,
 						int					_first=0) const;
+
+		// Instanced drawing functions
 		void Draw(		GLenum 				_primitiveType,
 						int 				_count,
 						int 				_first,
 						int 				_primCount) const;
 		void Draw(		GLenum				_primitiveType, 
 						const IndirectArrayBuffer& _indirectBuffer) const;
-		//----------------------------------------------------------------------
+
 		GLuint 			id;
 	};
 	//--------------------------------------------------------------------------
