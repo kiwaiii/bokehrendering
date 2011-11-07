@@ -1,0 +1,57 @@
+{
+	"geometries":
+	[
+		{
+			"name"      : "cobra",
+			"file"      : "cobra.obj",
+			"folder"    : "cobra",
+			"translate" : [0, 0, 2],
+			"rotate"    : [0, 0, 0],
+			"scale"     : 1
+		},
+
+		{
+			"name"      : "uh60",
+			"file"      : "uh60.obj",
+			"folder"    : "uh60",
+			"translate" : [10, 0, 1.5],
+			"rotate"    : [1, 0, 0],
+			"scale"     : 1
+		},
+
+		{
+			"name"      : "f14",
+			"file"      : "f14.obj",
+			"folder"    : "f14",
+			"translate" : [20, 0, 2.2],
+			"rotate"    : [-4, 0, 0],
+			"scale"     : 1
+		},
+
+		{
+			"name"      : "ground",
+			"file"      : "quad.obj",
+			"folder"    : "basics",
+			"translate" : [0, 0, 0],
+			"rotate"    : [0, 0, 0],
+			"scale"     : 50
+		}
+	],
+
+	"lights":
+	[
+		{
+			"name"      : "sun",
+			"type"      : "point",
+			"intensity" : [0, 0, 0]
+		}
+	],
+
+	"camera":
+	{
+		"position"    : [0, 0, 0],
+		"target"      : [0, 0, 0],
+		"type"        : "orbit"
+	}
+}
+
