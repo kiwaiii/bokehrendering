@@ -34,8 +34,11 @@ vec3 BRDF(	in vec3 _viewDir,
 			in float _roughness,
 			in float _specularity)
 {
+	// TODO : Optimize thisone. There is a large room for optimizating ...
+	// Remove BlendFactor : it is here for debugging
+
 	vec3  h		= normalize(_viewDir+_lightDir);
-	float F0	= 0.01f;
+	float F0	= 0.1f;
 	float VdotH = max(0.0f,dot(_viewDir,h));
 	float NdotH = max(0.0f,dot(_normal,h));
 	float NdotL = max(0.0f,dot(_normal,_lightDir));
@@ -56,6 +59,8 @@ vec3 BRDF(	in vec3 _viewDir,
 //------------------------------------------------------------------------------
 float ShadowTest(const vec3 _pos, int _cascadeIndex)
 {
+	// Basic shadow test
+	// TODO : re-add PCF
 	return texture(ShadowTex,vec4(_pos.xy,_cascadeIndex,_pos.z-Bias));
 }
 //------------------------------------------------------------------------------

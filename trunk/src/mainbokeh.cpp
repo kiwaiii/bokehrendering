@@ -101,6 +101,7 @@ namespace
 		float								cocThreshold;
 		float								bokehDepthCutoff;
 		bool								poissonFiltering;
+		bool								enable;
 	};
 
 	struct Application
@@ -128,8 +129,8 @@ namespace
 		glf::CSMRenderer					csmRenderer;
 
 		glf::CubeMap						cubeMap;
-		//glf::SkyBuilder						skyBuilder;
-		glf::NightSkyBuilder				skyBuilder;
+		glf::SkyBuilder						skyBuilder;
+		//glf::NightSkyBuilder				skyBuilder;
 
 		glf::SHLight						shLight;
 		glf::SHBuilder						shBuilder;
@@ -245,6 +246,7 @@ bool begin()
 	dofParams.lumThreshold 		= loader.GetFloat(dofNode,"lumThreshold",5000.f);
 	dofParams.cocThreshold 		= loader.GetFloat(dofNode,"cocThreshold",3.5f);
 	dofParams.bokehDepthCutoff 	= loader.GetFloat(dofNode,"bokehDepthCutoff",1.f);
+	dofParams.enable			= false;
 
 	SkyParams skyParams;
 	glf::io::ConfigNode *skyNode= loader.GetNode(root,"sky");
@@ -291,7 +293,7 @@ bool begin()
 													ssaoParams,
 													dofParams);
 
-	glf::io::LoadScene(	glf::directory::SceneDirectory + "f14.json",
+	glf::io::LoadScene(	glf::directory::SceneDirectory + "desert.json",
 						app->resources,
 						app->scene,
 						true);
@@ -501,6 +503,7 @@ void gui()
 				ctx::ui->HorizontalSlider(sliderRect,0.001f,1.f,&app->dofParams.bokehDepthCutoff);
 
 				ctx::ui->CheckButton(none,"Poisson filtering",&app->dofParams.poissonFiltering);
+				ctx::ui->CheckButton(none,"Activate",&app->dofParams.enable);
 
 				// Change bokeh shape
 				int previousActiveBokeh = app->activeBokeh;
@@ -665,6 +668,7 @@ void display()
 
 				// Render dof processing pass
 				glf::manager::timings->StartSection(glf::section::DofProcess);
+				if(app->dofParams.enable)
 				app->dofProcessor.Draw(	app->renderTarget1.texture,
 										app->gbuffer.positionTex,
 										view,
@@ -711,9 +715,14 @@ void display()
 
 				// Render post processing pass
 				glf::manager::timings->StartSection(glf::section::PostProcess);
-				app->postProcessor.Draw(app->renderTarget2.texture,
-										app->toneParams.toneExposure,
-										app->renderTarget1);
+				if(app->dofParams.enable)
+					app->postProcessor.Draw(app->renderTarget2.texture,
+											app->toneParams.toneExposure,
+											app->renderTarget1);
+				else
+					app->postProcessor.Draw(app->renderTarget1.texture,
+											app->toneParams.toneExposure,
+											app->renderTarget2);
 				glf::manager::timings->EndSection(glf::section::PostProcess);
 
 				break;

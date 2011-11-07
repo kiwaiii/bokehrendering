@@ -77,6 +77,7 @@ namespace
 
 			std::string name;
 			std::string colorMapFilename;
+			std::string specularMapFilename;
 			std::string bumpMapFilename;
 		};
 
@@ -812,6 +813,13 @@ namespace
 		    pVertex2->normal[0] += normal[0];
 		    pVertex2->normal[1] += normal[1];
 		    pVertex2->normal[2] += normal[2];
+
+			#if ENABLE_CHECK_MODEL_LOADING
+			if( isnan(normal[0]) || isnan(normal[1]) || isnan(normal[2]) )
+				glf::Error("Normal NaN");
+			if( isinf(normal[0]) || isinf(normal[1]) || isinf(normal[2]) )
+				glf::Error("Normal Inf");
+			#endif
 		}
 
 		// Normalize the vertex normals.
@@ -819,13 +827,32 @@ namespace
 		{
 		    pVertex0 = &m_vertexBuffer[i];
 
-		    length = 1.0f / sqrtf(pVertex0->normal[0] * pVertex0->normal[0] +
-		        pVertex0->normal[1] * pVertex0->normal[1] +
-		        pVertex0->normal[2] * pVertex0->normal[2]);
+			float nLength = sqrtf(	pVertex0->normal[0] * pVertex0->normal[0] +
+									pVertex0->normal[1] * pVertex0->normal[1] +
+									pVertex0->normal[2] * pVertex0->normal[2]);
+
+			// Set a default normal to avoir issue
+			if(nLength<1e-6f)
+			{
+				pVertex0->normal[0] = 0;
+				pVertex0->normal[1] = 0;
+				pVertex0->normal[2] = 1;
+				nLength 			= 1;
+			}
+
+			length = 1.0f / nLength;
+
+			#if ENABLE_CHECK_MODEL_LOADING
+			if( isnan(length) )
+				glf::Error("Normal Length NaN");
+			if( isinf(length) )
+				glf::Error("Normal Length Inf");
+			#endif
 
 		    pVertex0->normal[0] *= length;
 		    pVertex0->normal[1] *= length;
 		    pVertex0->normal[2] *= length;
+
 		}
 
 		m_hasNormals = true;
@@ -892,6 +919,7 @@ namespace
 
 		    det = texEdge1[0] * texEdge2[1] - texEdge2[0] * texEdge1[1];
 
+			// Set default tangent and bitangent to avoid issue is det near to zero
 		    if (fabs(det) < 1e-6f)
 		    {
 		        tangent[0] = 1.0f;
@@ -901,6 +929,19 @@ namespace
 		        bitangent[0] = 0.0f;
 		        bitangent[1] = 1.0f;
 		        bitangent[2] = 0.0f;
+
+				if(	fabs(tangent[0] * pVertex0->normal[0] + 
+						 tangent[1] * pVertex0->normal[1] +
+						 tangent[2] * pVertex0->normal[2]) > 0.8f )
+				{
+					tangent[0] = 0.0f;
+					tangent[1] = 1.0f;
+					tangent[2] = 0.0f;
+
+					bitangent[0] = 0.0f;
+					bitangent[1] = 0.0f;
+					bitangent[2] = 1.0f;
+				}
 		    }
 		    else
 		    {
@@ -915,8 +956,19 @@ namespace
 		        bitangent[2] = (-texEdge2[0] * edge1[2] + texEdge1[0] * edge2[2]) * det;
 		    }
 
-		    // Accumulate the tangents and bitangents.
+			// Check normal tangent and bitangent
+			#if ENABLE_CHECK_MODEL_LOADING
+			if( isnan(tangent[0]) || isnan(tangent[1]) || isnan(tangent[2]) )
+				glf::Error("Tangent NaN");
+			if( isinf(tangent[0]) || isinf(tangent[1]) || isinf(tangent[2]) )
+				glf::Error("Tangent Inf");
+			if( isnan(bitangent[0]) || isnan(bitangent[1]) || isnan(bitangent[2]) )
+				glf::Error("Bitangent NaN");
+			if( isinf(bitangent[0]) || isinf(bitangent[1]) || isinf(bitangent[2]) )
+				glf::Error("Bitangent Inf");
+			#endif
 
+		    // Accumulate the tangents and bitangents.
 		    pVertex0->tangent[0] += tangent[0];
 		    pVertex0->tangent[1] += tangent[1];
 		    pVertex0->tangent[2] += tangent[2];
@@ -954,11 +1006,47 @@ namespace
 		    pVertex0->tangent[1] -= pVertex0->normal[1] * nDotT;
 		    pVertex0->tangent[2] -= pVertex0->normal[2] * nDotT;
 
-		    // Normalize the tangent.
+			// Check tangent
+			float lenTangent = sqrtf(	pVertex0->tangent[0] * pVertex0->tangent[0] +
+										pVertex0->tangent[1] * pVertex0->tangent[1] +
+										pVertex0->tangent[2] * pVertex0->tangent[2]);
+			float lenBitangent = sqrtf(	pVertex0->bitangent[0] * pVertex0->bitangent[0] +
+										pVertex0->bitangent[1] * pVertex0->bitangent[1] +
+										pVertex0->bitangent[2] * pVertex0->bitangent[2]);
 
-		    length = 1.0f / sqrtf(pVertex0->tangent[0] * pVertex0->tangent[0] +
-		                          pVertex0->tangent[1] * pVertex0->tangent[1] +
-		                          pVertex0->tangent[2] * pVertex0->tangent[2]);
+			// Try to correct tangent if there is an issue
+			if(lenTangent < 1e-6f && lenBitangent < 1e-6f)
+			{
+				pVertex0->tangent[0] = 1.0f;
+				pVertex0->tangent[1] = 0.0f;
+				pVertex0->tangent[2] = 0.0f;
+
+				if(	fabs(pVertex0->tangent[0] * pVertex0->normal[0] + 
+						 pVertex0->tangent[1] * pVertex0->normal[1] +
+						 pVertex0->tangent[2] * pVertex0->normal[2]) > 0.8f )
+				{
+					pVertex0->tangent[0] = 0.0f;
+					pVertex0->tangent[1] = 1.0f;
+					pVertex0->tangent[2] = 0.0f;
+				}
+			}
+			else if (lenTangent < 1e-6f)
+			{
+				if(lenBitangent)
+				{
+					pVertex0->tangent[0] = 	(pVertex0->bitangent[1] * pVertex0->normal[2]) - 
+											(pVertex0->bitangent[2] * pVertex0->normal[1]);
+					pVertex0->tangent[1] = 	(pVertex0->bitangent[2] * pVertex0->normal[0]) -
+											(pVertex0->bitangent[0] * pVertex0->normal[2]);
+					pVertex0->tangent[2] = 	(pVertex0->bitangent[0] * pVertex0->normal[1]) - 
+											(pVertex0->bitangent[1] * pVertex0->normal[0]);
+				}
+			}
+
+			// Normalize the tangent.
+			length = 1.0f / sqrtf(	pVertex0->tangent[0] * pVertex0->tangent[0] +
+									pVertex0->tangent[1] * pVertex0->tangent[1] +
+									pVertex0->tangent[2] * pVertex0->tangent[2]);
 
 		    pVertex0->tangent[0] *= length;
 		    pVertex0->tangent[1] *= length;
@@ -1001,6 +1089,22 @@ namespace
 		    pVertex0->bitangent[0] = bitangent[0];
 		    pVertex0->bitangent[1] = bitangent[1];
 		    pVertex0->bitangent[2] = bitangent[2];
+
+			// Check normal, tangent, and bitangent
+			#if ENABLE_CHECK_MODEL_LOADING
+			if( isnan(pVertex0->normal[0]) || isnan(pVertex0->normal[1]) || isnan(pVertex0->normal[2]) )
+				glf::Error("Normal NaN");
+			if( isinf(pVertex0->normal[0]) || isinf(pVertex0->normal[1]) || isinf(pVertex0->normal[2]) )
+				glf::Error("Normal Inf");
+			if( isnan(pVertex0->tangent[0]) || isnan(pVertex0->tangent[1]) || isnan(pVertex0->tangent[2]) )
+				glf::Error("Tangent NaN");
+			if( isinf(pVertex0->tangent[0]) || isinf(pVertex0->tangent[1]) || isinf(pVertex0->tangent[2]) )
+				glf::Error("Tangent Inf");
+			if( isnan(pVertex0->bitangent[0]) || isnan(pVertex0->bitangent[1]) || isnan(pVertex0->bitangent[2]) )
+				glf::Error("Bitangent NaN");
+			if( isinf(pVertex0->bitangent[0]) || isinf(pVertex0->bitangent[1]) || isinf(pVertex0->bitangent[2]) )
+				glf::Error("Bitangent Inf");
+			#endif
 		}
 
 		m_hasTangents = true;
@@ -1372,10 +1476,7 @@ namespace
 		    {
 		    case 'N': // Ns
 		        fscanf(pFile, "%256f", &pMaterial->shininess);
-
 		        // Wavefront .MTL file shininess is from [0,1000].
-		        // Scale back to a generic [0,1] range.
-		        pMaterial->shininess /= 1000.0f;
 		        break;
 
 		    case 'K': // Ka, Kd, or Ks
@@ -1441,12 +1542,18 @@ namespace
 		        }
 		        break;
 
-		    case 'm': // map_Kd, map_bump
-		        if (strstr(buffer, "map_Kd") != 0)
+		    case 'm': // map_Kd, map_Ks, map_bump
+		        if (strstr(buffer, "map_Kd") != 0 || strstr(buffer, "map_kD") != 0)
 		        {
 		            fgets(buffer, sizeof(buffer), pFile);
 		            sscanf(buffer, "%s %s", buffer, buffer);
 		            pMaterial->colorMapFilename = buffer;
+		        }
+		        else if (strstr(buffer, "map_Ks") != 0 || strstr(buffer, "map_kS") != 0 )
+		        {
+		            fgets(buffer, sizeof(buffer), pFile);
+		            sscanf(buffer, "%s %s", buffer, buffer);
+		            pMaterial->specularMapFilename = buffer;
 		        }
 		        else if (strstr(buffer, "map_bump") != 0)
 		        {
@@ -1481,6 +1588,7 @@ namespace
 		        pMaterial->alpha = 1.0f;
 		        pMaterial->name = buffer;
 		        pMaterial->colorMapFilename.clear();
+		        pMaterial->specularMapFilename.clear();
 		        pMaterial->bumpMapFilename.clear();
 
 		        m_materialCache[pMaterial->name] = numMaterials;
@@ -1560,6 +1668,28 @@ namespace glf
 				return texture;
 			}
 			//------------------------------------------------------------------
+			Texture2D* GetSpecularTex(	const std::string& _folder,
+										const std::string& _filename, 
+										TextureDB& _textureDB,
+										ResourceManager& _resourceManager)
+			{
+				std::string filename = ValidFilename(_folder,_filename,"");
+				Texture2D* texture   = NULL;
+				if(!FindTexture(filename,_textureDB,texture))
+				{
+					texture = _resourceManager.CreateTexture2D();
+					LoadTexture(filename,*texture,true,true);
+
+					texture->SetFiltering(GL_LINEAR_MIPMAP_LINEAR,GL_LINEAR);
+					texture->SetAnisotropy(MAX_ANISOSTROPY);
+					glBindTexture(texture->target,texture->id);
+					glGenerateMipmap(GL_TEXTURE_2D);
+					
+					_textureDB[filename] = texture;
+				}
+				return texture;
+			}
+			//------------------------------------------------------------------
 			Texture2D* GetNormalTex(	const std::string& _folder,
 										const std::string& _filename,
 										TextureDB& _textureDB,
@@ -1586,21 +1716,28 @@ namespace glf
 								ResourceManager& _resourceManager)
 			{
 				// Create default textures
-				Texture2D* diffuseTex = _resourceManager.CreateTexture2D();
-				Texture2D* normalTex  = _resourceManager.CreateTexture2D();
+				Texture2D* diffuseTex  = _resourceManager.CreateTexture2D();
+				Texture2D* specularTex = _resourceManager.CreateTexture2D();
+				Texture2D* normalTex   = _resourceManager.CreateTexture2D();
 
 				unsigned char defaultColor[] = {255,255,255};
 				diffuseTex->Allocate(GL_SRGB8_ALPHA8,1,1);
 				diffuseTex->Fill(GL_RGB,GL_UNSIGNED_BYTE,defaultColor);
 				diffuseTex->SetFiltering(GL_LINEAR,GL_LINEAR);
 
+				unsigned char defaultSpecular[] = {0,0,0};
+				specularTex->Allocate(GL_SRGB8_ALPHA8,1,1);
+				specularTex->Fill(GL_RGB,GL_UNSIGNED_BYTE,defaultColor);
+				specularTex->SetFiltering(GL_LINEAR,GL_LINEAR);
+
 				unsigned char defaultNormal[] = {128,128,255};
 				normalTex->Allocate(GL_RGBA8,1,1);
 				normalTex->Fill(GL_RGB,GL_UNSIGNED_BYTE,defaultNormal);
 				normalTex->SetFiltering(GL_LINEAR,GL_LINEAR);
 
-				_textureDB["defaultdiffuse"] = diffuseTex;
-				_textureDB["defaultnormal"]  = normalTex;
+				_textureDB["defaultdiffuse"]  = diffuseTex;
+				_textureDB["defaultspecular"] = specularTex;
+				_textureDB["defaultnormal"]   = normalTex;
 			}
 		}
 		//----------------------------------------------------------------------
@@ -1639,7 +1776,6 @@ namespace glf
 			assert(loader.hasNormals());
 			assert(loader.hasTangents());
 
-
 			// Create VBO
 			glf::VertexBuffer3F* vb = _resourceManager.CreateVBO3F();
 			glf::VertexBuffer3F* nb = _resourceManager.CreateVBO3F();
@@ -1668,19 +1804,19 @@ namespace glf
 				nptr[i].x = vSource[i].normal[0];
 				nptr[i].y = vSource[i].normal[1];
 				nptr[i].z = vSource[i].normal[2];
-				nptr[i]   = rotTransform * nptr[i];
+				nptr[i]   = glm::normalize(rotTransform * nptr[i]);
 
 				tptr[i].x = vSource[i].tangent[0];
 				tptr[i].y = vSource[i].tangent[1];
 				tptr[i].z = vSource[i].tangent[2];
 				tptr[i].w = 0; 						// For removing translation
-				tptr[i]   = _transform * tptr[i];
+				tptr[i]   = glm::normalize(_transform * tptr[i]);
 
 				glm::vec3 bitangent;
 				bitangent.x = vSource[i].bitangent[0];
 				bitangent.y = vSource[i].bitangent[1];
 				bitangent.z = vSource[i].bitangent[2];
-				bitangent   = rotTransform * bitangent;
+				bitangent   = glm::normalize(rotTransform * bitangent);
 
 				uptr[i].x = vSource[i].texCoord[0];
 				uptr[i].y = vSource[i].texCoord[1];
@@ -1725,19 +1861,21 @@ namespace glf
 				TextureDB::iterator it;
 
 				// Load textures
-				glf::Texture2D* diffuseTex = GetDiffuseTex(_folder,mesh.pMaterial->colorMapFilename,textureDB,_resourceManager);
+				glf::Texture2D* diffuseTex  = GetDiffuseTex(_folder,mesh.pMaterial->colorMapFilename,textureDB,_resourceManager);
+				//glf::Texture2D* specularTex = GetSpecularTex(_folder,mesh.pMaterial->specularMapFilename,textureDB,_resourceManager);
 				#if ENABLE_LOAD_NORMAL_MAP
-				glf::Texture2D* normalTex  = GetNormalTex(_folder,mesh.pMaterial->bumpMapFilename,textureDB,_resourceManager);
+				glf::Texture2D* normalTex   = GetNormalTex(_folder,mesh.pMaterial->bumpMapFilename,textureDB,_resourceManager);
 				#else
-				glf::Texture2D* normalTex  = GetNormalTex(_folder,"",textureDB,_resourceManager);
+				glf::Texture2D* normalTex   = GetNormalTex(_folder,"",textureDB,_resourceManager);
 				#endif
 
 				// Create and add regular mesh
 				RegularMesh rmesh;
 				rmesh.diffuseTex   = diffuseTex;
+				//rmesh.specularTex  = specularTex;
 				rmesh.normalTex    = normalTex;
-				rmesh.roughness    = mesh.pMaterial->shininess * 1000.f; // (Has to be specified as roughness into MTL file)
-				rmesh.specularity  = 0.25f * (mesh.pMaterial->specular[0]+mesh.pMaterial->specular[1]+mesh.pMaterial->specular[2]+mesh.pMaterial->specular[3]);
+				rmesh.roughness    = 1.f / mesh.pMaterial->shininess; // (Has to be specified as roughness into MTL file)
+				rmesh.specularity  = 0.3333f * (mesh.pMaterial->specular[0]+mesh.pMaterial->specular[1]+mesh.pMaterial->specular[2]);
 				rmesh.indices      = ib;
 				rmesh.startIndices = mesh.startIndex;
 				rmesh.countIndices = mesh.triangleCount*3;
@@ -1793,6 +1931,7 @@ namespace glf
 					glf::Info("Alpha     : %f",mesh.pMaterial->alpha);
 					glf::Info("Name      : %s",mesh.pMaterial->name.c_str());
 					glf::Info("Color     : %s",mesh.pMaterial->colorMapFilename.c_str());
+					glf::Info("Specular  : %s",mesh.pMaterial->specularMapFilename.c_str());
 					glf::Info("Bump      : %s",mesh.pMaterial->bumpMapFilename.c_str());
 
 					glf::Info("Bound     : (%f,%f,%f) (%f,%f,%f)",

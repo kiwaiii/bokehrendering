@@ -26,8 +26,8 @@ namespace glf
 
 		Program 						program;
 		Texture2D 						positionTex;	// Position buffer (could be reconstruct from depth)
-		Texture2D  						normalTex;		// World space normal buffer
-		Texture2D 						diffuseTex;		// RGB : albedo / A : roughness
+		Texture2D  						normalTex;		// RGB : World space normal buffer / A : roughness
+		Texture2D 						diffuseTex;		// RGB : albedo / A : specularity
 		Texture2D  						depthTex; 		// Depth/Stencil buffer
 
 		GLint 	 						diffuseTexUnit;
