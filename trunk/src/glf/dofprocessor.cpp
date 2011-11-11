@@ -114,7 +114,7 @@ namespace glf
 		{
 			detectionPass.program.Compile(	ProgramOptions::CreateVSOptions().Append(LoadFile(directory::ShaderDirectory + "bokehdetection.vs")),
 											LoadFile(directory::ShaderDirectory + "bokehdetection.fs"));
-			Info(detectionPass.program.ToString());
+
 			detectionPass.colorTexUnit		= detectionPass.program["ColorTex"].unit;
 			detectionPass.blurDepthTexUnit	= detectionPass.program["BlurDepthTex"].unit;
 			detectionPass.lumThresholdVar	= detectionPass.program["LumThreshold"].location;

@@ -11,6 +11,22 @@
 		}
 	],
 
+	"terrains":
+	[
+		{
+			"name"      : "terrain",
+			"diffuse"   : "terrainDiffuse.png",
+			"height"    : "terrainHeight.png",
+			"normal"    : "terrainNormal2.png",
+			"terrainSize"  : [50, 50],
+			"terrainOffset": [-25, -25],
+			"tileResolution": 32,
+			"projFactor"   : 21,
+			"heightFactor" : -10,
+			"tessFactor"   : 10
+		}
+	],
+
 	"lights":
 	[
 		{

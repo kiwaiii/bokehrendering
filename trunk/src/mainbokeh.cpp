@@ -16,6 +16,7 @@
 #include <glf/wrapper.hpp>
 #include <glf/dofprocessor.hpp>
 #include <glf/postprocessor.hpp>
+#include <glf/terrain.hpp>
 #include <glf/utils.hpp>
 #include <glf/io/scene.hpp>
 #include <glf/io/config.hpp>
@@ -104,6 +105,15 @@ namespace
 		bool								enable;
 	};
 
+	struct TerrainParams
+	{
+		glm::ivec2							tileResolution;
+		float								depthFactor;
+		float								tessFactor;
+		float								projFactor;
+		bool								wireFrame;
+	};
+
 	struct Application
 	{
 		Application(						int _w, 
@@ -112,7 +122,8 @@ namespace
 											const ToneParams& _toneParams,
 											const CSMParams& _csmParams,
 											const SSAOParams& _ssaoParams,
-											const DOFParams& _dofParams);
+											const DOFParams& _dofParams,
+											const TerrainParams& _terrainParams);
 		glf::ResourceManager				resources;
 		glf::SceneManager					scene;
 
@@ -131,6 +142,7 @@ namespace
 		glf::CubeMap						cubeMap;
 		glf::SkyBuilder						skyBuilder;
 		//glf::NightSkyBuilder				skyBuilder;
+		//glf::Terrain						terrain;
 
 		glf::SHLight						shLight;
 		glf::SHBuilder						shBuilder;
@@ -147,6 +159,7 @@ namespace
 		ToneParams 							toneParams;
 		SkyParams							skyParams;
 		DOFParams							dofParams;
+		TerrainParams						terrainParams;
 
 		bool								updateLighting;
 		int									activeBokeh;
@@ -165,8 +178,8 @@ namespace
 	struct									bokehType		{ enum Type {BK_PENTAGONAL, BK_HEXAGONAL, BK_CIRCLE,BK_STAR,MAX }; };
 	const char*								bufferNames[]	= {"Composition","Position","Normal","Diffuse"};
 	struct									bufferType		{ enum Type {GB_COMPOSITION,GB_POSITION,GB_NORMAL,GB_DIFFUSE,MAX }; };
-	const char*								menuNames[]		= {"Tone","Sky","CSM","SSAO", "DoF" };
-	struct									menuType		{ enum Type {MN_TONE,MN_SKY,MN_CSM,MN_SSAO,MN_DOF,MAX }; };
+	const char*								menuNames[]		= {"Tone","Sky","CSM","SSAO", "DoF", "Terrain" };
+	struct									menuType		{ enum Type {MN_TONE,MN_SKY,MN_CSM,MN_SSAO,MN_DOF,MN_TERRAIN,MAX }; };
 
 	Application::Application(				int _w, 
 											int _h,
@@ -174,7 +187,8 @@ namespace
 											const ToneParams& _toneParams,
 											const CSMParams& _csmParams,
 											const SSAOParams& _ssaoParams,
-											const DOFParams& _dofParams):
+											const DOFParams& _dofParams,
+											const TerrainParams& _terrainParams):
 	timingRenderer(_w,_h),
 	gbuffer(_w,_h),
 	renderSurface(_w,_h),
@@ -185,6 +199,8 @@ namespace
 	csmRenderer(_w,_h),
 	cubeMap(),
 	skyBuilder(1024),
+//	terrain(32,32),
+//	terrain(1,256),
 	shLight(),
 	shBuilder(1024),
 	shRenderer(_w,_h),
@@ -198,12 +214,18 @@ namespace
 		csmParams					= _csmParams;
 		ssaoParams					= _ssaoParams;
 		dofParams					= _dofParams;
+		terrainParams				= _terrainParams;
 
 		updateLighting				= true;
 		activeBokeh					= 1;
 		activeBuffer				= 0;
 		activeMenu					= 2;
 		csmLight.direction			= glm::vec3(0,0,-1);
+
+//		terrain.Update(				terrainParams.tileResolution,
+//									terrainParams.depthFactor,
+//									terrainParams.tessFactor,
+//									terrainParams.projFactor);
 
 		#if ENABLE_BOKEH_STATISTICS
 		bokehQuery					= false;
@@ -257,7 +279,7 @@ bool begin()
 
 	ToneParams toneParams;
 	glf::io::ConfigNode*toneNode= loader.GetNode(root,"tone");
-	toneParams.expToneExposure	= loader.GetFloat(skyNode,"expToneExposure",-4.08f);
+	toneParams.expToneExposure	= loader.GetFloat(toneNode,"expToneExposure",-4.08f);
 	toneParams.toneExposure		= pow(10.f,toneParams.expToneExposure);
 
 	CSMParams csmParams;
@@ -282,6 +304,18 @@ bool begin()
 	ssaoParams.sigmaH 			= loader.GetFloat(ssaoNode,"sigmaH",1.f);
 	ssaoParams.sigmaV 			= loader.GetFloat(ssaoNode,"sigmaV",1.f);
 
+	TerrainParams terrainParams;
+//	glf::io::ConfigNode*terrainNode= loader.GetNode(root,"terrain");
+//	terrainParams.tileResolution= loader.GetIVec2(terrainNode,"tileResolution",glm::ivec2(32,32));
+//	terrainParams.depthFactor 	= loader.GetFloat(ssaoNode,"depthFactor",-5.f);
+//	terrainParams.tessFactor 	= loader.GetFloat(ssaoNode,"tessFactor",16.f);
+//	terrainParams.projFactor 	= loader.GetFloat(ssaoNode,"projFactor",10.f);
+	terrainParams.tileResolution= glm::ivec2(32,32);
+	terrainParams.depthFactor 	= -5.f;
+	terrainParams.tessFactor 	= 16.f;
+	terrainParams.projFactor 	= 10.f;
+	terrainParams.wireFrame		= false;
+
 	ctx::camera 				= glf::Camera::Ptr(new glf::HybridCamera());
 	glf::manager::timings		= glf::TimingManager::Create();
 	glf::manager::helpers		= glf::HelperManager::Create();
@@ -291,9 +325,10 @@ bool begin()
 													toneParams,
 													csmParams,
 													ssaoParams,
-													dofParams);
+													dofParams,
+													terrainParams);
 
-	glf::io::LoadScene(	glf::directory::SceneDirectory + "desert.json",
+	glf::io::LoadScene(	glf::directory::SceneDirectory + "tank.json",
 						app->resources,
 						app->scene,
 						true);
@@ -311,6 +346,10 @@ bool begin()
 	{
 		glf::manager::helpers->CreateBound(	app->scene.oBounds[i],
 											app->scene.transformations[i]);
+	}
+	for(unsigned int i=0;i<app->scene.tBounds.size();++i)
+	{
+		glf::manager::helpers->CreateBound(	app->scene.tBounds[i]);
 	}
 	#endif
 
@@ -523,6 +562,37 @@ void gui()
 				if(ctx::ui->Button(none,"Bokeh record")) app->bokehRecord = true;
 				#endif
 			}
+
+			if(app->activeMenu == menuType::MN_TERRAIN)
+			{
+				update = false;
+				float tileExp = floor(log2(app->terrainParams.tileResolution.x));
+				sprintf(labelBuffer,"Tile resolution : (%d,%d)",app->terrainParams.tileResolution.x,app->terrainParams.tileResolution.y);
+				ctx::ui->Label(none,labelBuffer);
+				update |= ctx::ui->HorizontalSlider(sliderRect,1.f,10.f,&tileExp);
+				app->terrainParams.tileResolution.x = int(pow(2.f,floor(tileExp)));
+				app->terrainParams.tileResolution.y = app->terrainParams.tileResolution.x;
+
+				sprintf(labelBuffer,"Depth factor : %f",app->terrainParams.depthFactor);
+				ctx::ui->Label(none,labelBuffer);
+				update |= ctx::ui->HorizontalSlider(sliderRect,-10.f,10.f,&app->terrainParams.depthFactor);
+
+				sprintf(labelBuffer,"Tesselation factor : %f",app->terrainParams.tessFactor);
+				ctx::ui->Label(none,labelBuffer);
+				update |= ctx::ui->HorizontalSlider(sliderRect,0.f,32.f,&app->terrainParams.tessFactor);
+
+				sprintf(labelBuffer,"Projection factor : %f",app->terrainParams.projFactor);
+				ctx::ui->Label(none,labelBuffer);
+				update |= ctx::ui->HorizontalSlider(sliderRect,0.f,32.f,&app->terrainParams.projFactor);
+
+				ctx::ui->CheckButton(none,"Wire frame",&app->terrainParams.wireFrame);
+
+//				if(update)
+//					app->terrain.Update(	app->terrainParams.tileResolution,
+//											app->terrainParams.depthFactor,
+//											app->terrainParams.tessFactor,
+//											app->terrainParams.projFactor);
+			}
 			ctx::ui->EndFrame();
 		ctx::ui->EndGroup();
 	ctx::ui->End();
@@ -731,8 +801,11 @@ void display()
 				glDisable(GL_DEPTH_TEST);
 				glDisable(GL_BLEND);
 				glBindFramebuffer(GL_FRAMEBUFFER,0);
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				app->renderSurface.Draw(app->gbuffer.positionTex);
+				glDepthMask(true);
+				glEnable(GL_DEPTH_TEST);
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT  | GL_STENCIL_BUFFER_BIT);
+				//app->renderSurface.Draw(app->gbuffer.positionTex);
+				//app->terrain.Draw(projection,view,glm::mat4(1),app->terrainParams.wireFrame);
 				break;
 		case bufferType::GB_NORMAL : 
 				glDisable(GL_STENCIL_TEST);

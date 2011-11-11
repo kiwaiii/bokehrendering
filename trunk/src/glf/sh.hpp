@@ -9,6 +9,7 @@
 #include <glf/wrapper.hpp>
 #include <glf/buffer.hpp>
 #include <glf/pass.hpp>
+#include <glf/gbuffer.hpp>
 
 namespace glf
 {

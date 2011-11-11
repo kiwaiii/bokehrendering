@@ -9,6 +9,7 @@
 #include <glf/scene.hpp>
 #include <glf/helper.hpp>
 #include <glf/pass.hpp>
+#include <glf/gbuffer.hpp>
 
 namespace glf
 {
@@ -52,11 +53,37 @@ namespace glf
  					CSMBuilder(		const CSMBuilder&);
  		CSMBuilder	operator=(		const CSMBuilder&);
 	public:
-		GLint 						projVar;
-		GLint 						viewVar;
-		GLint 						modelVar;
-		GLint 						nCascadesVar;
-		Program 					program;
+
+		struct RegularRenderer
+		{
+									RegularRenderer():program("CSMBuilder::RegularRenderer"){}
+			Program 				program;
+			GLint 					projVar;
+			GLint 					viewVar;
+			GLint 					modelVar;
+			GLint 					nCascadesVar;
+		};
+
+		struct TerrainRenderer
+		{
+									TerrainRenderer():program("CSMBuilder::TerrainRenderer"){}
+			Program 				program;
+			GLint 					projVar;
+			GLint 					viewVar;
+			GLint 					nCascadesVar;
+
+			GLint					heightTexUnit;
+			GLint 					tileSizeVar;
+			GLint 					tileCountVar;
+			GLint 					tileOffsetVar;
+			GLint 					projFactorVar;
+			GLint 					tessFactorVar;
+			GLint					depthFactorVar;
+		};
+
+		int							maxCascades;
+		RegularRenderer				regularRenderer;
+		TerrainRenderer				terrainRenderer;
 	};
 	//-------------------------------------------------------------------------
 	class CSMRenderer

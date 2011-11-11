@@ -720,6 +720,42 @@ namespace glf
 			return cJSON_GetArraySize(_node);
 		}
 		//----------------------------------------------------------------------
+		glm::ivec2 ConfigLoader::GetIVec2(ConfigNode* _node,
+										const std::string& _tag,
+										glm::ivec2 _default) const
+		{
+			assert(_node != NULL);
+			ConfigNode* node = GetNode(_node,_tag.c_str());
+			if(node!=NULL)
+			{
+				glm::ivec2 v;
+				assert(GetCount(node)==2);
+				v.x = float(GetNode(node,0)->valueint);
+				v.y = float(GetNode(node,1)->valueint);
+				return v;
+			}
+			else
+				return _default;
+		}
+		//----------------------------------------------------------------------
+		glm::vec2 ConfigLoader::GetVec2(ConfigNode* _node,
+										const std::string& _tag,
+										glm::vec2 _default) const
+		{
+			assert(_node != NULL);
+			ConfigNode* node = GetNode(_node,_tag.c_str());
+			if(node!=NULL)
+			{
+				glm::vec2 v;
+				assert(GetCount(node)==2);
+				v.x = float(GetNode(node,0)->valuedouble);
+				v.y = float(GetNode(node,1)->valuedouble);
+				return v;
+			}
+			else
+				return _default;
+		}
+		//----------------------------------------------------------------------
 		glm::vec3 ConfigLoader::GetVec3(ConfigNode* _node,
 										const std::string& _tag,
 										glm::vec3 _default) const

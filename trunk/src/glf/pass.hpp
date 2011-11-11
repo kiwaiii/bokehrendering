@@ -11,35 +11,35 @@
 namespace glf
 {
 	//--------------------------------------------------------------------------
-	struct GBuffer
-	{
-	private:
-					GBuffer(			const GBuffer&);
-		GBuffer&	operator=(			const GBuffer&);
-	public:
-					GBuffer(			unsigned int _width, 
-										unsigned int _height);
-				   ~GBuffer(			);
-		void 		Draw(				const glm::mat4& _projection,
-										const glm::mat4& _view,
-										const SceneManager& _scene);
+//	struct GBuffer
+//	{
+//	private:
+//					GBuffer(			const GBuffer&);
+//		GBuffer&	operator=(			const GBuffer&);
+//	public:
+//					GBuffer(			unsigned int _width, 
+//										unsigned int _height);
+//				   ~GBuffer(			);
+//		void 		Draw(				const glm::mat4& _projection,
+//										const glm::mat4& _view,
+//										const SceneManager& _scene);
 
-		Program 						program;
-		Texture2D 						positionTex;	// Position buffer (could be reconstruct from depth)
-		Texture2D  						normalTex;		// RGB : World space normal buffer / A : roughness
-		Texture2D 						diffuseTex;		// RGB : albedo / A : specularity
-		Texture2D  						depthTex; 		// Depth/Stencil buffer
+//		Program 						program;
+//		Texture2D 						positionTex;	// Position buffer (could be reconstruct from depth)
+//		Texture2D  						normalTex;		// RGB : World space normal buffer / A : roughness
+//		Texture2D 						diffuseTex;		// RGB : albedo / A : specularity
+//		Texture2D  						depthTex; 		// Depth/Stencil buffer
 
-		GLint 	 						diffuseTexUnit;
-		GLint 	 						normalTexUnit;
-		GLint	 						roughnessVar;
-		GLint	 						specularityVar;
+//		GLint 	 						diffuseTexUnit;
+//		GLint 	 						normalTexUnit;
+//		GLint	 						roughnessVar;
+//		GLint	 						specularityVar;
 
-		GLint	 						transformVar;
-		GLint	 						modelVar;
+//		GLint	 						transformVar;
+//		GLint	 						modelVar;
 
-		GLuint	 						framebuffer;
-	};
+//		GLuint	 						framebuffer;
+//	};
 	//--------------------------------------------------------------------------
 	struct RenderSurface
 	{
