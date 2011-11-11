@@ -116,9 +116,12 @@ namespace glf
 	BBox WorldBound(const SceneManager& _scene)
 	{
 		BBox bbox;
-		int nBounds = int(_scene.oBounds.size());
-		for(int i=0;i<nBounds;++i)
+		int nOBounds = int(_scene.oBounds.size());
+		int nTBounds = int(_scene.tBounds.size());
+		for(int i=0;i<nOBounds;++i)
 			bbox.Add(_scene.oBounds[i]);
+		for(int i=0;i<nTBounds;++i)
+			bbox.Add(_scene.tBounds[i]);
 		return bbox;
 	}
 }

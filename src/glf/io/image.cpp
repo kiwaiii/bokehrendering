@@ -120,5 +120,16 @@ namespace glf
 			}
 		}
 		//----------------------------------------------------------------------
+		// PPM saver code
+		//std::ofstream out("out.ppm",std::ios::binary);
+		//out << 'P' << '6' << ' ' << '1' << '0' << '2' << '4' << ' ' << '1' << '0' << '2' << '4' << ' ' << '2' << '5' << '5' << '\n';
+		//for(int y=0;y<1024;++y)
+		//for(int x=0;x<1024;++x)
+		//{
+		//	out.write((char*)&(data[x+y*1024]),sizeof(unsigned char));// << " " << data[x+y*1024] << " "<< data[x+y*1024] << "\n";
+		//	out.write((char*)&(data[x+y*1024]),sizeof(unsigned char));
+		//	out.write((char*)&(data[x+y*1024]),sizeof(unsigned char));
+		//}
+		//----------------------------------------------------------------------
 	}
 }

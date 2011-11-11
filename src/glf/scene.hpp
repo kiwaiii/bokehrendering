@@ -9,6 +9,7 @@
 #include <glf/buffer.hpp>
 #include <glf/memory.hpp>
 #include <glf/bound.hpp>
+#include <glf/terrain.hpp>
 #include <vector>
 
 namespace glf
@@ -86,11 +87,13 @@ namespace glf
 	class SceneManager
 	{
 	public:
+		std::vector<TerrainMesh> 		terrainMeshes;
 		std::vector<RegularMesh> 		regularMeshes;
 		std::vector<ShadowMesh> 		shadowMeshes;
 		std::vector<glm::mat4>			transformations;
-		std::vector<BBox>				oBounds;
-		BBox							wBound;
+		std::vector<BBox>				oBounds;	// Objects
+		std::vector<BBox>				tBounds;	// Terrains
+		BBox							wBound;		// Global
 	};
 
 	//--------------------------------------------------------------------------

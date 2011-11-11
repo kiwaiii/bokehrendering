@@ -2,7 +2,7 @@
 # CMake configuration
 #-------------------------------------------------------------------------------
 cmake_minimum_required(VERSION 2.6)
-SET(CMAKE_VERBOSE_MAKEFILE ON)	
+SET(CMAKE_VERBOSE_MAKEFILE ON)
 SET(CMAKE_BUILD_TYPE Debug)
 
 #-------------------------------------------------------------------------------

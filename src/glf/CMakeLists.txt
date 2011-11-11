@@ -6,6 +6,7 @@ SET(GLF_SRCS	${GLF_SRCS}
 				glf/dofprocessor.cpp
 				glf/font.cpp
 				glf/helper.cpp
+				glf/gbuffer.cpp
 				glf/geometry.cpp
 				glf/memory.cpp
 				glf/pass.cpp
@@ -15,6 +16,7 @@ SET(GLF_SRCS	${GLF_SRCS}
 				glf/sh.cpp
 				glf/sky.cpp
 				glf/ssao.cpp
+				glf/terrain.cpp
 				glf/texture.cpp
 				glf/timing.cpp
 				glf/utils.cpp

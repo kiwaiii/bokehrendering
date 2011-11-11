@@ -100,16 +100,44 @@ namespace glf
 	}
 	//-------------------------------------------------------------------------
 	CSMBuilder::CSMBuilder():
-	program("CSMBuilder")
+	maxCascades(4)
 	{
-		program.Compile(ProgramOptions::CreateVSOptions().Append(LoadFile(directory::ShaderDirectory + "csmbuilder.vs")),
-						LoadFile(directory::ShaderDirectory + "csmbuilder.gs"),
-						LoadFile(directory::ShaderDirectory + "csmbuilder.fs"));
+		// Program regular mesh
+		ProgramOptions regularOptions = ProgramOptions::CreateVSOptions();
+		regularOptions.AddDefine<int>("CSM_BUILDER", 1);
+		regularOptions.AddDefine<int>("MAX_CASCADES",maxCascades);
+		regularRenderer.program.Compile(regularOptions.Append(LoadFile(directory::ShaderDirectory + "meshregular.vs")),
+										regularOptions.Append(LoadFile(directory::ShaderDirectory + "meshregular.gs")),
+										regularOptions.Append(LoadFile(directory::ShaderDirectory + "meshregular.fs")));
 
-		projVar 		= program["Projections[0]"].location;
-		viewVar 		= program["View"].location;
-		modelVar 		= program["Model"].location;
-		nCascadesVar	= program["nCascades"].location;
+		regularRenderer.projVar 		= regularRenderer.program["Projections[0]"].location;
+		regularRenderer.viewVar 		= regularRenderer.program["View"].location;
+		regularRenderer.modelVar 		= regularRenderer.program["Model"].location;
+		regularRenderer.nCascadesVar	= regularRenderer.program["nCascades"].location;
+
+		// Program terrain mesh
+		ProgramOptions terrainOptions = ProgramOptions::CreateVSOptions();
+		terrainOptions.AddDefine<int>("CSM_BUILDER", 1);
+		terrainOptions.AddDefine<int>("MAX_CASCADES",maxCascades);
+		terrainRenderer.program.Compile(terrainOptions.Append(LoadFile(directory::ShaderDirectory + "meshterrain.vs")),
+										terrainOptions.Append(LoadFile(directory::ShaderDirectory + "meshterrain.cs")),
+										terrainOptions.Append(LoadFile(directory::ShaderDirectory + "meshterrain.es")),
+										terrainOptions.Append(LoadFile(directory::ShaderDirectory + "meshterrain.gs")),
+										terrainOptions.Append(LoadFile(directory::ShaderDirectory + "meshterrain.fs")));
+
+		terrainRenderer.projVar 		= terrainRenderer.program["Projections[0]"].location;
+		terrainRenderer.viewVar 		= terrainRenderer.program["View"].location;
+		terrainRenderer.nCascadesVar	= terrainRenderer.program["nCascades"].location;
+
+		terrainRenderer.heightTexUnit	= terrainRenderer.program["HeightTex"].unit;
+		terrainRenderer.tileSizeVar		= terrainRenderer.program["TileSize"].location;
+		terrainRenderer.tileCountVar	= terrainRenderer.program["TileCount"].location;
+		terrainRenderer.tileOffsetVar	= terrainRenderer.program["TileOffset"].location;
+		terrainRenderer.projFactorVar	= terrainRenderer.program["ProjFactor"].location;
+		terrainRenderer.tessFactorVar	= terrainRenderer.program["TessFactor"].location;
+		terrainRenderer.depthFactorVar	= terrainRenderer.program["DepthFactor"].location;
+
+		glProgramUniform1i(terrainRenderer.program.id, terrainRenderer.program["HeightTex"].location,  terrainRenderer.heightTexUnit);
 	}
 	//-------------------------------------------------------------------------
 	void CSMBuilder::Draw(	CSMLight&			_light,
@@ -259,22 +287,52 @@ namespace glf
 		}
 
 		// Render cascaded shadow maps 
-		assert(_light.nCascades<=4);
-		glUseProgram(program.id);
-		glProgramUniform1i(program.id, 			nCascadesVar,	_light.nCascades);
-		glProgramUniformMatrix4fv(program.id, 	projVar,  		_light.nCascades, 	GL_FALSE, &_light.projs[0][0][0]);
-		glProgramUniformMatrix4fv(program.id, 	viewVar,  		1, 					GL_FALSE, &_light.view[0][0]);
-
+		assert(_light.nCascades<=maxCascades);
 		glViewport(0,0,_light.depthTexs.size.x,_light.depthTexs.size.y);
 		glBindFramebuffer(GL_FRAMEBUFFER,_light.framebuffer);
 		glClear(GL_DEPTH_BUFFER_BIT);
-		for(unsigned int o=0;o<_scene.shadowMeshes.size();++o)
+
+		// Regular renderer
 		{
-			glProgramUniformMatrix4fv(program.id, modelVar, 1, GL_FALSE, &_scene.transformations[o][0][0]);
-			_scene.shadowMeshes[o].Draw();
+			glUseProgram(regularRenderer.program.id);
+			glProgramUniform1i(regularRenderer.program.id, 			regularRenderer.nCascadesVar,	_light.nCascades);
+			glProgramUniformMatrix4fv(regularRenderer.program.id, 	regularRenderer.projVar,  		_light.nCascades, 	GL_FALSE, &_light.projs[0][0][0]);
+			glProgramUniformMatrix4fv(regularRenderer.program.id, 	regularRenderer.viewVar,  		1, 					GL_FALSE, &_light.view[0][0]);
+
+			for(unsigned int o=0;o<_scene.shadowMeshes.size();++o)
+			{
+				glProgramUniformMatrix4fv(regularRenderer.program.id, regularRenderer.modelVar, 1, GL_FALSE, &_scene.transformations[o][0][0]);
+				_scene.shadowMeshes[o].Draw();
+			}
+			glf::CheckError("CSMBuilder::Draw::Regulars");
 		}
+
+		// Terrain renderer
+		{
+			glUseProgram(terrainRenderer.program.id);
+			glProgramUniform1i(terrainRenderer.program.id, 			terrainRenderer.nCascadesVar,	_light.nCascades);
+			glProgramUniformMatrix4fv(terrainRenderer.program.id, 	terrainRenderer.projVar,  		_light.nCascades, 	GL_FALSE, &_light.projs[0][0][0]);
+			glProgramUniformMatrix4fv(terrainRenderer.program.id, 	terrainRenderer.viewVar,  		1, 					GL_FALSE, &_light.view[0][0]);
+
+			for(unsigned int o=0;o<_scene.terrainMeshes.size();++o)
+			{
+				const TerrainMesh& mesh = _scene.terrainMeshes[o];
+				glProgramUniform2f(terrainRenderer.program.id, 		terrainRenderer.tileOffsetVar,	mesh.tileOffset.x, mesh.tileOffset.y);
+				glProgramUniform2i(terrainRenderer.program.id, 		terrainRenderer.tileCountVar,	mesh.tileCount.x,  mesh.tileCount.y);
+				glProgramUniform2f(terrainRenderer.program.id, 		terrainRenderer.tileSizeVar,	mesh.tileSize.x,   mesh.tileSize.y);
+				glProgramUniform1f(terrainRenderer.program.id, 		terrainRenderer.tessFactorVar,	mesh.tessFactor);
+				glProgramUniform1f(terrainRenderer.program.id, 		terrainRenderer.depthFactorVar,	mesh.depthFactor);
+				glProgramUniform1f(terrainRenderer.program.id, 		terrainRenderer.projFactorVar,	mesh.projFactor);
+
+				mesh.heightTex->Bind(terrainRenderer.heightTexUnit);
+				_scene.terrainMeshes[o].Draw();
+			}
+			glf::CheckError("CSMBuilder::Draw::Terrains");
+		}
+
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
 		glViewport(0,0,ctx::window.Size.x,ctx::window.Size.y);
+
 		glf::CheckError("CSMBuilder::Draw");
 	}
 	//-------------------------------------------------------------------------

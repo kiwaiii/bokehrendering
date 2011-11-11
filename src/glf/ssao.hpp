@@ -5,6 +5,7 @@
 // Include
 //------------------------------------------------------------------------------
 #include <glf/wrapper.hpp>
+#include <glf/gbuffer.hpp>
 #include <glf/pass.hpp>
 
 namespace glf

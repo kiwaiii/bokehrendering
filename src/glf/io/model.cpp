@@ -1717,7 +1717,7 @@ namespace glf
 			{
 				// Create default textures
 				Texture2D* diffuseTex  = _resourceManager.CreateTexture2D();
-				Texture2D* specularTex = _resourceManager.CreateTexture2D();
+				//Texture2D* specularTex = _resourceManager.CreateTexture2D();
 				Texture2D* normalTex   = _resourceManager.CreateTexture2D();
 
 				unsigned char defaultColor[] = {255,255,255};
@@ -1725,10 +1725,10 @@ namespace glf
 				diffuseTex->Fill(GL_RGB,GL_UNSIGNED_BYTE,defaultColor);
 				diffuseTex->SetFiltering(GL_LINEAR,GL_LINEAR);
 
-				unsigned char defaultSpecular[] = {0,0,0};
-				specularTex->Allocate(GL_SRGB8_ALPHA8,1,1);
-				specularTex->Fill(GL_RGB,GL_UNSIGNED_BYTE,defaultColor);
-				specularTex->SetFiltering(GL_LINEAR,GL_LINEAR);
+				//unsigned char defaultSpecular[] = {0,0,0};
+				//specularTex->Allocate(GL_SRGB8_ALPHA8,1,1);
+				//specularTex->Fill(GL_RGB,GL_UNSIGNED_BYTE,defaultSpecular);
+				//specularTex->SetFiltering(GL_LINEAR,GL_LINEAR);
 
 				unsigned char defaultNormal[] = {128,128,255};
 				normalTex->Allocate(GL_RGBA8,1,1);
@@ -1736,7 +1736,7 @@ namespace glf
 				normalTex->SetFiltering(GL_LINEAR,GL_LINEAR);
 
 				_textureDB["defaultdiffuse"]  = diffuseTex;
-				_textureDB["defaultspecular"] = specularTex;
+				//_textureDB["defaultspecular"] = specularTex;
 				_textureDB["defaultnormal"]   = normalTex;
 			}
 		}
@@ -1858,8 +1858,6 @@ namespace glf
 			{
 				const ModelOBJ::Mesh& mesh	= loader.getMesh(i);
 
-				TextureDB::iterator it;
-
 				// Load textures
 				glf::Texture2D* diffuseTex  = GetDiffuseTex(_folder,mesh.pMaterial->colorMapFilename,textureDB,_resourceManager);
 				//glf::Texture2D* specularTex = GetSpecularTex(_folder,mesh.pMaterial->specularMapFilename,textureDB,_resourceManager);
@@ -1943,21 +1941,48 @@ namespace glf
 											obound.pMax.z);
 				}
 			}
-			_scene.wBound = WorldBound(_scene);
-
-			if(_verbose)
-			{
-				glf::Info("----------------------------------------------");
-				glf::Info("World bound   : (%f,%f,%f) (%f,%f,%f)",
-											_scene.wBound.pMin.x,
-											_scene.wBound.pMin.y,
-											_scene.wBound.pMin.z,
-											_scene.wBound.pMax.x,
-											_scene.wBound.pMax.y,
-											_scene.wBound.pMax.z);
-			}
 
 			loader.destroy();
+		}
+		//----------------------------------------------------------------------
+		void LoadTerrain(	const std::string& _folder,
+							const std::string& _diffuseTex,
+							const std::string& _normalTex,
+							const std::string& _heightTex,
+							const glm::vec2& _terrainSize,
+							const glm::vec2& _terrainOffset,
+							int   _tileResolution,
+							float _heightFactor,
+							float _tessFactor,
+							float _projFactor,
+							ResourceManager& _resourceManager,
+							SceneManager& _scene,
+							bool _verbose)
+		{
+			TextureDB textureDB;
+			InitializeDB(textureDB,_resourceManager);
+
+			glf::VertexBuffer2F* terrainVBO = _resourceManager.CreateVBO2F();
+			terrainVBO->Allocate(4,GL_STATIC_DRAW);
+			glm::vec2* vertices = terrainVBO->Lock();
+			vertices[0] = glm::vec2(0,0);
+			vertices[1] = glm::vec2(1,0);
+			vertices[2] = glm::vec2(1,1);
+			vertices[3] = glm::vec2(0,1);
+			terrainVBO->Unlock();
+
+			glf::VertexArray* terrainVAO = _resourceManager.CreateVAO();
+			terrainVAO->Add(*terrainVBO,glf::semantic::Position,2,GL_FLOAT);
+
+			glf::Texture2D* diffuseTex = GetDiffuseTex(_folder,_diffuseTex,textureDB,_resourceManager);
+			glf::Texture2D* heightTex  = GetDiffuseTex(_folder,_heightTex,textureDB,_resourceManager);
+			glf::Texture2D* normalTex  = GetNormalTex(_folder,_normalTex,textureDB,_resourceManager);
+
+			TerrainMesh mesh(_terrainSize,_terrainOffset,diffuseTex,normalTex,heightTex,_tileResolution);
+			mesh.primitive  = terrainVAO;
+			mesh.Tesselation(_tileResolution,_heightFactor,_tessFactor,_projFactor);
+			_scene.terrainMeshes.push_back(mesh);
+			_scene.tBounds.push_back(mesh.Bound());
 		}
 	}
 }

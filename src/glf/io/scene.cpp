@@ -48,6 +48,55 @@ namespace glf
 							_verbose);
 			}
 
+			// Load terrains
+			glf::io::ConfigNode* terrainsNode = loader.GetNode(root,"terrains");
+			int nTerrains = loader.GetCount(terrainsNode);
+			for(int i=0;i<nTerrains;++i)
+			{
+				glf::io::ConfigNode* terrainNode = loader.GetNode(terrainsNode,i);
+
+				std::string name			= loader.GetString(terrainNode,"name");
+				std::string diffuse			= loader.GetString(terrainNode,"diffuse");
+				std::string normal			= loader.GetString(terrainNode,"normal");
+				std::string height			= loader.GetString(terrainNode,"height");
+				glm::vec2 offset			= loader.GetVec2(terrainNode,  "offset");
+
+				glm::vec2 terrainSize		= loader.GetVec2(terrainNode,"terrainSize");
+				glm::vec2 terrainOffset		= loader.GetVec2(terrainNode,"terrainOffset");
+				int tileResolution			= loader.GetInt(terrainNode,"tileResolution");
+				float heightFactor			= loader.GetFloat(terrainNode,"heightFactor");
+				float tessFactor			= loader.GetFloat(terrainNode,"tessFactor");
+				float projFactor			= loader.GetFloat(terrainNode,"projFactor");
+
+				LoadTerrain(glf::directory::TextureDirectory,
+							diffuse,
+							normal,
+							height,
+							terrainSize,
+							terrainOffset,
+							tileResolution,
+							heightFactor,
+							tessFactor,
+							projFactor,
+							_resourceManager,
+							_scene,
+							_verbose);
+			}
+
+			// Compute bounds
+			_scene.wBound = WorldBound(_scene);
+			if(_verbose)
+			{
+				glf::Info("----------------------------------------------");
+				glf::Info("World bound   : (%f,%f,%f) (%f,%f,%f)",
+											_scene.wBound.pMin.x,
+											_scene.wBound.pMin.y,
+											_scene.wBound.pMin.z,
+											_scene.wBound.pMax.x,
+											_scene.wBound.pMax.y,
+											_scene.wBound.pMax.z);
+			}
+
 			// Load lights
 			//TODO
 
