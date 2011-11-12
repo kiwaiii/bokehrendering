@@ -1,4 +1,4 @@
-#version 420
+#version 420 core
 
 layout(binding = 0, offset = 0) uniform atomic_uint BokehCounter;
 layout(size1x32) writeonly uniform uimage1D IndirectBufferTex;

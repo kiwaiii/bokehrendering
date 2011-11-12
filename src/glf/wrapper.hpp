@@ -20,7 +20,7 @@ namespace glf
 		template<typename T>
 		void 		AddDefine(	const std::string& _name, 
 								const T& _value);
-		void 		AddResolution(const std::string& _name,  
+		void 		AddResolution(const std::string& _name,
 								int _resX, 
 								int _resY);
 		void 		AddConst(	const std::string& _name,  

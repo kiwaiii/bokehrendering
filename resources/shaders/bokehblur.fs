@@ -1,4 +1,4 @@
-#version 410
+#version 420 core
 
 uniform sampler2D		BlurDepthTex;
 uniform sampler2D		ColorTex;

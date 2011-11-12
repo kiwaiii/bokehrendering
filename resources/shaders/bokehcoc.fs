@@ -1,4 +1,4 @@
-#version 410
+#version 420 core
 
 uniform sampler2D		PositionTex;
 uniform mat4			ViewMat;

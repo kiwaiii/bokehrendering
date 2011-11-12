@@ -1,11 +1,10 @@
 //-----------------------------------------------------------------------------
 #version 410
 
-uniform mat4					 Transformation;
-layout(location = ATTR_POSITION) in vec3 Position;
+layout(location = ATTR_POSITION) in vec2 Position;
 
 void main()
 {
-	gl_Position  = Transformation * vec4(Position,1);
+	gl_Position  = vec4(Position,0,1);
 }
 

@@ -19,8 +19,6 @@ namespace glf
 	PostProcessor::PostProcessor(		unsigned int _width, 
 										unsigned int _height)
 	{
-		glm::mat4 transform = ScreenQuadTransform();
-
 		// Tone Mapping
 		{
 			toneMapping.program.Compile(	ProgramOptions::CreateVSOptions().Append(LoadFile(directory::ShaderDirectory + "tonemap.vs")),
@@ -28,7 +26,6 @@ namespace glf
 			toneMapping.colorTexUnit		= toneMapping.program["ColorTex"].unit;
 			toneMapping.exposureVar			= toneMapping.program["Exposure"].location;
 			glProgramUniform1i(toneMapping.program.id, toneMapping.program["ColorTex"].location, toneMapping.colorTexUnit);
-			glProgramUniformMatrix4fv(toneMapping.program.id, toneMapping.program["Transformation"].location,1, GL_FALSE, &transform[0][0]);
 		}
 	}
 	//--------------------------------------------------------------------------

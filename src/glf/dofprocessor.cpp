@@ -18,8 +18,6 @@ namespace glf
 	//-------------------------------------------------------------------------
 	DOFProcessor::DOFProcessor(int _w, int _h)
 	{
-		glm::mat4 transform	= ScreenQuadTransform();
-		
 		// Resources initialization
 		{
 			// Load bokeh texture
@@ -104,8 +102,7 @@ namespace glf
 			cocPass.viewMatVar			= cocPass.program["ViewMat"].location;
 			cocPass.positionTexUnit		= cocPass.program["PositionTex"].unit;
 
-			glProgramUniformMatrix4fv(cocPass.program.id, cocPass.program["Transformation"].location,1, GL_FALSE, &transform[0][0]);
-			glProgramUniform1i(cocPass.program.id, 		  cocPass.program["PositionTex"].location,cocPass.positionTexUnit);
+			glProgramUniform1i(cocPass.program.id, cocPass.program["PositionTex"].location,cocPass.positionTexUnit);
 
 			glf::CheckError("DofProcessor::BlurDepth");
 		}
@@ -123,7 +120,6 @@ namespace glf
 			detectionPass.bokehColorTexUnit	= detectionPass.program["BokehColorTex"].unit;
 			detectionPass.bokehPositionTexUnit= detectionPass.program["BokehPositionTex"].unit;			
 
-			glProgramUniformMatrix4fv(detectionPass.program.id, detectionPass.program["Transformation"].location,1,GL_FALSE,&transform[0][0]);
 			glProgramUniform1i(detectionPass.program.id, detectionPass.program["BlurDepthTex"].location,detectionPass.blurDepthTexUnit);
 			glProgramUniform1i(detectionPass.program.id, detectionPass.program["ColorTex"].location,detectionPass.colorTexUnit);
 			glProgramUniform1i(detectionPass.program.id, detectionPass.program["BokehColorTex"].location,detectionPass.bokehColorTexUnit);
@@ -142,9 +138,8 @@ namespace glf
 			blurSeparablePass.maxCoCRadiusVar	= blurSeparablePass.program["MaxCoCRadius"].location;
 			blurSeparablePass.directionVar		= blurSeparablePass.program["Direction"].location;
 
-			glProgramUniformMatrix4fv(blurSeparablePass.program.id, blurSeparablePass.program["Transformation"].location,1,GL_FALSE, &transform[0][0]);
-			glProgramUniform1i(blurSeparablePass.program.id, 		blurSeparablePass.program["BlurDepthTex"].location,blurSeparablePass.blurDepthTexUnit);
-			glProgramUniform1i(blurSeparablePass.program.id, 		blurSeparablePass.program["ColorTex"].location,blurSeparablePass.colorTexUnit);
+			glProgramUniform1i(blurSeparablePass.program.id, blurSeparablePass.program["BlurDepthTex"].location,blurSeparablePass.blurDepthTexUnit);
+			glProgramUniform1i(blurSeparablePass.program.id, blurSeparablePass.program["ColorTex"].location,blurSeparablePass.colorTexUnit);
 
 			glf::CheckError("DofProcessor::BlurSeparable");
 		}
@@ -207,11 +202,10 @@ namespace glf
 			blurPoissonPass.maxCoCRadiusVar		= blurPoissonPass.program["MaxCoCRadius"].location;
 			blurPoissonPass.nSamplesVar			= blurPoissonPass.program["NSamples"].location;
 
-			glProgramUniformMatrix4fv(blurPoissonPass.program.id, blurPoissonPass.program["Transformation"].location,1,GL_FALSE, &transform[0][0]);
-			glProgramUniform1i(blurPoissonPass.program.id,		  blurPoissonPass.program["BlurDepthTex"].location,blurPoissonPass.blurDepthTexUnit);
-			glProgramUniform1i(blurPoissonPass.program.id,		  blurPoissonPass.program["ColorTex"].location,blurPoissonPass.colorTexUnit);
-			glProgramUniform1i(blurPoissonPass.program.id,		  blurPoissonPass.program["RotationTex"].location,blurPoissonPass.rotationTexUnit);
-			glProgramUniform2fv(blurPoissonPass.program.id,		  blurPoissonPass.program["Samples[0]"].location,32,&Halton[0][0]);
+			glProgramUniform1i(blurPoissonPass.program.id,	blurPoissonPass.program["BlurDepthTex"].location,blurPoissonPass.blurDepthTexUnit);
+			glProgramUniform1i(blurPoissonPass.program.id,	blurPoissonPass.program["ColorTex"].location,blurPoissonPass.colorTexUnit);
+			glProgramUniform1i(blurPoissonPass.program.id,	blurPoissonPass.program["RotationTex"].location,blurPoissonPass.rotationTexUnit);
+			glProgramUniform2fv(blurPoissonPass.program.id,	blurPoissonPass.program["Samples[0]"].location,32,&Halton[0][0]);
 
 			glf::CheckError("DofProcessor::BlurPoisson");
 		}
@@ -240,7 +234,6 @@ namespace glf
 			renderingPass.maxBokehRadiusVar		= renderingPass.program["MaxBokehRadius"].location;
 			renderingPass.bokehDepthCutoffVar	= renderingPass.program["BokehDepthCutoff"].location;
 
-			glProgramUniformMatrix4fv(renderingPass.program.id,	renderingPass.program["Transformation"].location,1, GL_FALSE, &transform[0][0]);
 			glProgramUniform2f(renderingPass.program.id, renderingPass.program["PixelScale"].location,1.f/_w, 1.f/_h);
 			glProgramUniform1i(renderingPass.program.id, renderingPass.program["BokehPositionTex"].location,renderingPass.bokehPositionTexUnit);
 			glProgramUniform1i(renderingPass.program.id, renderingPass.program["BokehShapeTex"].location,renderingPass.bokehShapeTexUnit);

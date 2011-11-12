@@ -1,5 +1,4 @@
-//-----------------------------------------------------------------------------
-#version 410 core
+#version 420 core
 
 uniform mat4 Transformation;
 layout(location = ATTR_POSITION) in	vec3 Position;

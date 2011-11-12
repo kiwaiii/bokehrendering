@@ -1,5 +1,4 @@
-//-----------------------------------------------------------------------------
-#version 410
+#version 420 core
 
 //-----------------------------------------------------------------------------
 uniform	int						nCascades;
@@ -60,7 +59,7 @@ vec3 BRDF(	in vec3 _viewDir,
 float ShadowTest(const vec3 _pos, int _cascadeIndex)
 {
 	// Basic shadow test
-	// TODO : re-add PCF
+	// TODO : re-add PCF and EVSM
 	return texture(ShadowTex,vec4(_pos.xy,_cascadeIndex,_pos.z-Bias));
 }
 //------------------------------------------------------------------------------

@@ -232,4 +232,14 @@ namespace glf
 		vertices[5] = glm::vec4(0,1,0,1);
 		_quad.Unlock();
 	}
+	//--------------------------------------------------------------------------
+	void CreateScreenTriangle(glf::VertexBuffer2F& _triangle)
+	{
+		_triangle.Allocate(3,GL_STATIC_DRAW);
+		glm::vec2* vertices = _triangle.Lock();
+		vertices[0] = glm::vec2(-2,-2);
+		vertices[1] = glm::vec2(4,0);
+		vertices[2] = glm::vec2(0,4);
+		_triangle.Unlock();
+	}
 }

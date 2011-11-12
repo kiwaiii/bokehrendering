@@ -40,7 +40,7 @@ namespace glf
 		GLuint							shFrameProjection;
 		TextureArray2D					shTexture;
 		Program							programProjection;
-		VertexBuffer3F					vbo;
+		VertexBuffer2F					vbo;
 		VertexArray						vao;
 		int 							resolution;
 	};

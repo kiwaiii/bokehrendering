@@ -1,6 +1,4 @@
-#version 410
-#extension GL_NV_gpu_shader5 : enable
-#extension GL_EXT_shader_image_load_store : enable
+#version 420 core
 
 layout(size1x32) coherent uniform uimage1D 	BokehCountTex;
 out vec4 FragColor;

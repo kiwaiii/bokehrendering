@@ -1,7 +1,6 @@
-//-----------------------------------------------------------------------------
-#version 330 core
+#version 420 core
 
-layout(location = ATTR_POSITION) in  vec3 	 Position;
+layout(location = ATTR_POSITION) in  vec3 Position;
 
 void main()
 {

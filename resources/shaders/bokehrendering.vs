@@ -21,6 +21,6 @@ void main()
 	vec4 pos	 = texelFetch(BokehPositionTex,coord,0);
 	vRadius		 = pos.w * MaxBokehRadius;
 	vDepth		 = pos.z;
-	gl_Position	 = vec4( (Position.xy+pos.xy)*PixelScale,0,1);
+	gl_Position	 = vec4((Position.xy+pos.xy)*PixelScale,0,1);
 }
 

@@ -1,6 +1,4 @@
-//-----------------------------------------------------------------------------
-//#version 330 core
-#version 410 core
+#version 420 core
 
 in  vec3 gColor; 
 out vec4 FragColor;
