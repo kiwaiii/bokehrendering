@@ -30,8 +30,6 @@ namespace glf
 		normalTexUnit		= program["NormalTex"].unit;
 		rotationTexUnit		= program["RotationTex"].unit;
 
-		glm::mat4 transform	= ScreenQuadTransform();
-		glProgramUniformMatrix4fv(program.id, program["Transformation"].location,	1, GL_FALSE, &transform[0][0]);
 		glProgramUniform1i(program.id, 		  program["PositionTex"].location,		positionTexUnit);
 		glProgramUniform1i(program.id, 		  program["NormalTex"].location,		normalTexUnit);
 		glProgramUniform1i(program.id, 		  program["RotationTex"].location,		rotationTexUnit);
@@ -133,11 +131,8 @@ namespace glf
 		positionTexUnit		= program["PositionTex"].unit;
 		inputTexUnit		= program["InputTex"].unit;
 
-		glm::mat4 transform	= ScreenQuadTransform();
-
-		glProgramUniform1i(program.id, 		  program["InputTex"].location,				inputTexUnit);
-		glProgramUniform1i(program.id, 		  program["PositionTex"].location,			positionTexUnit);
-		glProgramUniformMatrix4fv(program.id, program["Transformation"].location,		1, GL_FALSE, &transform[0][0]);
+		glProgramUniform1i(program.id, program["InputTex"].location,	inputTexUnit);
+		glProgramUniform1i(program.id, program["PositionTex"].location,	positionTexUnit);
 
 		glf::CheckError("BilateralPass::Create");
 	}
@@ -151,10 +146,10 @@ namespace glf
 								const RenderTarget& _renderTarget)
 	{
 		glUseProgram(program.id);
-		glProgramUniform1f(program.id,			sigmaHVar,			_sigmaH);
-		glProgramUniform1f(program.id,			sigmaVVar,			_sigmaV);
-		glProgramUniform1i(program.id,			nTapsVar,			_nTaps);
-		glProgramUniformMatrix4fv(program.id, 	viewMatVar,			1, GL_FALSE, &_view[0][0]);
+		glProgramUniform1f(program.id,			sigmaHVar,	_sigmaH);
+		glProgramUniform1f(program.id,			sigmaVVar,	_sigmaV);
+		glProgramUniform1i(program.id,			nTapsVar,	_nTaps);
+		glProgramUniformMatrix4fv(program.id, 	viewMatVar,	1, GL_FALSE, &_view[0][0]);
 
 		_inputTex.Bind(inputTexUnit);
 		_positionTex.Bind(positionTexUnit);

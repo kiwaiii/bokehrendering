@@ -356,9 +356,6 @@ namespace glf
 		normalTexUnit		= program["NormalTex"].unit;
 		shadowTexUnit		= program["ShadowTex"].unit;
 
-		glm::mat4 transform = ScreenQuadTransform();
-
-		glProgramUniformMatrix4fv(program.id, program["Transformation"].location,	1, GL_FALSE, &transform[0][0]);
 		glProgramUniform1i(program.id, 		  program["PositionTex"].location,		positionTexUnit);
 		glProgramUniform1i(program.id, 		  program["ShadowTex"].location,		shadowTexUnit);
 		glProgramUniform1i(program.id, 		  program["DiffuseTex"].location,		diffuseTexUnit);

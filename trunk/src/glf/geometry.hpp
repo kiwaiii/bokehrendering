@@ -15,6 +15,7 @@ namespace glf
 	void	CreateQuad(			glf::VertexBuffer3F& _quad);
 	void	CreateQuad(			glf::VertexBuffer4F& _quad);
 	void	CreateQuad(			glf::IndexBuffer& _quad);
+	void	CreateScreenTriangle(glf::VertexBuffer2F& _triangle);
 }
 #endif
 

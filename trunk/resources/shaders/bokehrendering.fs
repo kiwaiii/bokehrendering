@@ -1,4 +1,4 @@
-#version 410
+#version 420 core
 
 uniform sampler2D		BokehShapeTex;
 uniform sampler2D		BlurDepthTex;
@@ -21,10 +21,10 @@ void main()
 
 	FragColor	= vec4(gColor.xyz * alpha * weight,gColor.w);
 
-    // For debugging/displaying bokehs
-    //if(gl_FragCoord.x<10000)
-    //{
-    //	FragColor	= vec4(0,0,15000,1);
-    //}
+	// For debugging/displaying bokehs
+//	if(gl_FragCoord.x<10000)
+//	{
+//		FragColor	= vec4(0,0,15000,1);
+//	}
 }
 

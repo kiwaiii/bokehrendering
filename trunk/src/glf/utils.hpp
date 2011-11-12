@@ -99,7 +99,7 @@ namespace glf
 	std::string ToString(					const glm::vec3& _vec);
 	std::string ToString(					const glm::vec4& _vec);
 	//-------------------------------------------------------------------------
-	glm::mat4	ScreenQuadTransform(		);
+	//glm::mat4	ScreenQuadTransform(		);
 	bool		IsPower2( 					int _n );
 	int			MipmapLevels( 				int _n );
 	int			NearestSuperiorPowerOf2( 	int _n );

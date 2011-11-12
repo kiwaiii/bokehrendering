@@ -27,18 +27,15 @@ namespace glf
 	{
 		programProjection.Compile(	ProgramOptions::CreateVSOptions().Append(LoadFile(directory::ShaderDirectory + "shbuilder.vs")),
 									LoadFile(directory::ShaderDirectory + "shbuilder.fs"));
-		glm::mat4 transformation = ScreenQuadTransform();
-		glProgramUniformMatrix4fv(programProjection.id, programProjection["Transformation"].location, 1, GL_FALSE, &transformation[0][0]);
-
-		CreateQuad(vbo);
-		vao.Add(vbo,semantic::Position,3,GL_FLOAT);
+		CreateScreenTriangle(vbo);
+		vao.Add(vbo,semantic::Position,2,GL_FLOAT);
 
 		glm::mat4 transformations[6];
 		transformations[0] = glm::rotate(-90.f,0.f,0.f,1.f) * glm::rotate(90.f,1.f,0.f,0.f); 				// Positive X
 		transformations[1] = glm::rotate( 90.f,0.f,0.f,1.f) * glm::rotate(90.f,1.f,0.f,0.f); 				// Negative X
 		transformations[2] = glm::rotate( 90.f,1.f,0.f,0.f);												// Positive Y
 		transformations[3] = glm::rotate(180.f,0.f,0.f,1.f) * glm::rotate(90.f,1.f,0.f,0.f); 				// Negative Y
-		transformations[4] = glm::rotate(180.f,1.f,0.f,0.f);  												// Positive Z
+		transformations[4] = glm::rotate(180.f,1.f,0.f,0.f);												// Positive Z
 		transformations[5] = glm::mat4(1);																	// Negative Z
 		glProgramUniformMatrix4fv(programProjection.id, programProjection["Transformations[0]"].location, 6, GL_FALSE, &transformations[0][0][0]);
 
@@ -133,11 +130,9 @@ namespace glf
 		shLightVar			= program["SHLight[0]"].location;
 		diffuseTexUnit		= program["DiffuseTex"].unit;
 		normalTexUnit		= program["NormalTex"].unit;
-		glm::mat4 trans		= ScreenQuadTransform();
 
-		glProgramUniformMatrix4fv(program.id, program["Transformation"].location,	1, GL_FALSE, &trans[0][0]);
-		glProgramUniform1i(program.id, 		  program["DiffuseTex"].location,		diffuseTexUnit);
-		glProgramUniform1i(program.id, 		  program["NormalTex"].location,		normalTexUnit);
+		glProgramUniform1i(program.id, program["DiffuseTex"].location,	diffuseTexUnit);
+		glProgramUniform1i(program.id, program["NormalTex"].location,	normalTexUnit);
 	}
 	//-------------------------------------------------------------------------
 	void SHRenderer::Draw(	const SHLight&	_light,
@@ -146,7 +141,7 @@ namespace glf
 	{
 		glUseProgram(program.id);
 
-		glProgramUniform3fv(program.id,	shLightVar, 9, (float*)(&_light.coeffs[0]));
+		glProgramUniform3fv(program.id, shLightVar, 9, (float*)(&_light.coeffs[0]));
 		_gbuffer.diffuseTex.Bind(diffuseTexUnit);
 		_gbuffer.normalTex.Bind(normalTexUnit);
 		_renderTarget.Draw();
