@@ -11,7 +11,6 @@ uniform float	SunFactor;
 uniform bool	DrawSun;
 
 in  vec3		gPosition;
-in  vec3		gColor;
 out vec4		FragColor;
 //-----------------------------------------------------------------------------
 const float     SunRadius   = 0.018f;
@@ -126,6 +125,5 @@ void main()
 //	FragColor = vec4( vec3(1.0) - exp(-(1.0/15000.0) * (XYZ2RGB * XYZ)), 1);
 //	FragColor = vec4( vec3(1.0) - exp(-(1.0/8000.0) * (XYZ2RGB * XYZ)), 1);
 	FragColor = vec4( (XYZ2RGB * XYZ), 1);
-//	FragColor = vec4( (XYZ2RGB * XYZ) * clamp(gColor+vec3(0.5),vec3(0),vec3(1)), 1);
 }
 

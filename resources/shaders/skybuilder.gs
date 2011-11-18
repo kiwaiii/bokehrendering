@@ -4,7 +4,6 @@
 uniform mat4 Transformations[6];
 //-----------------------------------------------------------------------------
 out vec3 gPosition;
-out vec3 gColor;
 layout(triangles) in;
 layout(triangle_strip, max_vertices = 18) out;
 //-----------------------------------------------------------------------------

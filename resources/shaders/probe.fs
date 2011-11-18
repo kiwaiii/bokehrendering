@@ -74,10 +74,10 @@
 
 
 #ifdef RENDERER
-	uniform vec3			SHCoeffs[9];
-	//uniform samplerCube		CubeTex;
 	uniform sampler2D		PositionTex;
 	uniform sampler2D		NormalTex;
+    //uniform samplerCube		CubeTex;
+	uniform vec3			SHCoeffs[9];
 
 	out vec4 				FragColor;
 	const float 			c1 = 0.429043, 
@@ -129,6 +129,6 @@
 
 		vec3 sRadiance	= vec3(0);
 		//vec3 sRadiance	= texture(CubeTex,n).xyz;
-		FragColor	  	= vec4(dRadiance * INV_PI + sRadiance,1);
+		FragColor	  	= vec4(sRadiance + dRadiance * INV_PI,1);
 	}
 #endif

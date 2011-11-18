@@ -156,10 +156,10 @@ namespace glf
 						options.Append(LoadFile(directory::ShaderDirectory + "probe.fs")));
 
 		shCoeffsVar			= program["SHCoeffs[0]"].location;
-//		cubeTexUnit			= program["CubeTex"].unit;
+		//cubeTexUnit			= program["CubeTex"].unit;
 		normalTexUnit		= program["NormalTex"].unit;
 		glProgramUniform1i(program.id, program["NormalTex"].location, normalTexUnit);
-//		glProgramUniform1i(program.id, program["CubeTex"].location, cubeTexUnit);
+		//glProgramUniform1i(program.id, program["CubeTex"].location, cubeTexUnit);
 
 Info(program.ToString());
 	}
@@ -171,7 +171,7 @@ Info(program.ToString());
 		glUseProgram(program.id);
 
 		glProgramUniform3fv(program.id, shCoeffsVar, 9, (float*)(&_probe.shCoeffs[0]));
-		_probe.cubeTex.Bind(cubeTexUnit);
+		//_probe.cubeTex.Bind(cubeTexUnit);
 		_gbuffer.normalTex.Bind(normalTexUnit);
 		_renderTarget.Draw();
 
