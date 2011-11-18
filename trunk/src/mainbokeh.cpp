@@ -617,10 +617,8 @@ void display()
 		app->skyBuilder.SetSunFactor(app->skyParams.sunFactor);
 		app->skyBuilder.SetPosition(app->skyParams.sunTheta,app->skyParams.sunPhi);
 		app->skyBuilder.SetTurbidity(float(app->skyParams.turbidity));
-//		app->skyBuilder.Update();
 		app->skyBuilder.Build(app->probeLight.cubeTex);
 		app->probeBuilder.Filter(app->probeLight);
-//		app->shBuilder.Project(app->skyBuilder.skyTexture,app->shLight);
 		float sunLuminosity = glm::max(glm::dot(app->skyBuilder.sunIntensity, glm::vec3(0.299f, 0.587f, 0.114f)), 0.0001f);
 
 		glm::vec3 dir;

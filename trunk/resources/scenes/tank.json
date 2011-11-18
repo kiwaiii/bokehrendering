@@ -26,7 +26,7 @@
 			"name"      : "terrain",
 			"diffuse"   : "terrainDiffuse.png",
 			"height"    : "terrainHeight.png",
-			"normal"    : "terrainNormal2.png",
+			"normal"    : "terrainNormal.png",
 			"terrainSize"  : [50, 50],
 			"terrainOffset": [-25, -25, 0],
 			"tileResolution": 32,
