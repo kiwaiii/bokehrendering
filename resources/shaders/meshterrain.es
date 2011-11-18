@@ -2,9 +2,8 @@
 
 #ifdef GBUFFER
 	uniform mat4		Transform;
-	uniform float		DepthFactor;
-	uniform vec2		TileOffset;
 	uniform ivec2		TileCount;
+	uniform float		HeightFactor;
 	uniform sampler2D	HeightTex;
 
 	layout(quads, equal_spacing, ccw) in;
@@ -25,7 +24,7 @@
 	{	
 		vec2 coord	= (gl_TessCoord.xy + vec2(cTileCoord)) / vec2(TileCount);
 		vec4 pos	= interpolate(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_in[2].gl_Position, gl_in[3].gl_Position);
-		pos.z		-= DepthFactor * textureLod(HeightTex,coord,0).x;
+		pos.z		+= HeightFactor * textureLod(HeightTex,coord,0).x;
 		ePosition	= vec3(pos.xy,pos.z);
 		gl_Position	= Transform * vec4(pos.xy,pos.zw);
 		eTexCoord	= coord;
@@ -34,9 +33,8 @@
 
 #ifdef CSM_BUILDER
 	uniform mat4		View;
-	uniform float		DepthFactor;
-	uniform vec2		TileOffset;
 	uniform ivec2		TileCount;
+	uniform float		HeightFactor;
 	uniform sampler2D	HeightTex;
 
 	layout(quads, equal_spacing, ccw) in;
@@ -56,7 +54,7 @@
 	{	
 		vec2 coord	= (gl_TessCoord.xy + vec2(cTileCoord)) / vec2(TileCount);
 		vec4 pos	= interpolate(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_in[2].gl_Position, gl_in[3].gl_Position);
-		pos.z		-= DepthFactor * textureLod(HeightTex,coord,0).x;
+		pos.z		+= HeightFactor * textureLod(HeightTex,coord,0).x;
 		gl_Position	= View * vec4(pos.xy,pos.zw);
 		eTexCoord	= coord;
 	}

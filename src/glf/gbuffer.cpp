@@ -92,7 +92,7 @@ namespace glf
 		terrainRenderer.tileOffsetVar	= terrainRenderer.program["TileOffset"].location;
 		terrainRenderer.projFactorVar	= terrainRenderer.program["ProjFactor"].location;
 		terrainRenderer.tessFactorVar	= terrainRenderer.program["TessFactor"].location;
-		terrainRenderer.depthFactorVar	= terrainRenderer.program["DepthFactor"].location;
+		terrainRenderer.heightFactorVar	= terrainRenderer.program["HeightFactor"].location;
 
 		glProgramUniform1i(terrainRenderer.program.id, terrainRenderer.program["DiffuseTex"].location, terrainRenderer.diffuseTexUnit);
 		glProgramUniform1i(terrainRenderer.program.id, terrainRenderer.program["NormalTex"].location,  terrainRenderer.normalTexUnit);
@@ -146,11 +146,11 @@ namespace glf
 			for(int i=0;i<nTerrains;++i)
 			{
 				const TerrainMesh& mesh = _scene.terrainMeshes[i];
-				glProgramUniform2f(terrainRenderer.program.id, 			terrainRenderer.tileOffsetVar,	mesh.tileOffset.x, mesh.tileOffset.y);
+				glProgramUniform3f(terrainRenderer.program.id, 			terrainRenderer.tileOffsetVar,	mesh.tileOffset.x, mesh.tileOffset.y, mesh.tileOffset.z);
 				glProgramUniform2i(terrainRenderer.program.id, 			terrainRenderer.tileCountVar,	mesh.tileCount.x, mesh.tileCount.y);
 				glProgramUniform2f(terrainRenderer.program.id, 			terrainRenderer.tileSizeVar,	mesh.tileSize.x, mesh.tileSize.y);
 				glProgramUniform1f(terrainRenderer.program.id, 			terrainRenderer.tessFactorVar,	mesh.tessFactor);
-				glProgramUniform1f(terrainRenderer.program.id, 			terrainRenderer.depthFactorVar,	mesh.depthFactor);
+				glProgramUniform1f(terrainRenderer.program.id, 			terrainRenderer.heightFactorVar,mesh.heightFactor);
 				glProgramUniform1f(terrainRenderer.program.id, 			terrainRenderer.projFactorVar,	mesh.projFactor);
 
 				mesh.diffuseTex->Bind(terrainRenderer.diffuseTexUnit);

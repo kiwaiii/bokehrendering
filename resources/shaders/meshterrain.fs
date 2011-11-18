@@ -15,8 +15,8 @@
 	{
 		FragPosition 	= vec4(ePosition,1);
 		vec3 normal  	= textureLod(NormalTex,eTexCoord,0).xyz*2.f - 1.f;
-		FragNormal		= vec4(normalize(normal),1);
-		FragDiffuse		= vec4(texture(DiffuseTex,eTexCoord).xyz,0);
+		FragNormal		= vec4(normalize(normal),0.1);
+		FragDiffuse		= vec4(texture(DiffuseTex,eTexCoord).xyz,1);
 	}
 #endif
 

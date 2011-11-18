@@ -13,18 +13,45 @@
 namespace glf
 {
 	//--------------------------------------------------------------------------
+	class TerrainBuilder
+	{
+	public:
+				TerrainBuilder(				);
+		void	BuildNormals(				Texture2D* _heightTexture,
+											Texture2D* _normalTexture,
+											const glm::vec2& _terrainSize,
+											float _heightFactor=1.f);
+		void	BuildOcclusion(				Texture2D* _heightTexture,
+											Texture2D* _occlusionTexture,
+											float _heightFactor=1.f);
+	private:
+		struct NormalBuilder
+		{
+											NormalBuilder():program("TerrainBuilder::Normal"){}
+			GLint							heightFactorVar;
+			GLint							terrainSizeVar;
+			GLint							heightTexUnit;
+			Program							program;
+		};
+
+		glf::VertexBuffer2F					vbo;
+		glf::VertexArray					vao;
+		GLuint								framebuffer;
+		NormalBuilder						normalBuilder;
+	};
+	//--------------------------------------------------------------------------
 	class TerrainMesh
 	{
 	public:
 				TerrainMesh(				const glm::vec2 _terrainSize,
-											const glm::vec2 _terrainOffset,
+											const glm::vec3 _terrainOffset,
 											Texture2D* _diffuseTexture,
 											Texture2D* _normalTexture,
 											Texture2D* _heightTexture,
 											int _tileResolution=32);
 		void 	Draw(						bool _drawWireframe=false) const;
 		void	Tesselation(				int   _tileResolution,
-											float _depthFactor,
+											float _heightFactor,
 											float _tessFactor,
 											float _projFactor);
 		BBox	Bound(						) const;
@@ -33,10 +60,10 @@ namespace glf
 
 		glm::vec2							tileSize;		// Tile size
 		glm::ivec2							tileCount;		// Number of tiles for the terrain
-		glm::vec2							tileOffset; 	// World space offset
+		glm::vec3							tileOffset; 	// World space offset
 		glm::vec2							terrainSize;	// Terrain size (tileCount * tileSize)
 
-		float								depthFactor;	// Depth of the heightfield
+		float								heightFactor;	// Height of the heightfield
 		float								tessFactor;		// Tesselation factor ]0,32]
 		float								projFactor;		// For correcting projection estimation
 

@@ -1950,7 +1950,7 @@ namespace glf
 							const std::string& _normalTex,
 							const std::string& _heightTex,
 							const glm::vec2& _terrainSize,
-							const glm::vec2& _terrainOffset,
+							const glm::vec3& _terrainOffset,
 							int   _tileResolution,
 							float _heightFactor,
 							float _tessFactor,

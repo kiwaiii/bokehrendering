@@ -4,6 +4,7 @@
 uniform mat4 Transformations[6];
 //-----------------------------------------------------------------------------
 out vec3 gPosition;
+out vec3 gColor;
 layout(triangles) in;
 layout(triangle_strip, max_vertices = 18) out;
 //-----------------------------------------------------------------------------
@@ -14,8 +15,8 @@ void main()
 		gl_Layer = layer;
 		for(int i=0; i<3;++i)
 		{
-			gl_Position = Transformations[layer] * gl_in[i].gl_Position;
-			gPosition	= gl_in[i].gl_Position.xyz;
+			gl_Position = gl_in[i].gl_Position;
+			gPosition	= (Transformations[layer] * gl_in[i].gl_Position).xyz;
 			EmitVertex();
 		}
 		EndPrimitive();

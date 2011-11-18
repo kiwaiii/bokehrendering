@@ -10,7 +10,7 @@
 #include <glf/csm.hpp>
 #include <glf/debug.hpp>
 #include <glf/sky.hpp>
-#include <glf/sh.hpp>
+#include <glf/probe.hpp>
 #include <glf/ssao.hpp>
 #include <glf/camera.hpp>
 #include <glf/wrapper.hpp>
@@ -46,7 +46,7 @@ namespace ctx
 	glui::GlutContext* 						ui;
 	bool									drawHelpers = false;
 	bool									drawTimings = false;
-	bool									drawUI      = false;
+	bool									drawUI      = true;
 }
 //-----------------------------------------------------------------------------
 namespace
@@ -107,7 +107,7 @@ namespace
 
 	struct TerrainParams
 	{
-		glm::ivec2							tileResolution;
+		int									tileResolution;
 		float								depthFactor;
 		float								tessFactor;
 		float								projFactor;
@@ -141,12 +141,11 @@ namespace
 
 		glf::CubeMap						cubeMap;
 		glf::SkyBuilder						skyBuilder;
-		//glf::NightSkyBuilder				skyBuilder;
-		//glf::Terrain						terrain;
+		glf::TerrainBuilder					terrainBuilder;
 
-		glf::SHLight						shLight;
-		glf::SHBuilder						shBuilder;
-		glf::SHRenderer						shRenderer;
+		glf::ProbeLight						probeLight;
+		glf::ProbeBuilder					probeBuilder;
+		glf::ProbeRenderer					probeRenderer;
 
 		glf::SSAOPass						ssaoPass;
 		glf::BilateralPass					bilateralPass;
@@ -161,6 +160,7 @@ namespace
 		DOFParams							dofParams;
 		TerrainParams						terrainParams;
 
+		bool								updateTerrain;
 		bool								updateLighting;
 		int									activeBokeh;
 		int									activeBuffer;
@@ -199,11 +199,10 @@ namespace
 	csmRenderer(_w,_h),
 	cubeMap(),
 	skyBuilder(1024),
-//	terrain(32,32),
-//	terrain(1,256),
-	shLight(),
-	shBuilder(1024),
-	shRenderer(_w,_h),
+	terrainBuilder(),
+	probeLight(1024),
+	probeBuilder(1024),
+	probeRenderer(_w,_h),
 	ssaoPass(_w,_h),
 	bilateralPass(_w,_h),
 	dofProcessor(_w,_h),
@@ -216,10 +215,11 @@ namespace
 		dofParams					= _dofParams;
 		terrainParams				= _terrainParams;
 
+		updateTerrain				= true;
 		updateLighting				= true;
 		activeBokeh					= 1;
 		activeBuffer				= 0;
-		activeMenu					= 2;
+		activeMenu					= 5;
 		csmLight.direction			= glm::vec3(0,0,-1);
 
 //		terrain.Update(				terrainParams.tileResolution,
@@ -249,6 +249,7 @@ bool begin()
 	glEnable(GL_CULL_FACE);
 	glFrontFace(GL_CCW);
 	glCullFace(GL_BACK);
+	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 	glf::CheckError("begin");
 
 	// Load configuration
@@ -310,8 +311,8 @@ bool begin()
 //	terrainParams.depthFactor 	= loader.GetFloat(ssaoNode,"depthFactor",-5.f);
 //	terrainParams.tessFactor 	= loader.GetFloat(ssaoNode,"tessFactor",16.f);
 //	terrainParams.projFactor 	= loader.GetFloat(ssaoNode,"projFactor",10.f);
-	terrainParams.tileResolution= glm::ivec2(32,32);
-	terrainParams.depthFactor 	= -5.f;
+	terrainParams.tileResolution= 32;
+	terrainParams.depthFactor 	= 5.f;
 	terrainParams.tessFactor 	= 16.f;
 	terrainParams.projFactor 	= 10.f;
 	terrainParams.wireFrame		= false;
@@ -566,12 +567,11 @@ void gui()
 			if(app->activeMenu == menuType::MN_TERRAIN)
 			{
 				update = false;
-				float tileExp = floor(log2(app->terrainParams.tileResolution.x));
-				sprintf(labelBuffer,"Tile resolution : (%d,%d)",app->terrainParams.tileResolution.x,app->terrainParams.tileResolution.y);
+				float tileExp = floor(log2(app->terrainParams.tileResolution));
+				sprintf(labelBuffer,"Tile resolution : %d",app->terrainParams.tileResolution);
 				ctx::ui->Label(none,labelBuffer);
 				update |= ctx::ui->HorizontalSlider(sliderRect,1.f,10.f,&tileExp);
-				app->terrainParams.tileResolution.x = int(pow(2.f,floor(tileExp)));
-				app->terrainParams.tileResolution.y = app->terrainParams.tileResolution.x;
+				app->terrainParams.tileResolution = int(pow(2.f,floor(tileExp)));
 
 				sprintf(labelBuffer,"Depth factor : %f",app->terrainParams.depthFactor);
 				ctx::ui->Label(none,labelBuffer);
@@ -585,13 +585,12 @@ void gui()
 				ctx::ui->Label(none,labelBuffer);
 				update |= ctx::ui->HorizontalSlider(sliderRect,0.f,32.f,&app->terrainParams.projFactor);
 
-				ctx::ui->CheckButton(none,"Wire frame",&app->terrainParams.wireFrame);
+				update |= ctx::ui->CheckButton(none,"Wire frame",&app->terrainParams.wireFrame);
 
-//				if(update)
-//					app->terrain.Update(	app->terrainParams.tileResolution,
-//											app->terrainParams.depthFactor,
-//											app->terrainParams.tessFactor,
-//											app->terrainParams.projFactor);
+				if(update)
+				{
+					app->updateTerrain = true;
+				}
 			}
 			ctx::ui->EndFrame();
 		ctx::ui->EndGroup();
@@ -618,8 +617,10 @@ void display()
 		app->skyBuilder.SetSunFactor(app->skyParams.sunFactor);
 		app->skyBuilder.SetPosition(app->skyParams.sunTheta,app->skyParams.sunPhi);
 		app->skyBuilder.SetTurbidity(float(app->skyParams.turbidity));
-		app->skyBuilder.Update();
-		app->shBuilder.Project(app->skyBuilder.skyTexture,app->shLight);
+//		app->skyBuilder.Update();
+		app->skyBuilder.Build(app->probeLight.cubeTex);
+		app->probeBuilder.Filter(app->probeLight);
+//		app->shBuilder.Project(app->skyBuilder.skyTexture,app->shLight);
 		float sunLuminosity = glm::max(glm::dot(app->skyBuilder.sunIntensity, glm::vec3(0.299f, 0.587f, 0.114f)), 0.0001f);
 
 		glm::vec3 dir;
@@ -630,6 +631,23 @@ void display()
 		app->csmLight.SetIntensity(glm::vec3(sunLuminosity));
 
 		app->updateLighting = false;
+	}
+
+	if(app->updateTerrain)
+	{
+		for(unsigned int i=0;i<app->scene.terrainMeshes.size();++i)
+		{
+			app->scene.terrainMeshes[i].Tesselation(app->terrainParams.tileResolution,
+													app->terrainParams.depthFactor,
+													app->terrainParams.tessFactor,
+													app->terrainParams.projFactor);
+			app->terrainBuilder.BuildNormals(		app->scene.terrainMeshes[i].heightTex,
+													app->scene.terrainMeshes[i].normalTex,
+													app->scene.terrainMeshes[i].terrainSize,
+													app->terrainParams.depthFactor);
+		}
+
+		app->updateTerrain = false;
 	}
 
 	// Enable writting into the depth buffer
@@ -675,13 +693,13 @@ void display()
 				glCullFace(GL_FRONT);
 				app->cubeMap.Draw(	projection,
 									view,
-									app->skyBuilder.skyTexture);
+									app->probeLight.cubeTex);
 				glCullFace(GL_BACK);
 				glEnable(GL_STENCIL_TEST);
 
 				// Render sky lighting
 				glf::manager::timings->StartSection(glf::section::SkyRender);
-				app->shRenderer.Draw(	app->shLight,
+				app->probeRenderer.Draw(app->probeLight,
 										app->gbuffer,
 										app->renderTarget1);
 				glf::manager::timings->EndSection(glf::section::SkyRender);
@@ -804,8 +822,7 @@ void display()
 				glDepthMask(true);
 				glEnable(GL_DEPTH_TEST);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT  | GL_STENCIL_BUFFER_BIT);
-				//app->renderSurface.Draw(app->gbuffer.positionTex);
-				//app->terrain.Draw(projection,view,glm::mat4(1),app->terrainParams.wireFrame);
+				app->renderSurface.Draw(app->gbuffer.positionTex);
 				break;
 		case bufferType::GB_NORMAL : 
 				glDisable(GL_STENCIL_TEST);
