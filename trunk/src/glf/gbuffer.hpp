@@ -52,7 +52,7 @@ namespace glf
 			GLint 						tileOffsetVar;
 			GLint 						projFactorVar;
 			GLint 						tessFactorVar;
-			GLint						depthFactorVar;
+			GLint						heightFactorVar;
 		};
 
 		// Resources

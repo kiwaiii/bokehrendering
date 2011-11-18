@@ -36,5 +36,8 @@ void main()
 					+ 2*c1 * (SHLight[4]*n.x*n.y + SHLight[7]*n.x*n.z + SHLight[5]*n.y*n.z)
 					+ 2*c2 * (SHLight[3]*n.x + SHLight[1]*n.y + SHLight[2]*n.z );
 
+if(gl_FragCoord.x<10000)
+	FragColor	  	= vec4(radiance * INV_PI,1);
+else
 	FragColor	  	= vec4(radiance * d * INV_PI,1);
 }

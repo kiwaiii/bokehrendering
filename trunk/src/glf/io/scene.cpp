@@ -59,10 +59,9 @@ namespace glf
 				std::string diffuse			= loader.GetString(terrainNode,"diffuse");
 				std::string normal			= loader.GetString(terrainNode,"normal");
 				std::string height			= loader.GetString(terrainNode,"height");
-				glm::vec2 offset			= loader.GetVec2(terrainNode,  "offset");
 
 				glm::vec2 terrainSize		= loader.GetVec2(terrainNode,"terrainSize");
-				glm::vec2 terrainOffset		= loader.GetVec2(terrainNode,"terrainOffset");
+				glm::vec3 terrainOffset		= loader.GetVec3(terrainNode,"terrainOffset");
 				int tileResolution			= loader.GetInt(terrainNode,"tileResolution");
 				float heightFactor			= loader.GetFloat(terrainNode,"heightFactor");
 				float tessFactor			= loader.GetFloat(terrainNode,"tessFactor");

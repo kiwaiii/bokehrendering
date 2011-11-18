@@ -1,13 +1,10 @@
 #version 420 core
 
-//-----------------------------------------------------------------------------
-uniform sampler2DArray 	EnvTex;
-//-----------------------------------------------------------------------------
-in  vec3 				gTexCoord;
+uniform samplerCube 	EnvTex;
 in  vec3 				gPosition;
 out vec4 				FragColor;
-//-----------------------------------------------------------------------------
+
 void main()
 {
-    FragColor = texture(EnvTex,gTexCoord.xyz);
+	FragColor = textureLod(EnvTex,gPosition.xyz,0);
 }

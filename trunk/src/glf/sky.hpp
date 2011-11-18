@@ -22,7 +22,7 @@ namespace glf
 				   ~CubeMap(			);
 		void		Draw(				const glm::mat4& 		_proj, 
 										const glm::mat4& 		_view,
-										const TextureArray2D& 	_envTex);
+										const TextureCube& 		_envTex);
 
 		Program							program;
 		GLint							transformVar;
@@ -44,10 +44,11 @@ namespace glf
 		void		SetPosition(		float _theta,
 										float _phi);
 		void		SetTurbidity(		float _turbidity);
-		void		Update(				bool _drawSun=true);
+		void		Build(				TextureCube& _cube,
+										bool _drawSun=true);
 
 		GLuint							skyFramebuffer;
-		TextureArray2D					skyTexture;
+		TextureCube						skyTexture;
 		Program							program;
 		int								resolution;
 		float							sunTheta;
@@ -59,7 +60,7 @@ namespace glf
 		GLint							turbidityVar;
 		GLint							sunFactorVar;
 		GLint							drawSunVar;
-		VertexBuffer3F					vbo;
+		VertexBuffer2F					vbo;
 		VertexArray						vao;
 	private:
 		glm::vec3 	ToCartesian(		float _theta, 
@@ -76,73 +77,6 @@ namespace glf
 		glm::vec3 	ComputeSunIntensity(float _sunTheta, 
 										float _sunPhi, 
 										float _turbidity);
-	};
-	//--------------------------------------------------------------------------
-	class NightSkyBuilder
-	{
-	private:
- 					NightSkyBuilder(	const NightSkyBuilder&);
- 		NightSkyBuilder& operator=(		const NightSkyBuilder&);
-	public:
-					NightSkyBuilder(	int _resolution);
-				   ~NightSkyBuilder();
-		void		SetSunFactor(		float _factor);
-		void		SetPosition(		float _theta,
-										float _phi);
-		void		SetTurbidity(		float _turbidity);
-		void		Update(				bool _drawSun=true);
-
-		GLuint							skyFramebuffer;
-		TextureArray2D					skyTexture;
-		Texture1D						starTexture;
-		int								resolution;
-		float							sunTheta;
-		float							sunPhi;
-		float 							sunFactor;
-		glm::vec3						sunIntensity;
-		float							turbidity;
-		int								nStars;
-
-		struct Sky
-		{
-										Sky():program("NightSky"){}
-			GLint						sunSphCoordVar;
-			GLint						turbidityVar;
-			GLint						sunFactorVar;
-			GLint						drawSunVar;
-			Program						program;
-		};
-
-		struct Star
-		{
-										Star():program("NightStar"){}
-			GLint						starTexUnit;
-			GLint						starFactorVar;
-			Program						program;
-		};
-
-		Sky								sky;
-		Star							star;
-		VertexBuffer3F					cubeVBO;
-		VertexArray						cubeVAO;
-		VertexBuffer3F					pointVBO;
-		VertexArray						pointVAO;
-	private:
-		glm::vec3 	ToCartesian(		float _theta, 
-										float _phi);
-		float 		PerezFunction(		float A,  
-										float B,  
-										float C,  
-										float D,  
-										float E,  
-										float cosTheta, 
-										float gamma,
-										float thetaS, 
-										float lvz );
-		glm::vec3 	ComputeSunIntensity(float _sunTheta, 
-										float _sunPhi, 
-										float _turbidity);
-		void 		UpdateStar(			float _maxIntensity);
 	};
 	//--------------------------------------------------------------------------
 }

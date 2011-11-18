@@ -2,21 +2,17 @@
 
 //-----------------------------------------------------------------------------
 // Implementation based on :
-//  - Original Peter Shirley's implementation
 //  - http://www.cs.utah.edu/~shirley/papers/sunsky/sunsky.pdf
-//  - http://www.eisscholle.de/articles/daysky.pdf (wrong!)
 //-----------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------
-// Includes
-//-----------------------------------------------------------------------------
 uniform float	Turbidity; // [2,10]  Turbidity : 1 = pure aire, 64=thin fog
 uniform vec2	SunSphCoord;
 uniform float	SunFactor;
 uniform bool	DrawSun;
-//-----------------------------------------------------------------------------
-in  vec3        gPosition;
-out vec4        FragColor;
+
+in  vec3		gPosition;
+in  vec3		gColor;
+out vec4		FragColor;
 //-----------------------------------------------------------------------------
 const float     SunRadius   = 0.018f;
 const float     SunFalloff  = 0.022f;
@@ -84,15 +80,14 @@ void main()
         return;
     }
 
-    //
 	vec3 dir 	 	= normalize(gPosition);
 	float cosTheta  = dir.z;
 	float gamma  	= acos(dot(ToCartesian(SunSphCoord.x,SunSphCoord.y),dir));
 	float thetaS 	= SunSphCoord.x;   
 	float phiS   	= SunSphCoord.y;
 
-    // Check if direction is in the sun and clamp according to its distance
-    // Factor is in [1,5] : 5 in the sun, 1 outside with a smooth transition
+	// Check if direction is in the sun and clamp according to its distance
+	// Factor is in [1,5] : 5 in the sun, 1 outside with a smooth transition
 	float factor = 1;
 	if(DrawSun)
 	{
@@ -131,5 +126,6 @@ void main()
 //	FragColor = vec4( vec3(1.0) - exp(-(1.0/15000.0) * (XYZ2RGB * XYZ)), 1);
 //	FragColor = vec4( vec3(1.0) - exp(-(1.0/8000.0) * (XYZ2RGB * XYZ)), 1);
 	FragColor = vec4( (XYZ2RGB * XYZ), 1);
+//	FragColor = vec4( (XYZ2RGB * XYZ) * clamp(gColor+vec3(0.5),vec3(0),vec3(1)), 1);
 }
 

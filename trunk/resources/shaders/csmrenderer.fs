@@ -26,7 +26,7 @@ out vec4 						FragColor;
 
 
 //------------------------------------------------------------------------------
-vec3 BRDF(	in vec3 _viewDir,
+vec3 CTBRDF(in vec3 _viewDir,
 			in vec3 _lightDir,
 			in vec3 _normal,
 			in vec3 _diffuse,
@@ -47,13 +47,48 @@ vec3 BRDF(	in vec3 _viewDir,
 	// Basic Cook-Torrance
 	float kappa	= sNdotH/(NdotH*_roughness);
 	float F		= F0 + (1.f-F0) * pow(1.f - VdotH,5.f);
-	float D		= 1.f / (_roughness*_roughness * pow(NdotH,4.f)) * exp(-kappa*kappa);
+	float D		= 1.f / (M_PI * _roughness*_roughness * pow(NdotH,4.f)) * exp(-kappa*kappa);
 	float G		= min(1.f,min( 2.f*NdotH*NdotV/VdotH , 2.f*NdotH*NdotL/VdotH ));
 
 	// Max function prevents "nan" value due to the denominator
-	float val	= max(0.f,D * F *G / (M_PI * NdotL * NdotV));
+	float val	= max(0.f,D * F *G / (NdotL * NdotV));
 
-	return _diffuse * NdotL / M_PI + BlendFactor*_diffuse*_specularity*val;
+
+	if(gl_FragCoord.x < 10000)
+//		return vec3(max(0,dot(_normal,_lightDir)));
+//		return vec3(max(0,dot(normalize(_normal),normalize(_lightDir))));
+//		return vec3(NdotL / M_PI + _specularity*val);
+		return vec3(val);
+	else
+		return _diffuse * (NdotL / M_PI + BlendFactor*_specularity*val);
+}
+//------------------------------------------------------------------------------
+vec3 WangBRDF(	in vec3  _viewDir,
+				in vec3  _lightDir,
+				in vec3  _normal,
+				in vec3  _diffuse,
+				in float _roughness,
+				in float _specularity)
+{
+	// Use Wang09 approximation for CT BRDF
+	vec3  h			= normalize(_viewDir+_lightDir);
+	float VdotH 	= max(0.0f,dot(_viewDir,h));
+	float NdotV 	= max(0.0f,dot(_normal,_viewDir));
+
+	// Use schlick approximation for Fresnel
+	// Use Kelemen and Szirmau-Kalos apprixmation for the geometric term
+	float F0		= 0.1f;
+	float F			= F0 + (1.f-F0) * pow(1.f - VdotH,5.f);
+	float M0		= max(0.f,F / (VdotH * VdotH));
+
+	// Wrap NDF to the explicit BRDF response (assume isotropic ouput)
+	float lambda_d	= 2.f/(_roughness*_roughness) - 2;
+	float lambda_w	= clamp(lambda_d / float(abs(4*NdotV)),0.f,20000.f);
+	vec3 p_w		= normalize(2.f * NdotV * _normal - _viewDir);
+	float D			= (lambda_d+2) / (2*M_PI) * exp(lambda_w * (dot(p_w,_lightDir)-1) );
+	float val		= M0 * D;
+
+	return vec3(val);
 }
 //------------------------------------------------------------------------------
 float ShadowTest(const vec3 _pos, int _cascadeIndex)
@@ -99,7 +134,12 @@ void main()
 
 	// Compute radiance
 	float v		= ShadowTest(lposs[cindex].xyz, cindex);
-	vec3 f		= BRDF(viewDir,-LightDir,normal.xyz,diffuse.xyz,roughness,specularity);
+//	vec3 f		= BRDF(viewDir,-LightDir,normal.xyz,diffuse.xyz,roughness,specularity);
+
+	vec3 f		= mix(	CTBRDF(viewDir,-LightDir,normal.xyz,diffuse.xyz,roughness,specularity),
+						WangBRDF(viewDir,-LightDir,normal.xyz,diffuse.xyz,roughness,specularity),
+						BlendFactor);
+
 
 	#if DISPLAY_CASCADES
 	vec3 color;
@@ -119,6 +159,5 @@ void main()
 	#else
 	FragColor   = vec4(f*LightIntensity*v,1.f);
 	#endif
-
 }
 

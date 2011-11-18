@@ -11,9 +11,9 @@ SET(GLF_SRCS	${GLF_SRCS}
 				glf/memory.cpp
 				glf/pass.cpp
 				glf/postprocessor.cpp
+				glf/probe.cpp
 				glf/rng.cpp
 				glf/scene.cpp
-				glf/sh.cpp
 				glf/sky.cpp
 				glf/ssao.cpp
 				glf/terrain.cpp
