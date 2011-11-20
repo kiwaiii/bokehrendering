@@ -58,6 +58,9 @@ namespace glf
 		case 't':
 			ctx::drawTimings = !ctx::drawTimings;
 			break;
+		case 'w':
+			ctx::drawWire = !ctx::drawWire;
+			break;
 		case 27:
 			end();
 			exit(0);

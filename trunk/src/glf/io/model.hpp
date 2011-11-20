@@ -21,14 +21,16 @@ namespace glf
 
 		void LoadTerrain(	const std::string& _folder,
 							const std::string& _diffuseTex,
-							const std::string& _normalTex,
 							const std::string& _heightTex,
+							float _roughness,
+							float _specularity,
 							const glm::vec2& _terrainSize,
 							const glm::vec3& _terrainOffset,
 							int _tileResolution,
 							float _heightFactor,
 							float _tessFactor,
 							float _projFactor,
+							float _tileFactor,
 							ResourceManager& _resourceManager,
 							SceneManager& _scene,
 							bool _verbose=false);

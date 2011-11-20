@@ -41,9 +41,16 @@
 		"kappa"				: 1.0,
 		"radius"			: 1.0,
 		"nSamples"			: 16,
-		"sigmaH"			: 1.0,
-		"sigmaV"			: 1.0,
-		"nTaps"				: 1
+		"sigmaScreen"		: 1.0,
+		"sigmaDepth"		: 0.0052,
+		"nTaps"				: 2
+	},
+
+	"terrain":
+	{
+		"tileResolution"	: 32,
+		"projFactor"		: 21,
+		"tessFactor"		: 10
 	},
 
 	"directory":

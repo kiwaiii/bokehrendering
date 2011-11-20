@@ -4,10 +4,9 @@
 //  1/pi    = 0.3183098861f
 //------------------------------------------------------------------------------
 // Cook-Torrance BRDF
-vec3 CookBRDF(	in vec3 _viewDir,
+float CookBRDF(	in vec3 _viewDir,
 				in vec3 _lightDir,
 				in vec3 _normal,
-				in vec3 _color,
 				in float _roughness,
 				in float _specularity)
 {
@@ -35,10 +34,7 @@ vec3 CookBRDF(	in vec3 _viewDir,
 
 	float sRadiance	= M0 * D;
 	float dRadiance = NdotL * 0.3183098861f;
-//if(gl_FragCoord.x>10000)
-	return _color * (dRadiance + _specularity*sRadiance);
-//else
-//	return vec3(dRadiance + _specularity*sRadiance);
+	return dRadiance + _specularity*sRadiance;
 }
 //------------------------------------------------------------------------------
 // Wang Wrapping [SigAsia09]
@@ -67,10 +63,9 @@ void WangWrap(	in  vec3  _vDirection,
 }
 //------------------------------------------------------------------------------
 // Wang BRDF [SigAsia09]
-vec3 WangBRDF(	in vec3  _viewDir,
+float WangBRDF(	in vec3  _viewDir,
 				in vec3  _lightDir,
 				in vec3  _normal,
-				in vec3  _color,
 				in float _roughness,
 				in float _specularity)
 {
@@ -94,6 +89,6 @@ vec3 WangBRDF(	in vec3  _viewDir,
 
 	float sRadiance	= M0 * D;
 	float dRadiance = NdotL * 0.3183098861f;
-	return _color * (dRadiance + _specularity*sRadiance);
+	return dRadiance + _specularity*sRadiance;
 }
 //------------------------------------------------------------------------------

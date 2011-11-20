@@ -75,7 +75,7 @@
 			vec2  p	 = (gl_FragCoord.xy + i*Direction) * rcpSize;
 			vec4  d	 = ViewMat * vec4(textureLod(PositionTex,p,0).xyz,1);
 			float c	 = textureLod(InputTex,p,0).x;
-			float w  = GaussianWeight(float(i),SigmaScreen) * GaussianWeight(abs(d.z-dref.z),SigmaDepth);
+			float w  = GaussianWeight(float(i),SigmaScreen) * GaussianWeight((d.z-dref.z),SigmaDepth);
 			color 	+= w  * c;
 			totalW  += w;
 		}

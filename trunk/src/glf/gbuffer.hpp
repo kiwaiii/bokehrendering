@@ -45,6 +45,8 @@ namespace glf
 			GLint						diffuseTexUnit;
 			GLint						normalTexUnit;
 			GLint						heightTexUnit;
+			GLint	 					roughnessVar;
+			GLint	 					specularityVar;
 			GLint 						transformVar;
 
 			GLint 						tileSizeVar;
@@ -53,6 +55,7 @@ namespace glf
 			GLint 						projFactorVar;
 			GLint 						tessFactorVar;
 			GLint						heightFactorVar;
+			GLint						tileFactorVar;
 		};
 
 		// Resources

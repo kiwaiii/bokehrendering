@@ -48,8 +48,11 @@ namespace glf
 											Texture2D* _diffuseTexture,
 											Texture2D* _normalTexture,
 											Texture2D* _heightTexture,
+											float _tileFactor,
+											float _roughness,
+											float _specularity,
 											int _tileResolution=32);
-		void 	Draw(						bool _drawWireframe=false) const;
+		void 	Draw(						) const;
 		void	Tesselation(				int   _tileResolution,
 											float _heightFactor,
 											float _tessFactor,
@@ -66,10 +69,14 @@ namespace glf
 		float								heightFactor;	// Height of the heightfield
 		float								tessFactor;		// Tesselation factor ]0,32]
 		float								projFactor;		// For correcting projection estimation
+		float								tileFactor;		// Factor for tilling diffuse texture
 
 		glf::Texture2D*						diffuseTex;
 		glf::Texture2D*						normalTex;
 		glf::Texture2D*						heightTex;
+
+		float								roughness;
+		float								specularity;
 	};
 }
 
