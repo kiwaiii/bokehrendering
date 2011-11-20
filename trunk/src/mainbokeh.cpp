@@ -332,7 +332,7 @@ bool begin()
 													dofParams,
 													terrainParams);
 
-	glf::io::LoadScene(	glf::directory::SceneDirectory + "desert.json",
+	glf::io::LoadScene(	glf::directory::SceneDirectory + "tank.json",
 						app->resources,
 						app->scene,
 						true);
@@ -638,6 +638,7 @@ void display()
 		app->updateLighting = false;
 	}
 
+	// Update terrain if needed
 	if(app->updateTerrain)
 	{
 		for(unsigned int i=0;i<app->scene.terrainMeshes.size();++i)
@@ -690,11 +691,6 @@ void display()
 	switch(app->activeBuffer)
 	{
 		case bufferType::GB_COMPOSITION : 
-
-glViewport(0,0,ctx::window.Size.x,ctx::window.Size.y);
-				glBindFramebuffer(GL_FRAMEBUFFER,0);
-				glClear(GL_COLOR_BUFFER_BIT);
-
 				glBindFramebuffer(GL_FRAMEBUFFER,app->renderTarget1.framebuffer);
 				glClear(GL_COLOR_BUFFER_BIT);
 
@@ -846,8 +842,7 @@ glViewport(0,0,ctx::window.Size.x,ctx::window.Size.y);
 				glBindFramebuffer(GL_FRAMEBUFFER,0);
 				glDepthMask(true);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT  | GL_STENCIL_BUFFER_BIT);
-//				app->renderSurface.Draw(app->gbuffer.positionTex);
-				app->renderSurface.Draw(app->csmLight.momentTexs,app->skyParams.turbidity-2);
+				app->renderSurface.Draw(app->gbuffer.positionTex);
 				break;
 		case bufferType::GB_NORMAL : 
 				glDisable(GL_STENCIL_TEST);
@@ -855,7 +850,6 @@ glViewport(0,0,ctx::window.Size.x,ctx::window.Size.y);
 				glDisable(GL_BLEND);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 				app->renderSurface.Draw(app->gbuffer.normalTex);
-//				glf::io::SaveTexture("test.exr",app->gbuffer.normalTex);
 				break;
 		case bufferType::GB_DIFFUSE : 
 				glDisable(GL_STENCIL_TEST);
