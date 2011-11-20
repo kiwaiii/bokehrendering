@@ -37,7 +37,12 @@ namespace glf
 		glm::vec3		 			intensity;
 		int							nCascades;
 		TextureArray2D				depthTexs;
-		GLuint						framebuffer;
+		TextureArray2D				tmpTexs;	// Store linear moment for VSM and EVSM
+		TextureArray2D				momentTexs;	// Store linear moment for VSM and EVSM
+		TextureArray2D				filterTexs;	// Store filtered linear moment for VSM and EVSM
+		GLuint						tmpFBO;
+		GLuint						depthFBO;
+		GLuint						filterFBO;
 	};
 	//-------------------------------------------------------------------------
 	class CSMBuilder
@@ -81,9 +86,21 @@ namespace glf
 			GLint					heightFactorVar;
 		};
 
+		struct MomentFilter
+		{
+									MomentFilter():program("CSMBuilder::MomentFilter"){}
+			Program 				program;
+			GLint 					momentTexUnit;
+			GLint 					directionVar;
+		};
+
 		int							maxCascades;
 		RegularRenderer				regularRenderer;
 		TerrainRenderer				terrainRenderer;
+		MomentFilter				momentFilter;
+
+		VertexBuffer2F				vbo;
+		VertexArray					vao;
 	};
 	//-------------------------------------------------------------------------
 	class CSMRenderer

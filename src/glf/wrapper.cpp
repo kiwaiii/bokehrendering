@@ -44,6 +44,11 @@ namespace glf
 		options.push_back(option.str());
 	}
 	//-------------------------------------------------------------------------
+	void ProgramOptions::Include(	const std::string& _fileContent)
+	{
+		options.push_back(_fileContent);
+	}
+	//-------------------------------------------------------------------------
 	std::string ProgramOptions::ToString(	) const
 	{
 		std::stringstream out;

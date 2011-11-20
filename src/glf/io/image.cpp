@@ -9,10 +9,74 @@
 #include <IL/il.h>
 #include <IL/ilu.h>
 
+#ifdef ENABLE_OPEN_EXR
+	#include <OpenEXR/ImfInputFile.h>
+	#include <OpenEXR/ImfOutputFile.h>
+	#include <OpenEXR/ImfChannelList.h>
+	#include <OpenEXR/ImfFrameBuffer.h>
+	#include <OpenEXR/ImfFloatAttribute.h>
+	#include <OpenEXR/ImfChannelListAttribute.h>
+	#include <OpenEXR/half.h>
+#endif
+
 namespace glf
 {
 	namespace io
 	{
+		//---------------------------------------------------------------------
+		#ifdef ENABLE_OPEN_EXR
+		void SaveTexture(	const std::string& _filename,
+							float* _data,
+							int _w,
+							int _h,
+							bool _verbose)
+		{
+			int xRes 	  = _w;
+			int yRes 	  = _h;
+			int xOffset   = 0;
+			int yOffset   = 0;
+			int nChannels = 4;
+
+			Imf::Header header(xRes, yRes);
+			Imath::Box2i dataWindow(Imath::V2i(xOffset, yOffset), Imath::V2i(xOffset + xRes - 1, yOffset + yRes - 1));
+			header.dataWindow() = dataWindow;
+
+			header.channels().insert("R", Imf::Channel (Imf::HALF));
+			header.channels().insert("G", Imf::Channel (Imf::HALF));
+			header.channels().insert("B", Imf::Channel (Imf::HALF));
+			header.channels().insert("A", Imf::Channel (Imf::HALF));
+
+			::half *hchannels   = new ::half[nChannels * xRes * yRes];
+			for (int y = 0; y < yRes; ++y)
+			for (int x = 0; x < xRes; ++x)
+			for (int c = 0; c < nChannels; ++c)
+			{
+				int iSrc = c + x*nChannels + (yRes-1-y)*xRes*nChannels; 
+				int iDst = c + x*nChannels + y*xRes*nChannels;
+				hchannels[iDst] = _data[iSrc];
+			}
+
+			Imf::FrameBuffer fb;
+			fb.insert("R", Imf::Slice(Imf::HALF, (char *)hchannels,						nChannels*sizeof(::half), nChannels*xRes*sizeof(::half)));
+			fb.insert("G", Imf::Slice(Imf::HALF, (char *)hchannels+1*sizeof(::half),	nChannels*sizeof(::half), nChannels*xRes*sizeof(::half)));
+			fb.insert("B", Imf::Slice(Imf::HALF, (char *)hchannels+2*sizeof(::half),	nChannels*sizeof(::half), nChannels*xRes*sizeof(::half)));
+			fb.insert("A", Imf::Slice(Imf::HALF, (char *)hchannels+3*sizeof(::half),	nChannels*sizeof(::half), nChannels*xRes*sizeof(::half)));
+
+			Imf::OutputFile file(_filename.c_str(), header);
+			file.setFrameBuffer(fb);
+			try 
+			{
+				file.writePixels(yRes);
+			}
+			catch (const std::exception &e) 
+			{
+				Error("Unable to write image file \"%s\": %s", _filename.c_str(), e.what());
+				assert(false);
+			}
+
+			delete[] hchannels;
+		}
+		#endif
 		//---------------------------------------------------------------------
 		void LoadTexture(	const std::string& _filename,
 							Texture2D& _texture,
@@ -119,6 +183,90 @@ namespace glf
 				Error("Unable to read image file \"%s\": %s",_filename.c_str(),e.what());
 			}
 		}
+		//----------------------------------------------------------------------
+		void SaveTexture(	const std::string& _filename,
+							Texture2D& _texture,
+							bool _verbose)
+		{
+			#ifdef ENABLE_OPEN_EXR
+			float* data = new float[_texture.size.x * _texture.size.y * 4];
+			glBindTexture(_texture.target,_texture.id);
+			glGetTexImage(_texture.target,0,GL_RGBA,GL_FLOAT,data);
+			SaveTexture(_filename,data,_texture.size.x,_texture.size.y,_verbose);
+			delete[] data;
+			#else
+			try
+			{
+				ilInit();
+				
+				ILuint imgH;
+				ilGenImages(1, &imgH);
+				ilBindImage(imgH);
+
+				float* data = new float[_texture.size.x * _texture.size.y * 4];
+				glBindTexture(_texture.target,_texture.id);
+				glGetTexImage(_texture.target,0,GL_RGBA,GL_FLOAT,data);
+
+				ILboolean result;
+				result = ilTexImage(_texture.size.x, _texture.size.y, 1, 4, IL_RGBA, IL_FLOAT, data);
+				assert(result);
+
+				ilEnable(IL_FILE_OVERWRITE);
+//				result = ilSave(IL_EXR, _filename.c_str());
+//				result = ilSave(IL_TYPE_UNKNOWN, _filename.c_str());
+				result = ilSaveImage(_filename.c_str());
+				if(!result)
+				{
+					ILenum errorID = ilGetError();
+					if(errorID != IL_NO_ERROR)
+					{
+						Error("Save image error :  %s",str);
+						Error("Error ID :  %d",errorID);
+					}
+				}
+				assert(result);
+
+				delete[] data;
+
+				if(_verbose)
+				{
+					Info("Save image : %s",_filename.c_str());
+				}
+
+				ilDeleteImages(1, &imgH);
+				ilShutDown();
+			}
+			catch (const std::exception &e) 
+			{
+				Error("Unable to write texture \"%s\": %s",_filename.c_str(),e.what());
+			}
+			#endif
+		}
+		//----------------------------------------------------------------------
+		void SaveTexture(	const std::string& _filename,
+							TextureArray2D& _texture,
+							bool _verbose)
+		{
+			#ifdef ENABLE_OPEN_EXR
+			float* data = new float[_texture.size.x * _texture.size.y * _texture.layers * 4];
+			glBindTexture(_texture.target,_texture.id);
+			glGetTexImage(_texture.target,0,GL_RGBA,GL_FLOAT,data);
+
+			for(int l=0;l<_texture.layers;++l)
+			{
+				std::stringstream out;
+				out << _filename << "." << l << ".exr";
+				SaveTexture(out.str(),data+(l * _texture.size.x * _texture.size.y * 4),_texture.size.x,_texture.size.y,_verbose);
+			}
+			delete[] data;
+			#endif
+		}
+		//----------------------------------------------------------------------
+		//void SaveTexture(	const std::string& _filename,
+		//					TextureArray2D& _texture)
+		//{
+		//
+		//}
 		//----------------------------------------------------------------------
 		// PPM saver code
 		//std::ofstream out("out.ppm",std::ios::binary);

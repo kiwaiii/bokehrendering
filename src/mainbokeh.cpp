@@ -19,6 +19,7 @@
 #include <glf/terrain.hpp>
 #include <glf/utils.hpp>
 #include <glf/io/scene.hpp>
+#include <glf/io/image.hpp>
 #include <glf/io/config.hpp>
 #include <fstream>
 #include <cstring>
@@ -134,6 +135,7 @@ namespace
 		glf::RenderSurface					renderSurface;
 		glf::RenderTarget					renderTarget1;
 		glf::RenderTarget					renderTarget2;
+		glf::RenderTarget					renderTarget3;
 
 		glf::CSMLight						csmLight;
 		glf::CSMBuilder						csmBuilder;
@@ -147,8 +149,7 @@ namespace
 		glf::ProbeBuilder					probeBuilder;
 		glf::ProbeRenderer					probeRenderer;
 
-		glf::SSAOPass						ssaoPass;
-		glf::BilateralPass					bilateralPass;
+		glf::SSAO							ssao;
 
 		glf::DOFProcessor					dofProcessor;
 		glf::PostProcessor					postProcessor;
@@ -194,6 +195,7 @@ namespace
 	renderSurface(_w,_h),
 	renderTarget1(_w,_h),
 	renderTarget2(_w,_h),
+	renderTarget3(_w,_h),
 	csmLight(_csmParams.resolution,_csmParams.resolution,_csmParams.nCascades),
 	csmBuilder(),
 	csmRenderer(_w,_h),
@@ -203,8 +205,7 @@ namespace
 	probeLight(1024),
 	probeBuilder(1024),
 	probeRenderer(_w,_h),
-	ssaoPass(_w,_h),
-	bilateralPass(_w,_h),
+	ssao(_w,_h),
 	dofProcessor(_w,_h),
 	postProcessor(_w,_h)
 	{
@@ -233,6 +234,8 @@ namespace
 		bokehFile.open("BokehPerformances.dat");
 		#endif
 	}
+
+	bool saveTexture = false;
 }
 //------------------------------------------------------------------------------
 bool resize(int _w, int _h)
@@ -255,7 +258,7 @@ bool begin()
 	// Load configuration
 	glf::io::ConfigLoader loader;
 	glf::io::ConfigNode* root	= loader.Load("../resources/configs/config.json");
-		
+
 	DOFParams dofParams;
 	glf::io::ConfigNode *dofNode= loader.GetNode(root,"dof");
 	dofParams.nSamples 			= loader.GetInt(dofNode,"nSamples",24);
@@ -329,7 +332,7 @@ bool begin()
 													dofParams,
 													terrainParams);
 
-	glf::io::LoadScene(	glf::directory::SceneDirectory + "tank.json",
+	glf::io::LoadScene(	glf::directory::SceneDirectory + "desert.json",
 						app->resources,
 						app->scene,
 						true);
@@ -339,6 +342,7 @@ bool begin()
 
 	app->renderTarget1.AttachDepthStencil(app->gbuffer.depthTex);
 	app->renderTarget2.AttachDepthStencil(app->gbuffer.depthTex);
+	app->renderTarget3.AttachDepthStencil(app->gbuffer.depthTex);
 
 	glf::manager::helpers->CreateReferential(1.f);
 
@@ -481,12 +485,12 @@ void gui()
 
 				sprintf(labelBuffer,"SigmaV : %.4f",app->ssaoParams.sigmaV);
 				ctx::ui->Label(none,labelBuffer);
-				ctx::ui->HorizontalSlider(sliderRect,0.f,5.f,&app->ssaoParams.sigmaV);
+				ctx::ui->HorizontalSlider(sliderRect,0.f,10.f,&app->ssaoParams.sigmaV);
 
 				float fnTaps = float(app->ssaoParams.nTaps);
 				sprintf(labelBuffer,"nTaps : %d",app->ssaoParams.nTaps);
 				ctx::ui->Label(none,labelBuffer);
-				update |= ctx::ui->HorizontalSlider(sliderRect,1.f,8.f,&fnTaps);
+				update |= ctx::ui->HorizontalSlider(sliderRect,0.f,8.f,&fnTaps);
 				app->ssaoParams.nTaps = int(fnTaps);
 			}
 
@@ -592,6 +596,9 @@ void gui()
 					app->updateTerrain = true;
 				}
 			}
+
+			if(ctx::ui->Button(none,"Save texture")) saveTexture = true;
+
 			ctx::ui->EndFrame();
 		ctx::ui->EndGroup();
 	ctx::ui->End();
@@ -683,6 +690,11 @@ void display()
 	switch(app->activeBuffer)
 	{
 		case bufferType::GB_COMPOSITION : 
+
+glViewport(0,0,ctx::window.Size.x,ctx::window.Size.y);
+				glBindFramebuffer(GL_FRAMEBUFFER,0);
+				glClear(GL_COLOR_BUFFER_BIT);
+
 				glBindFramebuffer(GL_FRAMEBUFFER,app->renderTarget1.framebuffer);
 				glClear(GL_COLOR_BUFFER_BIT);
 
@@ -699,15 +711,16 @@ void display()
 				glf::manager::timings->StartSection(glf::section::SkyRender);
 				app->probeRenderer.Draw(app->probeLight,
 										app->gbuffer,
+										viewPos,
 										app->renderTarget1);
 				glf::manager::timings->EndSection(glf::section::SkyRender);
 
 				glBindFramebuffer(GL_FRAMEBUFFER,app->renderTarget2.framebuffer);
 				glClear(GL_COLOR_BUFFER_BIT);
 
-				// Render ssao render pass
+				// Render ssao::ssao pass
 				glf::manager::timings->StartSection(glf::section::SsaoRender);
-				app->ssaoPass.Draw(		app->gbuffer,
+				app->ssao.Draw(			app->gbuffer,
 										view,
 										nearValue,
 										app->ssaoParams.beta,
@@ -718,20 +731,34 @@ void display()
 										app->ssaoParams.nSamples,
 										app->renderTarget2);
 				glf::manager::timings->EndSection(glf::section::SsaoRender);
-				glBindFramebuffer(GL_FRAMEBUFFER,app->renderTarget1.framebuffer);
 
-				glEnable(GL_BLEND);
-				glBlendEquation(GL_FUNC_ADD);
-				glBlendFunc( GL_ZERO, GL_SRC_ALPHA); // Do a multiplication between SSAO and sky lighting
+				glBindFramebuffer(GL_FRAMEBUFFER,app->renderTarget3.framebuffer);
 
-				// Render ssao blur pass
+				// Render ssao::bilateral pass1
 				glf::manager::timings->StartSection(glf::section::SsaoBlur);
-				app->bilateralPass.Draw(app->renderTarget2.texture,
+				app->ssao.Draw(			app->renderTarget2.texture,
 										app->gbuffer.positionTex,
 										view,
 										app->ssaoParams.sigmaH,
 										app->ssaoParams.sigmaV,
 										app->ssaoParams.nTaps,
+										glm::vec2(1,0),
+										app->renderTarget3);
+
+				glEnable(GL_BLEND);
+				glBlendEquation(GL_FUNC_ADD);
+				glBlendFunc( GL_ZERO, GL_SRC_ALPHA); // Do a multiplication between SSAO and sky lighting
+
+				glBindFramebuffer(GL_FRAMEBUFFER,app->renderTarget1.framebuffer);
+
+				// Render ssao::bilateral pass2
+				app->ssao.Draw(			app->renderTarget3.texture,
+										app->gbuffer.positionTex,
+										view,
+										app->ssaoParams.sigmaH,
+										app->ssaoParams.sigmaV,
+										app->ssaoParams.nTaps,
+										glm::vec2(0,1),
 										app->renderTarget1);
 				glf::manager::timings->EndSection(glf::section::SsaoBlur);
 
@@ -745,6 +772,7 @@ void display()
 										app->csmParams.blendFactor,
 										app->csmParams.bias,
 										app->renderTarget1);
+
 				glf::manager::timings->EndSection(glf::section::CsmRender);
 
 				glBindFramebuffer(GL_FRAMEBUFFER,0);
@@ -810,7 +838,6 @@ void display()
 											app->toneParams.toneExposure,
 											app->renderTarget2);
 				glf::manager::timings->EndSection(glf::section::PostProcess);
-
 				break;
 		case bufferType::GB_POSITION :
 				glDisable(GL_STENCIL_TEST);
@@ -818,9 +845,9 @@ void display()
 				glDisable(GL_BLEND);
 				glBindFramebuffer(GL_FRAMEBUFFER,0);
 				glDepthMask(true);
-				glEnable(GL_DEPTH_TEST);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT  | GL_STENCIL_BUFFER_BIT);
-				app->renderSurface.Draw(app->gbuffer.positionTex);
+//				app->renderSurface.Draw(app->gbuffer.positionTex);
+				app->renderSurface.Draw(app->csmLight.momentTexs,app->skyParams.turbidity-2);
 				break;
 		case bufferType::GB_NORMAL : 
 				glDisable(GL_STENCIL_TEST);
@@ -828,6 +855,7 @@ void display()
 				glDisable(GL_BLEND);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 				app->renderSurface.Draw(app->gbuffer.normalTex);
+//				glf::io::SaveTexture("test.exr",app->gbuffer.normalTex);
 				break;
 		case bufferType::GB_DIFFUSE : 
 				glDisable(GL_STENCIL_TEST);

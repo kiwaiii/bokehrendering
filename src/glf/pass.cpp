@@ -11,20 +11,35 @@ namespace glf
 	//--------------------------------------------------------------------------
 	RenderSurface::RenderSurface(	unsigned int _width, 
 									unsigned int _height):
-	program("Surface")
-	{
-		ProgramOptions options = ProgramOptions::CreateVSOptions();
-		options.AddResolution("SCREEN",_width,_height);
-		program.Compile(options.Append(LoadFile(directory::ShaderDirectory + "surface.vs")),
-						options.Append(LoadFile(directory::ShaderDirectory + "surface.fs")));
 
-		textureUnit		= program["Texture"].unit;
-		levelVar		= program["Level"].location;
-		frameSize		= glm::vec2(_width,_height);
-		glProgramUniform1i(program.id, 		  program["Texture"].location,		textureUnit);
+	frameSize(_width,_height)
+	{
 
 		CreateScreenTriangle(vbo);
 		vao.Add(vbo,semantic::Position,2,GL_FLOAT);
+
+		// Regular 2D textures
+		ProgramOptions regularOptions = ProgramOptions::CreateVSOptions();
+		regularOptions.AddDefine<int>("REGULAR",1);
+		regularOptions.AddResolution("SCREEN",_width,_height);
+		regularRenderer.program.Compile(regularOptions.Append(LoadFile(directory::ShaderDirectory + "surface.vs")),
+										regularOptions.Append(LoadFile(directory::ShaderDirectory + "surface.fs")));
+
+		regularRenderer.textureUnit		= regularRenderer.program["Texture"].unit;
+		regularRenderer.levelVar		= regularRenderer.program["Level"].location;
+		glProgramUniform1i(regularRenderer.program.id, regularRenderer.program["Texture"].location, regularRenderer.textureUnit);
+
+		// Array 2D textures
+		ProgramOptions arrayOptions = ProgramOptions::CreateVSOptions();
+		arrayOptions.AddDefine<int>("ARRAY",1);
+		arrayOptions.AddResolution("SCREEN",_width,_height);
+		arrayRenderer.program.Compile(	arrayOptions.Append(LoadFile(directory::ShaderDirectory + "surface.vs")),
+										arrayOptions.Append(LoadFile(directory::ShaderDirectory + "surface.fs")));
+
+		arrayRenderer.textureUnit		= arrayRenderer.program["Texture"].unit;
+		arrayRenderer.levelVar			= arrayRenderer.program["Level"].location;
+		arrayRenderer.layerVar			= arrayRenderer.program["Layer"].location;
+		glProgramUniform1i(arrayRenderer.program.id, arrayRenderer.program["Texture"].location, arrayRenderer.textureUnit);
 
 		glf::CheckError("Surface::Surface");
 	}
@@ -35,11 +50,26 @@ namespace glf
 		assert(_texture.size.x==frameSize.x);
 		assert(_texture.size.y==frameSize.y);
 
-		glUseProgram(program.id);
-		_texture.Bind(textureUnit);
-		glProgramUniform1f(program.id, levelVar, float(_level));
+		glUseProgram(regularRenderer.program.id);
+		_texture.Bind(regularRenderer.textureUnit);
+		glProgramUniform1f(regularRenderer.program.id, regularRenderer.levelVar, float(_level));
 		vao.Draw(GL_TRIANGLES,3,0);
-		glf::CheckError("Surface::Draw");
+		glf::CheckError("Surface::Regular::Draw");
+	}
+	//--------------------------------------------------------------------------
+	void RenderSurface::Draw(		const TextureArray2D& _texture,
+									int _layer,
+									int _level)
+	{
+//		assert(_texture.size.x==frameSize.x);
+//		assert(_texture.size.y==frameSize.y);
+
+		glUseProgram(arrayRenderer.program.id);
+		_texture.Bind(arrayRenderer.textureUnit);
+		glProgramUniform1f(arrayRenderer.program.id, arrayRenderer.levelVar, float(_level));
+		glProgramUniform1f(arrayRenderer.program.id, arrayRenderer.layerVar, float(_layer));
+		vao.Draw(GL_TRIANGLES,3,0);
+		glf::CheckError("Surface::Array::Draw");
 	}
 	//--------------------------------------------------------------------------
 	RenderTarget::RenderTarget(				unsigned int _width, 

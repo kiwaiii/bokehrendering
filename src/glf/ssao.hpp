@@ -11,40 +11,13 @@
 namespace glf
 {
 	//--------------------------------------------------------------------------
-	class BilateralPass
+	class SSAO
 	{
 	private:
-					BilateralPass(	const BilateralPass&);
-		BilateralPass operator=(	const BilateralPass&);
+					SSAO(			const SSAO&);
+		SSAO		operator=(		const SSAO&);
 	public:
-					BilateralPass(	int _w, 
-									int _h);
-		void 		Draw(			const Texture2D& _inputTex,
-									const Texture2D& _positionTex,
-									const glm::mat4& _viewMat,
-									float 			 _sigmaH,
-									float 			 _sigmaV,
-									int 			 _nTaps,
-									const RenderTarget& _renderTarget);
-	public:
-		GLint 						positionTexUnit;
-		GLint 						inputTexUnit;
-
-		GLint						viewMatVar;
-		GLint						sigmaHVar;
-		GLint						sigmaVVar;
-		GLint						nTapsVar;
-
-		Program 					program;
-	};
-	//--------------------------------------------------------------------------
-	class SSAOPass
-	{
-	private:
-					SSAOPass(		const SSAOPass&);
-		SSAOPass	operator=(		const SSAOPass&);
-	public:
-					SSAOPass(		int _w, 
+					SSAO(			int _w, 
 									int _h);
 		void 		Draw(			const GBuffer&	_gbuffer,
 									const glm::mat4& _view,
@@ -56,21 +29,52 @@ namespace glf
 									float			_radius,
 									int 			_nSamples,
 									const RenderTarget& _renderTarget);
+
+		void 		Draw(			const Texture2D& _inputTex,
+									const Texture2D& _positionTex,
+									const glm::mat4& _viewMat,
+									float 			 _sigmaScreen,
+									float 			 _sigmaDepth,
+									int 			 _nTaps,
+									const glm::vec2& _direction,
+									const RenderTarget& _renderTarget);
 	public:
-		GLint 						positionTexUnit;
-		GLint 						normalTexUnit;
-		GLint						rotationTexUnit;
+		struct SSAOPass
+		{
+									SSAOPass():program("SSAO::SSAOPass"){}
+			GLint 					positionTexUnit;
+			GLint 					normalTexUnit;
+			GLint					rotationTexUnit;
 
-		GLint						nearVar;
-		GLint						betaVar;
-		GLint						epsilonVar;
-		GLint						kappaVar;
-		GLint						sigmaVar;
-		GLint						radiusVar;
-		GLint						nSamplesVar;
-		GLint						viewMatVar;
+			GLint					nearVar;
+			GLint					betaVar;
+			GLint					epsilonVar;
+			GLint					kappaVar;
+			GLint					sigmaVar;
+			GLint					radiusVar;
+			GLint					nSamplesVar;
+			GLint					viewMatVar;
 
-		Program 					program;
+			Program 				program;
+		};
+
+		struct BilateralPass
+		{
+									BilateralPass():program("SSAO::BilateraPass"){}
+			GLint 					positionTexUnit;
+			GLint 					inputTexUnit;
+
+			GLint					viewMatVar;
+			GLint					sigmaScreenVar;
+			GLint					sigmaDepthVar;
+			GLint					nTapsVar;
+			GLint					directionVar;
+
+			Program 				program;
+		};
+		
+		SSAOPass					ssaoPass;
+		BilateralPass				bilateralPass;
 		Texture2D					rotationTex;
 	};
 	//--------------------------------------------------------------------------

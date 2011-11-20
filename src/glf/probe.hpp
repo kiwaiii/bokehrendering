@@ -55,14 +55,15 @@ namespace glf
 										int _h);
 		void 		Draw(				const ProbeLight&	_probe,
 										const GBuffer&		_gbuffer,
+										const glm::vec3&	_viewPos,
 										const RenderTarget& _renderTarget);
 
-		VertexBuffer2F					vbo;
-		VertexArray						vao;
+		GLint 							positionTexUnit;
 		GLint 							diffuseTexUnit;
 		GLint 							normalTexUnit;
 		GLint 							cubeTexUnit;
 		GLint							shCoeffsVar;
+		GLint							viewPosVar;
 		Program 						program;
 	};
 	//--------------------------------------------------------------------------

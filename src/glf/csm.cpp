@@ -2,13 +2,21 @@
 // Include
 //-----------------------------------------------------------------------------
 #include <glf/csm.hpp>
-#include <glm/gtx/transform.hpp>
 #include <glf/window.hpp>
+#include <glf/geometry.hpp>
+#include <glm/gtx/transform.hpp>
 
 //-----------------------------------------------------------------------------
 // Constants
 //-----------------------------------------------------------------------------
+#define CONSTANT_K_EVSM			50.f
 #define ALIGN_CSM_WITH_CAMERA	1
+#define ENABLE_SHADOW_SSM		0
+#define ENABLE_SHADOW_VSM		0
+#define ENABLE_SHADOW_EVSM		1
+#if (ENABLE_SHADOW_SSM + ENABLE_SHADOW_VSM + ENABLE_SHADOW_EVSM != 1) 
+#	error("Invalid selection of shadow techniques") 
+#endif
 
 namespace glf
 {
@@ -63,13 +71,49 @@ namespace glf
 		depthTexs.SetWrapping(GL_CLAMP_TO_EDGE,GL_CLAMP_TO_EDGE);
 		depthTexs.SetCompare(GL_COMPARE_REF_TO_TEXTURE,GL_LEQUAL);
 
-		glGenFramebuffers(1, &framebuffer);
-		glBindFramebuffer(GL_FRAMEBUFFER,framebuffer);
+		#if (ENABLE_SHADOW_VSM || ENABLE_SHADOW_EVSM)
+		momentTexs.Allocate(GL_RG32F,_w,_h,nCascades);
+		momentTexs.SetFiltering(GL_LINEAR,GL_LINEAR);
+		momentTexs.SetWrapping(GL_CLAMP_TO_EDGE,GL_CLAMP_TO_EDGE);
+
+		tmpTexs.Allocate(GL_RG32F,_w,_h,nCascades);
+		tmpTexs.SetFiltering(GL_LINEAR,GL_LINEAR);
+		tmpTexs.SetWrapping(GL_CLAMP_TO_EDGE,GL_CLAMP_TO_EDGE);
+
+		filterTexs.Allocate(GL_RG32F,_w,_h,nCascades);
+		filterTexs.SetFiltering(GL_LINEAR,GL_LINEAR);
+		filterTexs.SetWrapping(GL_CLAMP_TO_EDGE,GL_CLAMP_TO_EDGE);
+		#endif
+
+		glGenFramebuffers(1, &depthFBO);
+		glBindFramebuffer(GL_FRAMEBUFFER,depthFBO);
+		#if ENABLE_SHADOW_SSM
+		glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthTexs.id, 0);
 		glDrawBuffer(GL_NONE);
 		glReadBuffer(GL_NONE);
+		#else
+		glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,momentTexs.id, 0);
 		glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthTexs.id, 0);
+		glDrawBuffer(GL_COLOR_ATTACHMENT0);
+		#endif
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
-		glf::CheckFramebuffer(framebuffer);
+		glf::CheckFramebuffer(depthFBO);
+
+		#if (ENABLE_SHADOW_VSM || ENABLE_SHADOW_EVSM)
+		glGenFramebuffers(1, &tmpFBO);
+		glBindFramebuffer(GL_FRAMEBUFFER,tmpFBO);
+		glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,tmpTexs.id, 0);
+		glDrawBuffer(GL_COLOR_ATTACHMENT0);
+		glBindFramebuffer(GL_FRAMEBUFFER,0);
+		glf::CheckFramebuffer(tmpFBO);
+
+		glGenFramebuffers(1, &filterFBO);
+		glBindFramebuffer(GL_FRAMEBUFFER,filterFBO);
+		glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,filterTexs.id, 0);
+		glDrawBuffer(GL_COLOR_ATTACHMENT0);
+		glBindFramebuffer(GL_FRAMEBUFFER,0);
+		glf::CheckFramebuffer(filterFBO);
+		#endif
 
 		// Default init
 		for(int i=0;i<nCascades;++i)
@@ -86,7 +130,10 @@ namespace glf
 		delete[] nearPlanes;
 		delete[] viewprojs;
 		delete[] projs;
-		glDeleteFramebuffers(1,&framebuffer);
+		glDeleteFramebuffers(1,&depthFBO);
+		#if (ENABLE_SHADOW_VSM || ENABLE_SHADOW_EVSM)
+		glDeleteFramebuffers(1,&filterFBO);
+		#endif
 	}
 	//-------------------------------------------------------------------------
 	void CSMLight::SetDirection(	const glm::vec3& _direction)
@@ -102,9 +149,20 @@ namespace glf
 	CSMBuilder::CSMBuilder():
 	maxCascades(4)
 	{
+		CreateScreenTriangle(vbo);
+		vao.Add(vbo,semantic::Position,2,GL_FLOAT);
+
 		// Program regular mesh
 		ProgramOptions regularOptions = ProgramOptions::CreateVSOptions();
 		regularOptions.AddDefine<int>("CSM_BUILDER", 1);
+		#if   ENABLE_SHADOW_SSM
+		regularOptions.AddDefine<int>("SSM", 1);
+		#elif ENABLE_SHADOW_VSM
+		regularOptions.AddDefine<int>("VSM", 1);
+		#elif ENABLE_SHADOW_EVSM
+		regularOptions.AddDefine<int>("EVSM", 1);
+		regularOptions.AddDefine<float>("K_EVSM_VALUE", CONSTANT_K_EVSM);
+		#endif
 		regularOptions.AddDefine<int>("MAX_CASCADES",maxCascades);
 		regularRenderer.program.Compile(regularOptions.Append(LoadFile(directory::ShaderDirectory + "meshregular.vs")),
 										regularOptions.Append(LoadFile(directory::ShaderDirectory + "meshregular.gs")),
@@ -118,6 +176,14 @@ namespace glf
 		// Program terrain mesh
 		ProgramOptions terrainOptions = ProgramOptions::CreateVSOptions();
 		terrainOptions.AddDefine<int>("CSM_BUILDER", 1);
+		#if   ENABLE_SHADOW_SSM
+		terrainOptions.AddDefine<int>("SSM", 1);
+		#elif ENABLE_SHADOW_VSM
+		terrainOptions.AddDefine<int>("VSM", 1);
+		#elif ENABLE_SHADOW_EVSM
+		terrainOptions.AddDefine<int>("EVSM", 1);
+		terrainOptions.AddDefine<float>("K_EVSM_VALUE", CONSTANT_K_EVSM);
+		#endif
 		terrainOptions.AddDefine<int>("MAX_CASCADES",maxCascades);
 		terrainRenderer.program.Compile(terrainOptions.Append(LoadFile(directory::ShaderDirectory + "meshterrain.vs")),
 										terrainOptions.Append(LoadFile(directory::ShaderDirectory + "meshterrain.cs")),
@@ -138,6 +204,26 @@ namespace glf
 		terrainRenderer.heightFactorVar	= terrainRenderer.program["HeightFactor"].location;
 
 		glProgramUniform1i(terrainRenderer.program.id, terrainRenderer.program["HeightTex"].location,  terrainRenderer.heightTexUnit);
+
+
+		// Program filter moments
+		ProgramOptions filterOptions = ProgramOptions::CreateVSOptions();
+		#if   ENABLE_SHADOW_SSM
+		filterOptions.AddDefine<int>("SSM", 1);
+		#elif ENABLE_SHADOW_VSM
+		filterOptions.AddDefine<int>("VSM", 1);
+		#elif ENABLE_SHADOW_EVSM
+		filterOptions.AddDefine<int>("EVSM", 1);
+		#endif
+		filterOptions.AddDefine<int>("CSM_FILTER",1);
+		filterOptions.AddDefine<int>("MAX_CASCADES",maxCascades);
+		momentFilter.program.Compile(	filterOptions.Append(LoadFile(directory::ShaderDirectory + "csm.vs")),
+										filterOptions.Append(LoadFile(directory::ShaderDirectory + "csm.gs")),
+										filterOptions.Append(LoadFile(directory::ShaderDirectory + "csm.fs")));
+
+		momentFilter.directionVar  = momentFilter.program["Direction"].location;
+		momentFilter.momentTexUnit = momentFilter.program["MomentTex"].unit;
+		glProgramUniform1i(momentFilter.program.id, momentFilter.program["MomentTex"].location, momentFilter.momentTexUnit);
 	}
 	//-------------------------------------------------------------------------
 	void CSMBuilder::Draw(	CSMLight&			_light,
@@ -289,9 +375,13 @@ namespace glf
 		// Render cascaded shadow maps 
 		assert(_light.nCascades<=maxCascades);
 		glViewport(0,0,_light.depthTexs.size.x,_light.depthTexs.size.y);
-		glBindFramebuffer(GL_FRAMEBUFFER,_light.framebuffer);
-		glClear(GL_DEPTH_BUFFER_BIT);
+		glBindFramebuffer(GL_FRAMEBUFFER,_light.depthFBO);
 
+		#if ENABLE_SHADOW_SSM
+		glClear(GL_DEPTH_BUFFER_BIT);
+		#else
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		#endif
 		// Regular renderer
 		{
 			glUseProgram(regularRenderer.program.id);
@@ -330,6 +420,21 @@ namespace glf
 			glf::CheckError("CSMBuilder::Draw::Terrains");
 		}
 
+		// Filter shadow map with VSM or EVSM
+		#if (ENABLE_SHADOW_VSM || ENABLE_SHADOW_EVSM)
+		glUseProgram(momentFilter.program.id);
+
+		glBindFramebuffer(GL_FRAMEBUFFER,_light.tmpFBO);
+		_light.momentTexs.Bind(momentFilter.momentTexUnit);
+		glProgramUniform2f(momentFilter.program.id, momentFilter.directionVar, 1, 0);
+		vao.Draw(GL_TRIANGLES,3,0,_light.nCascades); // Instanced screen triangles for each cascade
+
+		glBindFramebuffer(GL_FRAMEBUFFER,_light.filterFBO);
+		_light.tmpTexs.Bind(momentFilter.momentTexUnit);
+		glProgramUniform2f(momentFilter.program.id, momentFilter.directionVar, 0, 1);
+		vao.Draw(GL_TRIANGLES,3,0,_light.nCascades); // Instanced screen triangles for each cascade
+		#endif
+
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
 		glViewport(0,0,ctx::window.Size.x,ctx::window.Size.y);
 
@@ -339,8 +444,19 @@ namespace glf
 	CSMRenderer::CSMRenderer(int _w, int _h):
 	program("CSMRenderer")
 	{
-		program.Compile(ProgramOptions::CreateVSOptions().Append(LoadFile(directory::ShaderDirectory + "csmrenderer.vs")),
-						LoadFile(directory::ShaderDirectory + "csmrenderer.fs"));
+		ProgramOptions options = ProgramOptions::CreateVSOptions();
+		#if   ENABLE_SHADOW_SSM
+		options.AddDefine<int>("SSM", 1);
+		#elif ENABLE_SHADOW_VSM
+		options.AddDefine<int>("VSM", 1);
+		#elif ENABLE_SHADOW_EVSM
+		options.AddDefine<int>("EVSM", 1);
+		options.AddDefine<float>("K_EVSM_VALUE", CONSTANT_K_EVSM);
+		#endif
+		options.AddDefine<int>("CSM_RENDERER",1);
+		options.Include(LoadFile(directory::ShaderDirectory + "brdf.fs"));
+		program.Compile(options.Append(LoadFile(directory::ShaderDirectory + "csm.vs")),
+						options.Append(LoadFile(directory::ShaderDirectory + "csm.fs")));
 
 		viewPosVar 			= program["ViewPos"].location;
 		lightDirVar 		= program["LightDir"].location;
@@ -356,10 +472,10 @@ namespace glf
 		normalTexUnit		= program["NormalTex"].unit;
 		shadowTexUnit		= program["ShadowTex"].unit;
 
-		glProgramUniform1i(program.id, 		  program["PositionTex"].location,		positionTexUnit);
-		glProgramUniform1i(program.id, 		  program["ShadowTex"].location,		shadowTexUnit);
-		glProgramUniform1i(program.id, 		  program["DiffuseTex"].location,		diffuseTexUnit);
-		glProgramUniform1i(program.id, 		  program["NormalTex"].location,		normalTexUnit);
+		glProgramUniform1i(program.id, program["PositionTex"].location,	positionTexUnit);
+		glProgramUniform1i(program.id, program["ShadowTex"].location,	shadowTexUnit);
+		glProgramUniform1i(program.id, program["DiffuseTex"].location,	diffuseTexUnit);
+		glProgramUniform1i(program.id, program["NormalTex"].location,	normalTexUnit);
 
 		glf::CheckError("CSMRenderer::Create");
 	}
@@ -382,7 +498,12 @@ namespace glf
 		glProgramUniformMatrix4fv(program.id,	lightViewProjsVar,	_light.nCascades, 	GL_FALSE, &_light.viewprojs[0][0][0]);
 		glProgramUniform3f(program.id,			lightIntensityVar,	_light.intensity.x,	_light.intensity.y,	_light.intensity.z);
 
+		#if ENABLE_SHADOW_SSM
 		_light.depthTexs.Bind(shadowTexUnit);
+		#else
+		//_light.momentTexs.Bind(shadowTexUnit);
+		_light.filterTexs.Bind(shadowTexUnit);
+		#endif
 		_gbuffer.positionTex.Bind(positionTexUnit);
 		_gbuffer.diffuseTex.Bind(diffuseTexUnit);
 		_gbuffer.normalTex.Bind(normalTexUnit);

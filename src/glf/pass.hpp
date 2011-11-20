@@ -17,10 +17,27 @@ namespace glf
 					RenderSurface(		const RenderSurface&);
 		RenderSurface&	operator=(		const RenderSurface&);
 	public:
-		GLint 							textureUnit;
-		GLint 							levelVar;
+
+		struct RegularRenderer
+		{
+										RegularRenderer():program("Surface::Regular"){}
+			GLint 						textureUnit;
+			GLint 						levelVar;
+			Program 					program;
+		};
+
+		struct ArrayRenderer
+		{
+										ArrayRenderer():program("Surface::Array"){}
+			GLint 						textureUnit;
+			GLint 						layerVar;
+			GLint 						levelVar;
+			Program 					program;
+		};
+
+		ArrayRenderer					arrayRenderer;
+		RegularRenderer					regularRenderer;
 		glm::vec2						frameSize;
-		Program 						program;
 		VertexBuffer2F					vbo;
 		VertexArray						vao;
 
@@ -28,6 +45,9 @@ namespace glf
 										unsigned int _height);
 		void 		Draw(				const Texture2D& _texture,
 										int 			 _level=0);
+		void 		Draw(				const TextureArray2D& _texture,
+										int 			_layer,
+										int 			_level=0);
 	};
 	//--------------------------------------------------------------------------
 	struct RenderTarget
