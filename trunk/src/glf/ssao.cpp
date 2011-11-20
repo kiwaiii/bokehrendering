@@ -11,29 +11,9 @@
 namespace glf
 {
 	//-------------------------------------------------------------------------
-	SSAOPass::SSAOPass(int _w, int _h):
-	program("SSAOPass")
+	SSAO::SSAO(int _w, int _h)
 	{
-		program.Compile(ProgramOptions::CreateVSOptions().Append(LoadFile(directory::ShaderDirectory + "ssao.vs")),
-						LoadFile(directory::ShaderDirectory + "ssao.fs"));
-
-		betaVar				= program["Beta"].location;
-		epsilonVar			= program["Epsilon"].location;
-		kappaVar	 		= program["Kappa"].location;
-		sigmaVar			= program["Sigma"].location;
-		radiusVar			= program["Radius"].location;
-		nSamplesVar			= program["nSamples"].location;
-		viewMatVar			= program["View"].location;
-		nearVar				= program["Near"].location;
-
-		positionTexUnit		= program["PositionTex"].unit;
-		normalTexUnit		= program["NormalTex"].unit;
-		rotationTexUnit		= program["RotationTex"].unit;
-
-		glProgramUniform1i(program.id, 		  program["PositionTex"].location,		positionTexUnit);
-		glProgramUniform1i(program.id, 		  program["NormalTex"].location,		normalTexUnit);
-		glProgramUniform1i(program.id, 		  program["RotationTex"].location,		rotationTexUnit);
-
+		// TODO : create a smaller rotation texture and use tilling
 		// Create and fill rotation texture
 		RNG rng;
 		rotationTex.Allocate(GL_RG16F,_w,_h);
@@ -83,79 +63,102 @@ namespace glf
 		Halton[29]	= glm::vec2(0.488794, 0.479406);
 		Halton[30]	= glm::vec2(-0.948199, 0.263949);
 		Halton[31]	= glm::vec2(0.0311802, -0.121049);
-		glProgramUniform2fv(program.id, program["Samples[0]"].location,	32, &Halton[0][0]);
 
-		glf::CheckError("SSAOPass::Create");
+		// Create SSAO Pass
+		ProgramOptions ssaoOptions = ProgramOptions::CreateVSOptions();
+		ssaoOptions.AddDefine<int>("SSAO_PASS",1);
+		ssaoPass.program.Compile(	ssaoOptions.Append(LoadFile(directory::ShaderDirectory + "ssao.vs")),
+									ssaoOptions.Append(LoadFile(directory::ShaderDirectory + "ssao.fs")));
+
+		ssaoPass.betaVar			= ssaoPass.program["Beta"].location;
+		ssaoPass.epsilonVar			= ssaoPass.program["Epsilon"].location;
+		ssaoPass.kappaVar	 		= ssaoPass.program["Kappa"].location;
+		ssaoPass.sigmaVar			= ssaoPass.program["Sigma"].location;
+		ssaoPass.radiusVar			= ssaoPass.program["Radius"].location;
+		ssaoPass.nSamplesVar		= ssaoPass.program["nSamples"].location;
+		ssaoPass.viewMatVar			= ssaoPass.program["View"].location;
+		ssaoPass.nearVar			= ssaoPass.program["Near"].location;
+
+		ssaoPass.positionTexUnit	= ssaoPass.program["PositionTex"].unit;
+		ssaoPass.normalTexUnit		= ssaoPass.program["NormalTex"].unit;
+		ssaoPass.rotationTexUnit	= ssaoPass.program["RotationTex"].unit;
+
+		glProgramUniform1i(ssaoPass.program.id, ssaoPass.program["PositionTex"].location,	ssaoPass.positionTexUnit);
+		glProgramUniform1i(ssaoPass.program.id, ssaoPass.program["NormalTex"].location,		ssaoPass.normalTexUnit);
+		glProgramUniform1i(ssaoPass.program.id, ssaoPass.program["RotationTex"].location,	ssaoPass.rotationTexUnit);
+		glProgramUniform2fv(ssaoPass.program.id, ssaoPass.program["Samples[0]"].location,	32, &Halton[0][0]);
+
+		// Create Bilatereal Pass
+		ProgramOptions bilateralOptions = ProgramOptions::CreateVSOptions();
+		bilateralOptions.AddDefine<int>("BILATERAL_PASS",1);
+		bilateralPass.program.Compile(	bilateralOptions.Append(LoadFile(directory::ShaderDirectory + "ssao.vs")),
+										bilateralOptions.Append(LoadFile(directory::ShaderDirectory + "ssao.fs")));
+
+		bilateralPass.sigmaScreenVar= bilateralPass.program["SigmaScreen"].location;
+		bilateralPass.sigmaDepthVar	= bilateralPass.program["SigmaDepth"].location;
+		bilateralPass.nTapsVar		= bilateralPass.program["nTaps"].location;
+		bilateralPass.viewMatVar	= bilateralPass.program["ViewMat"].location;
+		bilateralPass.directionVar	= bilateralPass.program["Direction"].location;
+
+		bilateralPass.inputTexUnit	= bilateralPass.program["InputTex"].unit;
+		bilateralPass.positionTexUnit=bilateralPass.program["PositionTex"].unit;
+
+		glProgramUniform1i(bilateralPass.program.id, bilateralPass.program["InputTex"].location,	bilateralPass.inputTexUnit);
+		glProgramUniform1i(bilateralPass.program.id, bilateralPass.program["PositionTex"].location,	bilateralPass.positionTexUnit);
+
+		glf::CheckError("SSAO::Create");
 	}
 	//-------------------------------------------------------------------------
-	void SSAOPass::Draw(	const GBuffer&	_gbuffer,
-							const glm::mat4& _view,
-							float 			_near,
-							float 			_beta,
-							float 			_epsilon,
-							float 			_kappa,
-							float 			_sigma,
-							float 			_radius,
-							int 			_nSamples,
-							const RenderTarget& _renderTarget)
+	void SSAO::Draw(	const GBuffer&	_gbuffer,
+						const glm::mat4& _view,
+						float 			_near,
+						float 			_beta,
+						float 			_epsilon,
+						float 			_kappa,
+						float 			_sigma,
+						float 			_radius,
+						int 			_nSamples,
+						const RenderTarget& _renderTarget)
 	{
-		glUseProgram(program.id);
-		glProgramUniform1f(program.id,			nearVar,			_near);
-		glProgramUniform1f(program.id,			betaVar,			_beta);
-		glProgramUniform1f(program.id,			epsilonVar,			_epsilon);
-		glProgramUniform1f(program.id,			kappaVar,			_kappa);
-		glProgramUniform1f(program.id,			sigmaVar,			_sigma);
-		glProgramUniform1f(program.id,			radiusVar,			_radius);
-		glProgramUniform1i(program.id,			nSamplesVar,		_nSamples);
-		glProgramUniformMatrix4fv(program.id, 	viewMatVar,	1, GL_FALSE, &_view[0][0]);
+		glUseProgram(ssaoPass.program.id);
+		glProgramUniform1f(ssaoPass.program.id,			ssaoPass.nearVar,		_near);
+		glProgramUniform1f(ssaoPass.program.id,			ssaoPass.betaVar,		_beta);
+		glProgramUniform1f(ssaoPass.program.id,			ssaoPass.epsilonVar,	_epsilon);
+		glProgramUniform1f(ssaoPass.program.id,			ssaoPass.kappaVar,		_kappa);
+		glProgramUniform1f(ssaoPass.program.id,			ssaoPass.sigmaVar,		_sigma);
+		glProgramUniform1f(ssaoPass.program.id,			ssaoPass.radiusVar,		_radius);
+		glProgramUniform1i(ssaoPass.program.id,			ssaoPass.nSamplesVar,	_nSamples);
+		glProgramUniformMatrix4fv(ssaoPass.program.id, 	ssaoPass.viewMatVar,	1, GL_FALSE, &_view[0][0]);
 
-		_gbuffer.positionTex.Bind(positionTexUnit);
-		_gbuffer.normalTex.Bind(normalTexUnit);
-		rotationTex.Bind(rotationTexUnit);
+		_gbuffer.positionTex.Bind(ssaoPass.positionTexUnit);
+		_gbuffer.normalTex.Bind(ssaoPass.normalTexUnit);
+		rotationTex.Bind(ssaoPass.rotationTexUnit);
 		_renderTarget.Draw();
 
-		glf::CheckError("SSAOPass::Draw");
+		glf::CheckError("SSAO::SSAODraw");
 	}
 	//-------------------------------------------------------------------------
-	BilateralPass::BilateralPass(int _w, int _h):
-	program("BilateralPass")
+	void SSAO::Draw(	const Texture2D& _inputTex,
+						const Texture2D& _positionTex,
+						const glm::mat4& _view,
+						float 			 _sigmaScreen,
+						float 			 _sigmaDepth,
+						int 			 _nTaps,
+						const glm::vec2& _direction,
+						const RenderTarget& _renderTarget)
 	{
-		program.Compile(ProgramOptions::CreateVSOptions().Append(LoadFile(directory::ShaderDirectory + "bilateral.vs")),
-						LoadFile(directory::ShaderDirectory + "bilateral.fs"));
+		glUseProgram(bilateralPass.program.id);
+		glProgramUniform1f(bilateralPass.program.id,			bilateralPass.sigmaScreenVar,	_sigmaScreen);
+		glProgramUniform1f(bilateralPass.program.id,			bilateralPass.sigmaDepthVar,	_sigmaDepth);
+		glProgramUniform1i(bilateralPass.program.id,			bilateralPass.nTapsVar,			_nTaps);
+		glProgramUniform2f(bilateralPass.program.id,			bilateralPass.directionVar,		_direction.x,_direction.y);
+		glProgramUniformMatrix4fv(bilateralPass.program.id, 	bilateralPass.viewMatVar,		1, GL_FALSE, &_view[0][0]);
 
-		sigmaHVar			= program["SigmaH"].location;
-		sigmaVVar			= program["SigmaV"].location;
-		nTapsVar			= program["nTaps"].location;
-		viewMatVar			= program["ViewMat"].location;
-
-		positionTexUnit		= program["PositionTex"].unit;
-		inputTexUnit		= program["InputTex"].unit;
-
-		glProgramUniform1i(program.id, program["InputTex"].location,	inputTexUnit);
-		glProgramUniform1i(program.id, program["PositionTex"].location,	positionTexUnit);
-
-		glf::CheckError("BilateralPass::Create");
-	}
-	//-------------------------------------------------------------------------
-	void BilateralPass::Draw(	const Texture2D& _inputTex,
-								const Texture2D& _positionTex,
-								const glm::mat4& _view,
-								float 			 _sigmaH,
-								float 			 _sigmaV,
-								int 			 _nTaps,
-								const RenderTarget& _renderTarget)
-	{
-		glUseProgram(program.id);
-		glProgramUniform1f(program.id,			sigmaHVar,	_sigmaH);
-		glProgramUniform1f(program.id,			sigmaVVar,	_sigmaV);
-		glProgramUniform1i(program.id,			nTapsVar,	_nTaps);
-		glProgramUniformMatrix4fv(program.id, 	viewMatVar,	1, GL_FALSE, &_view[0][0]);
-
-		_inputTex.Bind(inputTexUnit);
-		_positionTex.Bind(positionTexUnit);
+		_inputTex.Bind(bilateralPass.inputTexUnit);
+		_positionTex.Bind(bilateralPass.positionTexUnit);
 		_renderTarget.Draw();
 
-		glf::CheckError("BilateralPass::Draw");
+		glf::CheckError("SSAO::BilateralDraw");
 	}
 	//-------------------------------------------------------------------------
 }

@@ -21,7 +21,7 @@ namespace glf
 			shCoeffs[i]=glm::vec3(0);
 
 		cubeTex.Allocate(GL_RGBA32F, _resolution, true);
-		cubeTex.SetWrapping(GL_CLAMP_TO_EDGE,GL_CLAMP_TO_EDGE);
+		cubeTex.SetWrapping(GL_CLAMP_TO_EDGE,GL_CLAMP_TO_EDGE,GL_CLAMP_TO_EDGE);
 		cubeTex.SetFiltering(GL_LINEAR_MIPMAP_LINEAR,GL_LINEAR);
 	}
 	//--------------------------------------------------------------------------
@@ -147,31 +147,42 @@ namespace glf
 	ProbeRenderer::ProbeRenderer(int _w, int _h):
 	program("ProbeRenderer")
 	{
-		CreateScreenTriangle(vbo);
-		vao.Add(vbo,semantic::Position,2,GL_FLOAT);
-
 		ProgramOptions options = ProgramOptions::CreateVSOptions();
 		options.AddDefine<int>("RENDERER",1);
+		options.AddDefine<int>("DIFFUSE_REFLECTION",1);
+		options.Include(LoadFile(directory::ShaderDirectory + "brdf.fs"));
 		program.Compile(options.Append(LoadFile(directory::ShaderDirectory + "probe.vs")),
 						options.Append(LoadFile(directory::ShaderDirectory + "probe.fs")));
 
 		shCoeffsVar			= program["SHCoeffs[0]"].location;
-		//cubeTexUnit			= program["CubeTex"].unit;
 		normalTexUnit		= program["NormalTex"].unit;
+		diffuseTexUnit		= program["DiffuseTex"].unit;
 		glProgramUniform1i(program.id, program["NormalTex"].location, normalTexUnit);
-		//glProgramUniform1i(program.id, program["CubeTex"].location, cubeTexUnit);
+		glProgramUniform1i(program.id, program["DiffuseTex"].location, diffuseTexUnit);
 
-Info(program.ToString());
+		// For all reflections
+//		viewPosVar			= program["ViewPos"].location;
+//		cubeTexUnit			= program["CubeTex"].unit;
+//		positionTexUnit		= program["PositionTex"].unit;
+//		glProgramUniform1i(program.id, program["CubeTex"].location, cubeTexUnit);
+//		glProgramUniform1i(program.id, program["PositionTex"].location, positionTexUnit);
+
 	}
 	//-------------------------------------------------------------------------
 	void ProbeRenderer::Draw(	const ProbeLight&	_probe,
 								const GBuffer&		_gbuffer,
+								const glm::vec3&	_viewPos,
 								const RenderTarget& _renderTarget)
 	{
 		glUseProgram(program.id);
 
+		// For all reflections
+//		glProgramUniform3f(program.id, viewPosVar, _viewPos.x, _viewPos.y, _viewPos.z);
+//		_probe.cubeTex.Bind(cubeTexUnit);
+//		_gbuffer.positionTex.Bind(positionTexUnit);
+
 		glProgramUniform3fv(program.id, shCoeffsVar, 9, (float*)(&_probe.shCoeffs[0]));
-		//_probe.cubeTex.Bind(cubeTexUnit);
+		_gbuffer.diffuseTex.Bind(diffuseTexUnit);
 		_gbuffer.normalTex.Bind(normalTexUnit);
 		_renderTarget.Draw();
 

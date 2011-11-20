@@ -33,8 +33,37 @@
 
 
 #ifdef CSM_BUILDER
+	#ifdef SSM
 	void main()
 	{
 
 	}
+	#endif
+
+	#ifdef VSM
+	in  vec4 gLinearDepth;
+	out vec2 FragDepth;
+	void main()
+	{
+		vec3 linearDepth = (gLinearDepth.xyz+vec3(1)) * 0.5f;
+		vec2 outDepth;
+		outDepth.x = linearDepth.z;
+		outDepth.y = outDepth.x * outDepth.x;
+		FragDepth  = outDepth;
+	}
+	#endif
+
+	#ifdef EVSM
+	in  vec4 gLinearDepth;
+	out vec2 FragDepth;
+	void main()
+	{
+		float k = K_EVSM_VALUE;
+		vec3 linearDepth = (gLinearDepth.xyz+vec3(1)) * 0.5f;
+		vec2 outDepth;
+		outDepth.x = exp(linearDepth.z * k);
+		outDepth.y = outDepth.x * outDepth.x;
+		FragDepth  = outDepth;
+	}
+	#endif
 #endif

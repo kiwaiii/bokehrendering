@@ -28,11 +28,11 @@
 		// cos\theta is equal to 1/sqrt(r2)	
 		ivec2 texSize	= textureSize(CubeTex,0).xy;
 		float texArea	= 4.f/float(texSize.x*texSize.y); 
-		vec2  texCoord  = (gl_FragCoord.xy) / vec2(texSize);
-		vec2  texelPos  = (gl_FragCoord.xy + vec2(0.5f)) / vec2(texSize)*2.f - vec2(1.f);
-		float r2	    = texelPos.x*texelPos.x + texelPos.y*texelPos.y + 1;
-		float weight    = 1.f / (sqrt(r2)*r2) * texArea;
-		vec3 refDir     = normalize(vec3(texelPos,-1));
+		vec2  texCoord	= (gl_FragCoord.xy) / vec2(texSize);
+		vec2  texelPos	= (gl_FragCoord.xy + vec2(0.5f)) / vec2(texSize)*2.f - vec2(1.f);
+		float r2		= texelPos.x*texelPos.x + texelPos.y*texelPos.y + 1;
+		float weight	= 1.f / (sqrt(r2)*r2) * texArea;
+		vec3 refDir		= normalize(vec3(texelPos,-1));
 
 		vec3 SHCoeffs[9];
 		SHCoeffs[0] = vec3(0);
@@ -74,9 +74,9 @@
 
 
 #ifdef RENDERER
-	uniform sampler2D		PositionTex;
+	#if DIFFUSE_REFLECTION
 	uniform sampler2D		NormalTex;
-    //uniform samplerCube		CubeTex;
+	uniform sampler2D		DiffuseTex;
 	uniform vec3			SHCoeffs[9];
 
 	out vec4 				FragColor;
@@ -86,40 +86,16 @@
 							c4 = 0.886227, 
 							c5 = 0.247708;
 
-//	//--------------------------------------------------------------------------
-//	float ClosestPower2(int _x, out int _exp)
-//	{
-//		float temp	= log(float(_x))/log(2.f);
-//		_exp		= int(temp+0.5);
-//		return pow(2.f,_exp);
-//	}
-//	//--------------------------------------------------------------------------
-//	float Exponent2Layer( float _exponent, int _maxExponent, int _nTextures )
-//	{
-//		if(_exponent<=1.f) 			return 0.f;
-//		if(_exponent>=_maxExponent) return 1.f;
-
-//		int index;
-//		float value		= ClosestPower2(int(_exponent), index);
-//		float offset	= _exponent-value;
-//		int inf			= offset>=0?index:index-1;
-//		int sup			= offset>=0?index+1:index;
-
-//		float eInf		= pow(2.f,inf);
-//		float eSup		= pow(2.f,sup);
-//		offset 			= (_exponent-eInf) / (eSup-eInf);
-
-//		return (inf + offset) / float(_nTextures-1);
-//	}
-	//--------------------------------------------------------------------------
 	// Convolve with a clamped cos
 	// From Siggraph 02 An efficient representation for irradiance environment maps 
 	// [Ravi Ramamorthi, Pat Hanrahan]
 	// Compute the value of the kernel (including the scaling factor of the convolution)
 	void main()
 	{
-		vec2 pix		= gl_FragCoord.xy / vec2(textureSize(PositionTex,0));
+		vec2 pix		= gl_FragCoord.xy / vec2(textureSize(NormalTex,0));
 		vec3 n			= normalize(texture(NormalTex,pix).xyz);
+		vec4 color		= texture(DiffuseTex,pix);
+
 		vec3 dRadiance	= 	c1 *  SHCoeffs[8] * (n.x*n.x - n.y*n.y) 
 						+	c3 *  SHCoeffs[6] * n.z*n.z
 						+	c4 *  SHCoeffs[0]
@@ -127,8 +103,61 @@
 						+ 2*c1 * (SHCoeffs[4]*n.x*n.y + SHCoeffs[7]*n.x*n.z + SHCoeffs[5]*n.y*n.z)
 						+ 2*c2 * (SHCoeffs[3]*n.x + SHCoeffs[1]*n.y + SHCoeffs[2]*n.z );
 
-		vec3 sRadiance	= vec3(0);
-		//vec3 sRadiance	= texture(CubeTex,n).xyz;
-		FragColor	  	= vec4(sRadiance + dRadiance * INV_PI,1);
+		FragColor	  	= vec4(color.xyz * dRadiance * INV_PI,1);
 	}
+	#endif
+	#if TOTAL_REFLECTION
+	uniform samplerCube		CubeTex;
+	uniform sampler2D		NormalTex;
+	uniform sampler2D		DiffuseTex;
+	uniform sampler2D		PositionTex;
+	uniform vec3			SHCoeffs[9];
+	uniform vec3			ViewPos;
+
+	out vec4 				FragColor;
+	const float 			c1 = 0.429043, 
+							c2 = 0.511664, 
+							c3 = 0.743125, 
+							c4 = 0.886227, 
+							c5 = 0.247708;
+	//--------------------------------------------------------------------------
+	float MipmapLevel(float _exponent, int _cubeResolution)
+	{
+		// Magic fomula : derived from Wang09 for a cubemap
+		// Epsilon is set up to 0.9
+		// Assume each pixel has the same solid angle
+		// -3*ln(0.9) = 0.316081547
+		return clamp(0.5 * log2(0.316081547 *_cubeResolution*_cubeResolution / _exponent),0,log2(_cubeResolution));
+	}
+	//--------------------------------------------------------------------------
+	// Convolve with a clamped cos
+	// From Siggraph 02 An efficient representation for irradiance environment maps 
+	// [Ravi Ramamorthi, Pat Hanrahan]
+	// Compute the value of the kernel (including the scaling factor of the convolution)
+	void main()
+	{
+		vec2 pix		= gl_FragCoord.xy / vec2(textureSize(NormalTex,0));
+		vec3 p			= normalize(texture(PositionTex,pix).xyz);
+		vec4 n_rough	= texture(NormalTex,pix);
+		vec3 n			= normalize(n_rough.xyz);
+		float roughness	= n_rough.w;
+		vec3 vDirection	= normalize(ViewPos-p);
+
+		vec4 color		= texture(DiffuseTex,pix);
+		vec3 dRadiance	= 	c1 *  SHCoeffs[8] * (n.x*n.x - n.y*n.y) 
+						+	c3 *  SHCoeffs[6] * n.z*n.z
+						+	c4 *  SHCoeffs[0]
+						-	c5 *  SHCoeffs[6] 
+						+ 2*c1 * (SHCoeffs[4]*n.x*n.y + SHCoeffs[7]*n.x*n.z + SHCoeffs[5]*n.y*n.z)
+						+ 2*c2 * (SHCoeffs[3]*n.x + SHCoeffs[1]*n.y + SHCoeffs[2]*n.z );
+
+		// Compute BRDF lobe
+		vec3  rDirection;
+		float rExponent,rScale;
+		WangWrap(vDirection,n,roughness,rDirection,rExponent,rScale);
+		float rLevel	= MipmapLevel(rExponent,textureSize(CubeTex,0).x);
+		vec3 sRadiance	= textureLod(CubeTex,rDirection,rLevel).xyz;
+		FragColor	  	= vec4(color.xyz * (color.w*sRadiance + dRadiance * INV_PI),1);
+	}
+	#endif
 #endif

@@ -74,7 +74,17 @@ ADD_SUBDIRECTORY(glui)
 ADD_SUBDIRECTORY(glf/io)
 
 #-------------------------------------------------------------------------------
+# OpenEXR Support (for debugging)
+#-------------------------------------------------------------------------------
+SET(ENABLE_OPEN_EXR 1)
+IF(ENABLE_OPEN_EXR)
+	ADD_DEFINITIONS(-DENABLE_OPEN_EXR)
+	INCLUDE_DIRECTORIES(/usr/include/OpenEXR)
+	SET(EXR_LIBS -lHalf -lIlmImf -lImath -lIex)
+ENDIF(ENABLE_OPEN_EXR)
+
+#-------------------------------------------------------------------------------
 # Libraries definitions
 #-------------------------------------------------------------------------------
 ADD_EXECUTABLE(BOKEH mainbokeh.cpp ${GLF_SRCS} ${GLUI_SRCS})
-TARGET_LINK_LIBRARIES(BOKEH ${OPENGL_LIBRARY} ${GLEW_LIBRARY} ${FREEGLUT_LIBRARY} ${GLUT_LIBRARY} ${DevIL_LIBRARY})
+TARGET_LINK_LIBRARIES(BOKEH ${OPENGL_LIBRARY} ${GLEW_LIBRARY} ${FREEGLUT_LIBRARY} ${GLUT_LIBRARY} ${DevIL_LIBRARY} ${EXR_LIBS})

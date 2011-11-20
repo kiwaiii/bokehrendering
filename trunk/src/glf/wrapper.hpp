@@ -31,6 +31,7 @@ namespace glf
 								const glm::ivec2& _value);
 		void 		AddDefine(	const std::string& _name, 
 								int _value);
+		void 		Include(	const std::string& _string);
 		std::string	ToString(	) const;
 		std::string	Append(		const std::string& _source) const;
 	private:

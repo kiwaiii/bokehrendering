@@ -62,9 +62,18 @@ namespace glf
 		CreateScreenTriangle(vbo);
 		vao.Add(vbo,semantic::Position,2,GL_FLOAT);
 
-		program.Compile(ProgramOptions::CreateVSOptions().Append(LoadFile(directory::ShaderDirectory + "skybuilder.vs")),
-						LoadFile(directory::ShaderDirectory + "skybuilder.gs"),
-						LoadFile(directory::ShaderDirectory + "skybuilder.fs"));
+		glm::mat4 transformations[6];
+		transformations[0] = glm::rotate( 90.f,0.f,1.f,0.f);	// Positive X
+		transformations[1] = glm::rotate(-90.f,0.f,1.f,0.f);	// Negative X
+		transformations[2] = glm::rotate( 90.f,1.f,0.f,0.f);	// Positive Y
+		transformations[3] = glm::rotate(-90.f,1.f,0.f,0.f);	// Negative Y
+		transformations[4] = glm::mat4(1.f);					// Positive Z
+		transformations[5] = glm::rotate(180.f,1.f,0.f,0.f);	// Negative Z
+
+		ProgramOptions options = ProgramOptions::CreateVSOptions();
+		program.Compile(options.Append(LoadFile(directory::ShaderDirectory + "skybuilder.vs")),
+						options.Append(LoadFile(directory::ShaderDirectory + "skybuilder.gs")),
+						options.Append(LoadFile(directory::ShaderDirectory + "skybuilder.fs")));
 
 		drawSunVar	 		= program["DrawSun"].location;
 		sunFactorVar 		= program["SunFactor"].location;
@@ -73,25 +82,11 @@ namespace glf
 
 		glProgramUniform2f(program.id, sunSphCoordVar,	sunTheta, sunPhi);
 		glProgramUniform1f(program.id, turbidityVar,	turbidity);
-
-		glm::mat4 transformations[6];
-		transformations[0] = glm::rotate( 90.f,0.f,1.f,0.f);	// Positive X
-		transformations[1] = glm::rotate(-90.f,0.f,1.f,0.f);	// Negative X
-		transformations[2] = glm::rotate( 90.f,1.f,0.f,0.f);	// Positive Y
-		transformations[3] = glm::rotate(-90.f,1.f,0.f,0.f);	// Negative Y
-		transformations[4] = glm::mat4(1.f);					// Positive Z
-		transformations[5] = glm::rotate(180.f,1.f,0.f,0.f);	// Negative Z
 		glProgramUniformMatrix4fv(program.id, program["Transformations[0]"].location, 6, GL_FALSE, &transformations[0][0][0]);
 
-		// Init sky map & sky framebuffer
-		// 32FP is needed, otherwise we lack of contrast
-		skyTexture.Allocate(GL_RGBA32F,resolution,true);
-		skyTexture.SetWrapping(GL_CLAMP_TO_EDGE,GL_CLAMP_TO_EDGE);
-		skyTexture.SetFiltering(GL_LINEAR_MIPMAP_LINEAR,GL_LINEAR);
-
+		// Init sky framebuffer
 		glGenFramebuffers(1,&skyFramebuffer);
 		glBindFramebuffer(GL_FRAMEBUFFER,skyFramebuffer);
-		glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, skyTexture.id, 0);
 		glDrawBuffer(GL_COLOR_ATTACHMENT0);
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
 
@@ -132,11 +127,13 @@ namespace glf
 		glDisable(GL_DEPTH_TEST);
 		glDepthMask(false);
 
+		assert(_cubeTex.size.x==resolution);
+		assert(_cubeTex.size.y==resolution);
 		glProgramUniform1i(program.id, drawSunVar, _drawSun);
 
 		// Render to cube map
 		glUseProgram(program.id);
-		glViewport(0,0,skyTexture.size.x,skyTexture.size.y);
+		glViewport(0,0,resolution,resolution);
 			glBindFramebuffer(GL_FRAMEBUFFER,skyFramebuffer);
 			glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, _cubeTex.id, 0);
 				glClear(GL_COLOR_BUFFER_BIT);
@@ -150,9 +147,9 @@ namespace glf
 		// Generate mipmap (required by the cubemap renderer otherwise 
 		// interpolation at corner are wrong, since corser mipmap level are 
 		// not available)
-		glBindTexture(skyTexture.target,skyTexture.id);
-		glGenerateMipmap(skyTexture.target);
-		glBindTexture(skyTexture.target,0);
+		glBindTexture(_cubeTex.target,_cubeTex.id);
+		glGenerateMipmap(_cubeTex.target);
+		glBindTexture(_cubeTex.target,0);
 
 		assert(glf::CheckFramebuffer(skyFramebuffer));
 		glf::CheckError("Sky::Update");	

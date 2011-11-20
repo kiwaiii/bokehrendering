@@ -48,7 +48,6 @@ namespace glf
 										bool _drawSun=true);
 
 		GLuint							skyFramebuffer;
-		TextureCube						skyTexture;
 		Program							program;
 		int								resolution;
 		float							sunTheta;

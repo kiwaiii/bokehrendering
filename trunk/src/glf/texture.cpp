@@ -472,8 +472,8 @@ namespace glf
 	{
 		glGenTextures(1,&id);
 		glBindTexture(GL_TEXTURE_CUBE_MAP,id);
-		SetFiltering(GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR);
-		SetWrapping(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+		SetFiltering(GL_LINEAR, GL_LINEAR);
+		SetWrapping(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 	}
 	//-------------------------------------------------------------------------
 	TextureCube::~TextureCube()
@@ -528,10 +528,11 @@ namespace glf
 		glTextureParameteriEXT(id, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, _mag);
 	}
 	//-------------------------------------------------------------------------
-	void TextureCube::SetWrapping(GLenum _s, GLenum _t)
+	void TextureCube::SetWrapping(GLenum _s, GLenum _t, GLenum _r)
 	{
 		glTextureParameteriEXT(id, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, _s);
 		glTextureParameteriEXT(id, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, _t);
+		glTextureParameteriEXT(id, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, _r);
 	}
 	//-------------------------------------------------------------------------
 	#if ENABLE_SAMPLER_OBJECT

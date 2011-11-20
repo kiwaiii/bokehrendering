@@ -175,7 +175,8 @@ namespace glf
 		void SetFiltering(	GLenum _min, 
 							GLenum _mag);
 		void SetWrapping(	GLenum _s, 
-							GLenum _t);
+							GLenum _t,
+							GLenum _r);
 		void Bind(			GLint _textureUnit) const;
 	private:
 			 TextureCube( const TextureCube&);
