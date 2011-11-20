@@ -2,6 +2,7 @@
 // Includes
 //------------------------------------------------------------------------------
 #include <glf/probe.hpp>
+#include <glf/debug.hpp>
 #include <glf/utils.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glf/window.hpp>
@@ -150,6 +151,7 @@ namespace glf
 		ProgramOptions options = ProgramOptions::CreateVSOptions();
 		options.AddDefine<int>("RENDERER",1);
 		options.AddDefine<int>("DIFFUSE_REFLECTION",1);
+		options.AddDefine<int>("LIGHTING_ONLY",ENABLE_LIGHTING_ONLY);
 		options.Include(LoadFile(directory::ShaderDirectory + "brdf.fs"));
 		program.Compile(options.Append(LoadFile(directory::ShaderDirectory + "probe.vs")),
 						options.Append(LoadFile(directory::ShaderDirectory + "probe.fs")));

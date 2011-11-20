@@ -48,6 +48,7 @@ namespace ctx
 	bool									drawHelpers = false;
 	bool									drawTimings = false;
 	bool									drawUI      = true;
+	bool									drawWire    = false;
 }
 //-----------------------------------------------------------------------------
 namespace
@@ -85,8 +86,8 @@ namespace
 		float								kappa;
 		float								radius;
 		int									nSamples;
-		float								sigmaH;
-		float								sigmaV;
+		float								sigmaScreen;
+		float								sigmaDepth;
 		int 								nTaps;
 	};
 
@@ -109,10 +110,9 @@ namespace
 	struct TerrainParams
 	{
 		int									tileResolution;
-		float								depthFactor;
+		std::vector<float>					depthFactors;
 		float								tessFactor;
 		float								projFactor;
-		bool								wireFrame;
 	};
 
 	struct Application
@@ -223,19 +223,12 @@ namespace
 		activeMenu					= 5;
 		csmLight.direction			= glm::vec3(0,0,-1);
 
-//		terrain.Update(				terrainParams.tileResolution,
-//									terrainParams.depthFactor,
-//									terrainParams.tessFactor,
-//									terrainParams.projFactor);
-
 		#if ENABLE_BOKEH_STATISTICS
 		bokehQuery					= false;
 		bokehRecord					= false;
 		bokehFile.open("BokehPerformances.dat");
 		#endif
 	}
-
-	bool saveTexture = false;
 }
 //------------------------------------------------------------------------------
 bool resize(int _w, int _h)
@@ -305,20 +298,14 @@ bool begin()
 	ssaoParams.sigma 			= loader.GetFloat(ssaoNode,"sigma",1.f);
 	ssaoParams.kappa 			= loader.GetFloat(ssaoNode,"kappa",1.f);
 	ssaoParams.radius 			= loader.GetFloat(ssaoNode,"radius",1.f);
-	ssaoParams.sigmaH 			= loader.GetFloat(ssaoNode,"sigmaH",1.f);
-	ssaoParams.sigmaV 			= loader.GetFloat(ssaoNode,"sigmaV",1.f);
+	ssaoParams.sigmaScreen 		= loader.GetFloat(ssaoNode,"sigmaScreen",1.f);
+	ssaoParams.sigmaDepth 		= loader.GetFloat(ssaoNode,"sigmaDepth",1.f);
 
 	TerrainParams terrainParams;
-//	glf::io::ConfigNode*terrainNode= loader.GetNode(root,"terrain");
-//	terrainParams.tileResolution= loader.GetIVec2(terrainNode,"tileResolution",glm::ivec2(32,32));
-//	terrainParams.depthFactor 	= loader.GetFloat(ssaoNode,"depthFactor",-5.f);
-//	terrainParams.tessFactor 	= loader.GetFloat(ssaoNode,"tessFactor",16.f);
-//	terrainParams.projFactor 	= loader.GetFloat(ssaoNode,"projFactor",10.f);
-	terrainParams.tileResolution= 32;
-	terrainParams.depthFactor 	= 5.f;
-	terrainParams.tessFactor 	= 16.f;
-	terrainParams.projFactor 	= 10.f;
-	terrainParams.wireFrame		= false;
+	glf::io::ConfigNode*terrainNode= loader.GetNode(root,"terrain");
+	terrainParams.tileResolution= loader.GetInt(terrainNode,"tileResolution",32);
+	terrainParams.tessFactor 	= loader.GetFloat(ssaoNode,"tessFactor",16.f);
+	terrainParams.projFactor 	= loader.GetFloat(ssaoNode,"projFactor",10.f);
 
 	ctx::camera 				= glf::Camera::Ptr(new glf::HybridCamera());
 	glf::manager::timings		= glf::TimingManager::Create();
@@ -336,6 +323,11 @@ bool begin()
 						app->resources,
 						app->scene,
 						true);
+
+	// Retrive terrain heights
+	app->terrainParams.depthFactors.resize(app->scene.terrainMeshes.size());
+	for(unsigned int i=0;i<app->terrainParams.depthFactors.size();++i)
+		app->terrainParams.depthFactors[i] = app->scene.terrainMeshes[i].heightFactor;
 
 	float farPlane = 2.f * glm::length(app->scene.wBound.pMax - app->scene.wBound.pMin);
 	ctx::camera->Perspective(45.f, ctx::window.Size.x, ctx::window.Size.y, 0.1f, farPlane);
@@ -396,6 +388,7 @@ void gui()
 			}
 			ctx::ui->EndFrame();
 			ctx::ui->CheckButton(none,"Helpers",&ctx::drawHelpers);
+			ctx::ui->CheckButton(none,"Wire frame",&ctx::drawWire);
 		ctx::ui->EndGroup();
 
 		bool update = false;
@@ -479,13 +472,13 @@ void gui()
 				update |= ctx::ui->HorizontalSlider(sliderRect,1.f,32.f,&fnSamples);
 				app->ssaoParams.nSamples = int(fnSamples);
 
-				sprintf(labelBuffer,"SigmaH : %.4f",app->ssaoParams.sigmaH);
+				sprintf(labelBuffer,"Sigma Screen : %.4f",app->ssaoParams.sigmaScreen);
 				ctx::ui->Label(none,labelBuffer);
-				ctx::ui->HorizontalSlider(sliderRect,0.f,3.f,&app->ssaoParams.sigmaH);
+				ctx::ui->HorizontalSlider(sliderRect,0.f,3.f,&app->ssaoParams.sigmaScreen);
 
-				sprintf(labelBuffer,"SigmaV : %.4f",app->ssaoParams.sigmaV);
+				sprintf(labelBuffer,"Sigma Depth : %.4f",app->ssaoParams.sigmaDepth);
 				ctx::ui->Label(none,labelBuffer);
-				ctx::ui->HorizontalSlider(sliderRect,0.f,10.f,&app->ssaoParams.sigmaV);
+				ctx::ui->HorizontalSlider(sliderRect,0.f,1.f,&app->ssaoParams.sigmaDepth);
 
 				float fnTaps = float(app->ssaoParams.nTaps);
 				sprintf(labelBuffer,"nTaps : %d",app->ssaoParams.nTaps);
@@ -504,6 +497,8 @@ void gui()
 
 			if(app->activeMenu == menuType::MN_DOF)
 			{
+				ctx::ui->CheckButton(none,"Activate",&app->dofParams.enable);
+
 				sprintf(labelBuffer,"Near Start : %.2f",app->dofParams.nearStart);
 				ctx::ui->Label(none,labelBuffer);
 				ctx::ui->HorizontalSlider(sliderRect,0.1f,5.f,&app->dofParams.nearStart);
@@ -547,7 +542,6 @@ void gui()
 				ctx::ui->HorizontalSlider(sliderRect,0.001f,1.f,&app->dofParams.bokehDepthCutoff);
 
 				ctx::ui->CheckButton(none,"Poisson filtering",&app->dofParams.poissonFiltering);
-				ctx::ui->CheckButton(none,"Activate",&app->dofParams.enable);
 
 				// Change bokeh shape
 				int previousActiveBokeh = app->activeBokeh;
@@ -577,9 +571,12 @@ void gui()
 				update |= ctx::ui->HorizontalSlider(sliderRect,1.f,10.f,&tileExp);
 				app->terrainParams.tileResolution = int(pow(2.f,floor(tileExp)));
 
-				sprintf(labelBuffer,"Depth factor : %f",app->terrainParams.depthFactor);
-				ctx::ui->Label(none,labelBuffer);
-				update |= ctx::ui->HorizontalSlider(sliderRect,-10.f,10.f,&app->terrainParams.depthFactor);
+				for(unsigned int i=0;i<app->terrainParams.depthFactors.size();++i)
+				{
+					sprintf(labelBuffer,"Depth factor [%d]: %f",i,app->terrainParams.depthFactors[i]);
+					ctx::ui->Label(none,labelBuffer);
+					update |= ctx::ui->HorizontalSlider(sliderRect,-10.f,10.f,&app->terrainParams.depthFactors[i]);
+				}
 
 				sprintf(labelBuffer,"Tesselation factor : %f",app->terrainParams.tessFactor);
 				ctx::ui->Label(none,labelBuffer);
@@ -589,15 +586,11 @@ void gui()
 				ctx::ui->Label(none,labelBuffer);
 				update |= ctx::ui->HorizontalSlider(sliderRect,0.f,32.f,&app->terrainParams.projFactor);
 
-				update |= ctx::ui->CheckButton(none,"Wire frame",&app->terrainParams.wireFrame);
-
 				if(update)
 				{
 					app->updateTerrain = true;
 				}
 			}
-
-			if(ctx::ui->Button(none,"Save texture")) saveTexture = true;
 
 			ctx::ui->EndFrame();
 		ctx::ui->EndGroup();
@@ -644,13 +637,13 @@ void display()
 		for(unsigned int i=0;i<app->scene.terrainMeshes.size();++i)
 		{
 			app->scene.terrainMeshes[i].Tesselation(app->terrainParams.tileResolution,
-													app->terrainParams.depthFactor,
+													app->terrainParams.depthFactors[i],
 													app->terrainParams.tessFactor,
 													app->terrainParams.projFactor);
 			app->terrainBuilder.BuildNormals(		app->scene.terrainMeshes[i].heightTex,
 													app->scene.terrainMeshes[i].normalTex,
 													app->scene.terrainMeshes[i].terrainSize,
-													app->terrainParams.depthFactor);
+													app->terrainParams.depthFactors[i]);
 		}
 
 		app->updateTerrain = false;
@@ -661,24 +654,26 @@ void display()
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_STENCIL_TEST);
 
-	glf::manager::timings->StartSection(glf::section::CsmBuiler);
+	glf::manager::timings->StartSection(glf::section::CsmBuilder);
 	app->csmBuilder.Draw(	app->csmLight,
 							*ctx::camera,
 							app->csmParams.cascadeAlpha,
 							app->csmParams.blendFactor,
 							app->scene);
-	glf::manager::timings->EndSection(glf::section::CsmBuiler);
+	glf::manager::timings->EndSection(glf::section::CsmBuilder);
 
 	// Enable writting into the stencil buffer
 	glEnable(GL_STENCIL_TEST);
 	glStencilFunc(GL_ALWAYS, 1, 1);
 	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
+	if(ctx::drawWire) glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
 	glf::manager::timings->StartSection(glf::section::Gbuffer);
 	app->gbuffer.Draw(		projection,
 							view,
 							app->scene);
 	glf::manager::timings->EndSection(glf::section::Gbuffer);
+	if(ctx::drawWire) glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 
 	glDisable(GL_DEPTH_TEST);
 	glDepthMask(false);
@@ -735,8 +730,8 @@ void display()
 				app->ssao.Draw(			app->renderTarget2.texture,
 										app->gbuffer.positionTex,
 										view,
-										app->ssaoParams.sigmaH,
-										app->ssaoParams.sigmaV,
+										app->ssaoParams.sigmaScreen,
+										app->ssaoParams.sigmaDepth,
 										app->ssaoParams.nTaps,
 										glm::vec2(1,0),
 										app->renderTarget3);
@@ -751,8 +746,8 @@ void display()
 				app->ssao.Draw(			app->renderTarget3.texture,
 										app->gbuffer.positionTex,
 										view,
-										app->ssaoParams.sigmaH,
-										app->ssaoParams.sigmaV,
+										app->ssaoParams.sigmaScreen,
+										app->ssaoParams.sigmaDepth,
 										app->ssaoParams.nTaps,
 										glm::vec2(0,1),
 										app->renderTarget1);
@@ -768,7 +763,6 @@ void display()
 										app->csmParams.blendFactor,
 										app->csmParams.bias,
 										app->renderTarget1);
-
 				glf::manager::timings->EndSection(glf::section::CsmRender);
 
 				glBindFramebuffer(GL_FRAMEBUFFER,0);

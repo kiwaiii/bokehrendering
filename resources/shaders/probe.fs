@@ -103,7 +103,12 @@
 						+ 2*c1 * (SHCoeffs[4]*n.x*n.y + SHCoeffs[7]*n.x*n.z + SHCoeffs[5]*n.y*n.z)
 						+ 2*c2 * (SHCoeffs[3]*n.x + SHCoeffs[1]*n.y + SHCoeffs[2]*n.z );
 
-		FragColor	  	= vec4(color.xyz * dRadiance * INV_PI,1);
+		FragColor		= vec4(color.xyz * dRadiance * INV_PI,1);
+
+		#if LIGHTING_ONLY
+		if(gl_FragCoord.x<10000)
+			FragColor	= vec4(vec3(dRadiance * INV_PI),1);
+		#endif
 	}
 	#endif
 	#if TOTAL_REFLECTION
@@ -157,7 +162,12 @@
 		WangWrap(vDirection,n,roughness,rDirection,rExponent,rScale);
 		float rLevel	= MipmapLevel(rExponent,textureSize(CubeTex,0).x);
 		vec3 sRadiance	= textureLod(CubeTex,rDirection,rLevel).xyz;
-		FragColor	  	= vec4(color.xyz * (color.w*sRadiance + dRadiance * INV_PI),1);
+		FragColor		= vec4(color.xyz * (color.w*sRadiance + dRadiance * INV_PI),1);
+
+		#if LIGHTING_ONLY
+		if(gl_FragCoord.x<10000)
+			FragColor	= vec4(vec3(color.w*sRadiance + dRadiance * INV_PI),1);
+		#endif
 	}
 	#endif
 #endif

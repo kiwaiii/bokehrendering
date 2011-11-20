@@ -707,7 +707,7 @@ namespace glf
 		}
 		//----------------------------------------------------------------------
 		ConfigNode* ConfigLoader::GetNode(	ConfigNode* _node,
-										int _i) const
+											int _i) const
 		{
 			assert(_node != NULL);
 			assert(cJSON_GetArraySize(_node)>_i);

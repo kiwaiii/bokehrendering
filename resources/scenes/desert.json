@@ -5,8 +5,8 @@
 			"name"      : "cobra",
 			"file"      : "cobra.obj",
 			"folder"    : "cobra",
-			"translate" : [0, 0, 2],
-			"rotate"    : [0, 0, 0],
+			"translate" : [-4, -18, 2.9],
+			"rotate"    : [0, 0, -65],
 			"scale"     : 1
 		},
 
@@ -14,17 +14,8 @@
 			"name"      : "uh60",
 			"file"      : "uh60.obj",
 			"folder"    : "uh60",
-			"translate" : [10, 0, 1.5],
-			"rotate"    : [1, 0, 0],
-			"scale"     : 1
-		},
-
-		{
-			"name"      : "f14",
-			"file"      : "f14.obj",
-			"folder"    : "f14",
-			"translate" : [20, 0, 2.2],
-			"rotate"    : [-4, 0, 0],
+			"translate" : [16, 12, 2],
+			"rotate"    : [1, 0, 10],
 			"scale"     : 1
 		},
 
@@ -42,16 +33,28 @@
 	[
 		{
 			"name"      : "terrain",
-			"diffuse"   : "terrainDiffuse.png",
-			"height"    : "terrainHeight.png",
-			"normal"    : "terrainNormal.png",
+			"diffuse"   : "terrainDiffuse2.png",
+			"height"    : "terrainHeight2.png",
 			"terrainSize"  : [50, 50],
 			"terrainOffset": [-25, -25, 0],
-			"tileResolution": 32,
-			"projFactor"   : 21,
-			"heightFactor" : 10,
-			"tessFactor"   : 10
+			"heightFactor": 1.8556,
+			"tileFactor": 10,
+			"roughness" : 0.2,
+			"specularity": 0.01
+		},
+
+		{
+			"name"      : "terrain",
+			"diffuse"   : "terrainDiffuse.png",
+			"height"    : "terrainHeight.png",
+			"terrainSize"  : [50, 50],
+			"terrainOffset": [-25, -25, 0],
+			"heightFactor": 6.0824,
+			"tileFactor": 1,
+			"roughness" : 0.2,
+			"specularity": 0.01
 		}
+
 	],
 
 	"lights":

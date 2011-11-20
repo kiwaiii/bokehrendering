@@ -52,6 +52,11 @@ namespace glf
 		extern int	GPUSection;
 		extern int	CPUSection;
 
+		// CSM inner timings
+		extern int	CsmBuilderRegular;
+		extern int	CsmBuilderTerrain;
+		extern int	CsmBuilderFilter;
+
 		// Dof inner timings
 		extern int	DofReset;
 		extern int	DofBlurDepth;
@@ -62,7 +67,7 @@ namespace glf
 
 		// Pass timings
 		extern int	Gbuffer;
-		extern int	CsmBuiler;
+		extern int	CsmBuilder;
 		extern int	CsmRender;
 		extern int	SkyRender;
 		extern int	SsaoRender;

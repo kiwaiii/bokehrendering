@@ -47,6 +47,11 @@ namespace glf
 		vao.Draw(GL_TRIANGLES,3,0);
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
 
+		// Filter normals
+		glBindTexture(_normalTexture->target,_normalTexture->id);
+		glGenerateMipmap(_normalTexture->target);
+		glBindTexture(_normalTexture->target,0);
+
 		glf::CheckError("TerrainBuilder::BuildNormals");
 	}
 	//--------------------------------------------------------------------------
@@ -63,12 +68,18 @@ namespace glf
 								Texture2D* _diffuseTexture,
 								Texture2D* _normalTexture,
 								Texture2D* _heightTexture,
+								float _tileFactor,
+								float _roughness,
+								float _specularity,
 								int _tileResolution):
 	tileOffset(_terrainOffset),
 	terrainSize(_terrainSize),
+	tileFactor(_tileFactor),
 	diffuseTex(_diffuseTexture),
 	normalTex(_normalTexture),
-	heightTex(_heightTexture)
+	heightTex(_heightTexture),
+	roughness(_roughness),
+	specularity(_specularity)
 	{
 		assert(glf::CheckError("TerrainMesh::TerrainMesh"));
 		Tesselation(_tileResolution,1,16,20);
@@ -87,15 +98,12 @@ namespace glf
 		projFactor 		= _projFactor;
 	}
 	//--------------------------------------------------------------------------
-	void TerrainMesh::Draw(		bool _drawWireframe) const
+	void TerrainMesh::Draw() const
 	{
-		if(_drawWireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
 		// TODO : Add frustum culling 
 		glPatchParameteri(GL_PATCH_VERTICES, 4);
 		primitive->Draw(GL_PATCHES, 4, 0, tileCount.x*tileCount.y);
 
-		if(_drawWireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		assert(glf::CheckError("TerrainMesh::Draw"));
 	}
 	//--------------------------------------------------------------------------

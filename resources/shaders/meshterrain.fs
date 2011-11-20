@@ -3,6 +3,9 @@
 #ifdef GBUFFER
 	uniform sampler2D   DiffuseTex;
 	uniform sampler2D   NormalTex;
+	uniform float       Roughness;
+	uniform float       Specularity;
+	uniform float       TileFactor;
 
 	in  vec3  ePosition;
 	in  vec2  eTexCoord;
@@ -15,8 +18,8 @@
 	{
 		FragPosition 	= vec4(ePosition,1);
 		vec3 normal  	= textureLod(NormalTex,eTexCoord,0).xyz*2.f - 1.f;
-		FragNormal		= vec4(normalize(normal),0.1);
-		FragDiffuse		= vec4(texture(DiffuseTex,eTexCoord).xyz,1);
+		FragNormal		= vec4(normalize(normal),Roughness);
+		FragDiffuse		= vec4(texture(DiffuseTex,eTexCoord*TileFactor).xyz,Specularity);
 	}
 #endif
 

@@ -10,7 +10,7 @@
 //------------------------------------------------------------------------------
 // Constants
 //------------------------------------------------------------------------------
-#define ENABLE_CSM_HELPERS				1
+#define ENABLE_CSM_HELPERS				0
 #define ENABLE_OBJECT_BBOX_HELPERS		1
 #define ENABLE_SCENE_BBOX_HELPERS		0
 #define ENABLE_OBJECT_TBN_HELPERS		0
@@ -19,6 +19,9 @@
 #define ENABLE_LOAD_NORMAL_MAP			0
 #define ENABLE_ANISOSTROPIC_FILTERING	1
 //------------------------------------------------------------------------------
+#define ENABLE_LIGHTING_ONLY			1
+//------------------------------------------------------------------------------
+#define ENABLE_CSM_PASS_TIMING			1
 #define ENABLE_DOF_PASS_TIMING			1
 #define ENABLE_GPU_PASSES_TIMING		1
 #define ENABLE_GPU_FRAME_TIMING			0

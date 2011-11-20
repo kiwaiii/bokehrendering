@@ -4,6 +4,7 @@
 #include <glf/csm.hpp>
 #include <glf/window.hpp>
 #include <glf/geometry.hpp>
+#include <glf/debug.hpp>
 #include <glm/gtx/transform.hpp>
 
 //-----------------------------------------------------------------------------
@@ -383,6 +384,7 @@ namespace glf
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		#endif
 		// Regular renderer
+		glf::manager::timings->StartSection(glf::section::CsmBuilderRegular);
 		{
 			glUseProgram(regularRenderer.program.id);
 			glProgramUniform1i(regularRenderer.program.id, 			regularRenderer.nCascadesVar,	_light.nCascades);
@@ -396,8 +398,10 @@ namespace glf
 			}
 			glf::CheckError("CSMBuilder::Draw::Regulars");
 		}
+		glf::manager::timings->EndSection(glf::section::CsmBuilderRegular);
 
 		// Terrain renderer
+		glf::manager::timings->StartSection(glf::section::CsmBuilderTerrain);
 		{
 			glUseProgram(terrainRenderer.program.id);
 			glProgramUniform1i(terrainRenderer.program.id, 			terrainRenderer.nCascadesVar,	_light.nCascades);
@@ -419,8 +423,10 @@ namespace glf
 			}
 			glf::CheckError("CSMBuilder::Draw::Terrains");
 		}
+		glf::manager::timings->EndSection(glf::section::CsmBuilderTerrain);
 
 		// Filter shadow map with VSM or EVSM
+		glf::manager::timings->StartSection(glf::section::CsmBuilderFilter);
 		#if (ENABLE_SHADOW_VSM || ENABLE_SHADOW_EVSM)
 		glUseProgram(momentFilter.program.id);
 
@@ -434,6 +440,7 @@ namespace glf
 		glProgramUniform2f(momentFilter.program.id, momentFilter.directionVar, 0, 1);
 		vao.Draw(GL_TRIANGLES,3,0,_light.nCascades); // Instanced screen triangles for each cascade
 		#endif
+		glf::manager::timings->EndSection(glf::section::CsmBuilderFilter);
 
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
 		glViewport(0,0,ctx::window.Size.x,ctx::window.Size.y);
@@ -454,6 +461,7 @@ namespace glf
 		options.AddDefine<float>("K_EVSM_VALUE", CONSTANT_K_EVSM);
 		#endif
 		options.AddDefine<int>("CSM_RENDERER",1);
+		options.AddDefine<int>("LIGHTING_ONLY",ENABLE_LIGHTING_ONLY);
 		options.Include(LoadFile(directory::ShaderDirectory + "brdf.fs"));
 		program.Compile(options.Append(LoadFile(directory::ShaderDirectory + "csm.vs")),
 						options.Append(LoadFile(directory::ShaderDirectory + "csm.fs")));

@@ -86,6 +86,8 @@ namespace glf
 		terrainRenderer.diffuseTexUnit	= terrainRenderer.program["DiffuseTex"].unit;
 		terrainRenderer.normalTexUnit	= terrainRenderer.program["NormalTex"].unit;
 		terrainRenderer.heightTexUnit	= terrainRenderer.program["HeightTex"].unit;
+		terrainRenderer.roughnessVar	= terrainRenderer.program["Roughness"].location;
+		terrainRenderer.specularityVar	= terrainRenderer.program["Specularity"].location;
 
 		terrainRenderer.tileSizeVar		= terrainRenderer.program["TileSize"].location;
 		terrainRenderer.tileCountVar	= terrainRenderer.program["TileCount"].location;
@@ -93,6 +95,7 @@ namespace glf
 		terrainRenderer.projFactorVar	= terrainRenderer.program["ProjFactor"].location;
 		terrainRenderer.tessFactorVar	= terrainRenderer.program["TessFactor"].location;
 		terrainRenderer.heightFactorVar	= terrainRenderer.program["HeightFactor"].location;
+		terrainRenderer.tileFactorVar	= terrainRenderer.program["TileFactor"].location;
 
 		glProgramUniform1i(terrainRenderer.program.id, terrainRenderer.program["DiffuseTex"].location, terrainRenderer.diffuseTexUnit);
 		glProgramUniform1i(terrainRenderer.program.id, terrainRenderer.program["NormalTex"].location,  terrainRenderer.normalTexUnit);
@@ -146,12 +149,15 @@ namespace glf
 			for(int i=0;i<nTerrains;++i)
 			{
 				const TerrainMesh& mesh = _scene.terrainMeshes[i];
-				glProgramUniform3f(terrainRenderer.program.id, 			terrainRenderer.tileOffsetVar,	mesh.tileOffset.x, mesh.tileOffset.y, mesh.tileOffset.z);
-				glProgramUniform2i(terrainRenderer.program.id, 			terrainRenderer.tileCountVar,	mesh.tileCount.x, mesh.tileCount.y);
-				glProgramUniform2f(terrainRenderer.program.id, 			terrainRenderer.tileSizeVar,	mesh.tileSize.x, mesh.tileSize.y);
-				glProgramUniform1f(terrainRenderer.program.id, 			terrainRenderer.tessFactorVar,	mesh.tessFactor);
-				glProgramUniform1f(terrainRenderer.program.id, 			terrainRenderer.heightFactorVar,mesh.heightFactor);
-				glProgramUniform1f(terrainRenderer.program.id, 			terrainRenderer.projFactorVar,	mesh.projFactor);
+				glProgramUniform3f(terrainRenderer.program.id, terrainRenderer.tileOffsetVar,	mesh.tileOffset.x, mesh.tileOffset.y, mesh.tileOffset.z);
+				glProgramUniform2i(terrainRenderer.program.id, terrainRenderer.tileCountVar,	mesh.tileCount.x, mesh.tileCount.y);
+				glProgramUniform2f(terrainRenderer.program.id, terrainRenderer.tileSizeVar,		mesh.tileSize.x, mesh.tileSize.y);
+				glProgramUniform1f(terrainRenderer.program.id, terrainRenderer.tessFactorVar,	mesh.tessFactor);
+				glProgramUniform1f(terrainRenderer.program.id, terrainRenderer.heightFactorVar,	mesh.heightFactor);
+				glProgramUniform1f(terrainRenderer.program.id, terrainRenderer.projFactorVar,	mesh.projFactor);
+				glProgramUniform1f(terrainRenderer.program.id, terrainRenderer.roughnessVar,	mesh.roughness);
+				glProgramUniform1f(terrainRenderer.program.id, terrainRenderer.specularityVar,	mesh.specularity);
+				glProgramUniform1f(terrainRenderer.program.id, terrainRenderer.tileFactorVar,	mesh.tileFactor);
 
 				mesh.diffuseTex->Bind(terrainRenderer.diffuseTexUnit);
 				mesh.normalTex->Bind(terrainRenderer.normalTexUnit);
