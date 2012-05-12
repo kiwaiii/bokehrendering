@@ -76,7 +76,7 @@ ADD_SUBDIRECTORY(glf/io)
 #-------------------------------------------------------------------------------
 # OpenEXR Support (for debugging)
 #-------------------------------------------------------------------------------
-SET(ENABLE_OPEN_EXR 1)
+SET(ENABLE_OPEN_EXR 0)
 IF(ENABLE_OPEN_EXR)
 	ADD_DEFINITIONS(-DENABLE_OPEN_EXR)
 	INCLUDE_DIRECTORIES(/usr/include/OpenEXR)

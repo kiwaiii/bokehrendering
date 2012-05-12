@@ -214,13 +214,18 @@ namespace glf
 				ilEnable(IL_FILE_OVERWRITE);
 //				result = ilSave(IL_EXR, _filename.c_str());
 //				result = ilSave(IL_TYPE_UNKNOWN, _filename.c_str());
+				#if WIN32
+				result = ilSaveImage(s2ws(_filename).c_str());			
+				#else
 				result = ilSaveImage(_filename.c_str());
+				#endif
+
 				if(!result)
 				{
 					ILenum errorID = ilGetError();
 					if(errorID != IL_NO_ERROR)
 					{
-						Error("Save image error :  %s",str);
+						Error("Save image error :  %s",_filename.c_str());
 						Error("Error ID :  %d",errorID);
 					}
 				}
