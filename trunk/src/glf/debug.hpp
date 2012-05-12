@@ -16,7 +16,7 @@
 #define ENABLE_OBJECT_TBN_HELPERS		0
 //------------------------------------------------------------------------------
 #define ENABLE_CHECK_MODEL_LOADING		0
-#define ENABLE_LOAD_NORMAL_MAP			0
+#define ENABLE_LOAD_NORMAL_MAP			1
 #define ENABLE_ANISOSTROPIC_FILTERING	1
 //------------------------------------------------------------------------------
 #define ENABLE_LIGHTING_ONLY			1
@@ -28,7 +28,7 @@
 //------------------------------------------------------------------------------
 #define ENABLE_BOKEH_STATISTICS			1
 //------------------------------------------------------------------------------
-#define ENABLE_CHECK_ERROR				1
+#define ENABLE_CHECK_ERROR				0
 #define ENABLE_VERBOSE_PROGRAM 			0
 #define ENABLE_ASSERT_ON_ERROR			1
 #define ENABLE_EXIT_ON_ERROR			1
