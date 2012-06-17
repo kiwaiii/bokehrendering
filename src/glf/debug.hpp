@@ -19,7 +19,7 @@
 #define ENABLE_LOAD_NORMAL_MAP			1
 #define ENABLE_ANISOSTROPIC_FILTERING	1
 //------------------------------------------------------------------------------
-#define ENABLE_LIGHTING_ONLY			1
+#define ENABLE_LIGHTING_ONLY			0
 //------------------------------------------------------------------------------
 #define ENABLE_CSM_PASS_TIMING			1
 #define ENABLE_DOF_PASS_TIMING			1

@@ -265,7 +265,7 @@ bool begin()
 	dofParams.lumThreshold 		= loader.GetFloat(dofNode,"lumThreshold",5000.f);
 	dofParams.cocThreshold 		= loader.GetFloat(dofNode,"cocThreshold",3.5f);
 	dofParams.bokehDepthCutoff 	= loader.GetFloat(dofNode,"bokehDepthCutoff",1.f);
-	dofParams.enable			= false;
+	dofParams.enable			= true;
 
 	SkyParams skyParams;
 	glf::io::ConfigNode *skyNode= loader.GetNode(root,"sky");
